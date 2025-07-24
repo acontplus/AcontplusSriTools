@@ -460,12 +460,15 @@ class FacturasManager {
 	}
 
 	async descargarXMLSeleccionados() {
+		console.log('🔽 Iniciando descarga XML...');  // AGREGAR ESTA LÍNEA
+		
 		if (this.selectedFacturas.size === 0) {
 			this.showNotification('Selecciona al menos un documento para descargar XML', 'warning');
 			return;
 		}
 
 		const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
+		console.log('📋 Documentos seleccionados:', facturasSeleccionadas);  // AGREGAR ESTA LÍNEA
 		
 		try {
 			const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -481,10 +484,14 @@ class FacturasManager {
 			this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargando...</span>');
 			this.selectAllBtn.disabled = true;
 
+			console.log('📤 Enviando mensaje a content script...');  // AGREGAR ESTA LÍNEA
+			
 			const response = await this.sendMessageWithRetry(tab.id, { 
 				action: 'descargarXMLDocumentos',
 				documentos: facturasSeleccionadas
 			}, 3);
+			
+			console.log('📥 Respuesta recibida:', response);  // AGREGAR ESTA LÍNEA
 			
 			if (response && response.success) {
 				this.showNotification(`Iniciando descarga de ${facturasSeleccionadas.length} archivos XML`, 'success');
@@ -499,8 +506,8 @@ class FacturasManager {
 			this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargar Seleccionados</span>');
 			this.selectAllBtn.disabled = false;
 		}
-	}
-	
+	}	
+
   handleRowSelection(checkbox) {
     const facturaId = checkbox.closest('tr').dataset.id;
     

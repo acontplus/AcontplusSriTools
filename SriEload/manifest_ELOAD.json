@@ -1,0 +1,22 @@
+{
+   "action": {
+      "default_icon": "images/logo.png",
+      "default_popup": "popup.html",
+      "default_title": "SRIeloadocs-2.0"
+   },
+   "background": {
+      "service_worker": "background.js"
+   },
+   "content_scripts": [ {
+      "js": [ "content.js" ],
+      "matches": [ "\u003Call_urls>" ]
+   } ],
+   "description": "Descargas del sitio web del SRI",
+   "host_permissions": [ "https://srienlinea.sri.gob.ec/*" ],
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhO8J31PDMUfx41UivQpmrJYquEZnCxk0JseYTDbGANAb65RQrmCoGI3HpL74OEIAnyPxG4BysY01rXi2d/MXlrrZsDCMRMWXK7daPbe6ZJuN/rT/lUXCzs/Y9NNvrJvUm/FtiRaM4Tbb96ZrAfG+9zfnTAKdz8iiVTnVtIr3Ep2mewDBazoXFOjHuqFKeNkTjKpT5pGxLxIJkCuqoq3jWIIujXVC1FxADw1A3rtKNsVuazM5bY2sPWBveZ+ZBAQvjU/NIR1FYvL2Q9KFDXPsjsXJaYhBL5EbqGlNoVNOC2/8IWguOeJouFkoMHERaNwnTAxnysDLbUD8nnNi0GaT7wIDAQAB",
+   "manifest_version": 3,
+   "name": "e-load",
+   "permissions": [ "activeTab", "downloads", "scripting" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "2.0"
+}

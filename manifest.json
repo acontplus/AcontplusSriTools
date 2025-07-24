@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Acontplus SRI Tools v1.4.1-Final",
+  "version": "1.4.1",
+  "description": "Extractor de Comprobantes Electronicos del SRI para Acontplus S.A.S. - Interfaz optimizada con tecnicas robustas de paginacion",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.sri.gob.ec/*",
+    "*://comprobantes-electronicos-internet/*",
+    "*://srienlinea.sri.gob.ec/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.sri.gob.ec/*",
+        "*://comprobantes-electronicos-internet/*",
+        "*://srienlinea.sri.gob.ec/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Acontplus SRI Tools v1.4.1 - Final"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html", "libs/*", "content.js"],
+      "matches": ["*://*.sri.gob.ec/*", "*://comprobantes-electronicos-internet/*"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+  }
+}

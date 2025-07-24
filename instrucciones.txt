@@ -1,0 +1,7 @@
+Please follow these instructions when working within the project:
+
+Every time a new modification is made, increment the version number in all the modified files. Also, update the version in the manifiest.json file so the new version is displayed in the main form.
+
+Only publish the source code of the files that were modified.
+
+Update the readmefinal.txt and readmetecnico.txt files to include a description of the improvements made to the software.

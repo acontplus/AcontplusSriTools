@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acontplus SRI Tools v1.4.1 - Final</title>
+    <link rel="stylesheet" href="popup.css">
+    <!-- Google Fonts optimizada -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- SheetJS LOCAL - Solucion CSP -->
+    <script src="libs/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with Acontplus Branding v1.4.1 -->
+        <header class="header">
+            <div class="logo-section">
+                <!-- Logo SVG removed as requested -->
+                <div class="logo-text">
+                    <h1>ACONTPLUS</h1>
+                    <span class="tagline">SRI Tools v1.4.1 - Final</span>
+                </div>
+            </div>
+            <div class="extraction-info">
+                <span id="extraction-timestamp" class="timestamp">Cargando...</span>
+            </div>
+        </header>
+
+        <!-- Stats Panel - Centrado con 2 elementos -->
+        <div class="stats-panel">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="total-count">0</div>
+                        <div class="stat-label">Total Documentos</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-value" id="selected-count">0</div>
+                        <div class="stat-label">Seleccionados</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Controls - Centrados -->
+        <div class="action-controls">
+            <button id="new-search" class="btn btn-secondary" title="Buscar documentos usando tecnicas robustas en todas las paginas">
+                <span class="btn-text">Buscar</span>
+            </button>
+            <button id="select-all" class="btn btn-accent" title="Seleccionar o deseleccionar todos los documentos extra¨ªdos">
+                <span class="btn-text">Seleccionar Todo</span>
+            </button>
+            <button id="export-selected" class="btn btn-primary" disabled title="Exportar documentos seleccionados a Excel">
+                <span class="btn-text">Exportar Excel</span>
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Cargando comprobantes electronicos...</p>
+            <div id="pagination-progress" class="pagination-progress" style="display: none;">
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <div class="progress-text">
+                    Procesando p¨¢gina <span id="current-page">1</span> de <span id="total-pages">1</span>
+                    <br>
+                    <small style="color: #6c757d;">Aplicando optimizaciones automaticas...</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Data State -->
+        <div id="no-data" class="no-data" style="display: none;">
+            <div class="empty-icon">??</div>
+            <h3>No se encontraron comprobantes</h3>
+            <p>Navega a una pagina del SRI con comprobantes electronicos y utiliza "Buscar" para extraer todos los documentos automaticamente.</p>
+            <div style="background: linear-gradient(135deg, #D61672 0%, #FFA901 100%); color: white; padding: 8px 12px; border-radius: 6px; font-size: 11px; margin: 8px 0;">
+                <strong>? Nuevo:</strong> Integracion con tecnicas robustas de paginacion
+            </div>
+        </div>
+
+        <!-- Table Container - Ampliado con Todas las Columnas -->
+        <div id="table-container" class="table-container" style="display: none;">
+            <div class="table-wrapper">
+                <table class="facturas-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col" style="color: white; font-family: 'Inter', sans-serif; font-weight: 600;">
+                                <input type="checkbox" id="master-checkbox" style="accent-color: #FFA901;" title="Seleccionar/Deseleccionar todos">
+                            </th>
+                            <th class="counter-col">Nro</th>
+                            <th class="numero-col">Numero</th>
+                            <th class="ruc-col">RUC</th>
+                            <th class="razon-col">Razon Social</th>
+                            <th class="fecha-col">Fecha Emision</th>
+                            <th class="clave-col" style="display: none;">Clave de Acceso</th> <!-- OCULTA: Para export -->
+                            <th class="amount-col">Total</th>
+                            <th class="fecha-autorizacion-col" style="display: none;">Fecha Autorizacion</th> <!-- OCULTA: Para export -->
+                            <th class="valor-sin-impuestos-col" style="display: none;">Subtotal</th> <!-- OCULTA: Para export -->
+                            <th class="iva-col" style="display: none;">IVA</th> <!-- OCULTA: Para export -->
+                        </tr>
+                    </thead>
+                    <tbody id="facturas-tbody">
+                        <!-- Datos se cargan dinamicamente -->
+                    </tbody>
+                    <tfoot id="facturas-totals" style="display: none;">
+                        <tr class="totals-row">
+                            <td class="checkbox-col"></td>
+                            <td class="counter-col"></td>
+                            <td class="numero-col"></td>
+                            <td class="ruc-col"></td>
+                            <td class="razon-col"></td>
+                            <td class="fecha-col"><strong>TOTALES:</strong></td>
+                            <td class="clave-col" style="display: none;"></td> <!-- OCULTA: Para export -->
+                            <td class="amount-col total-amount">$0.00</td>
+                            <td class="fecha-autorizacion-col" style="display: none;"></td> <!-- OCULTA: Para export -->
+                            <td class="valor-sin-impuestos-col" style="display: none;"></td> <!-- OCULTA: Para export -->
+                            <td class="iva-col" style="display: none;"></td> <!-- OCULTA: Para export -->
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-brand">
+                <span class="company">Acontplus S.A.S</span>
+                <span class="version-number">v1.4.1 Final</span>
+            </div>
+            <div style="font-size: 9px; color: #6c757d; margin-top: 2px;">
+                Integracion robusta con tecnicas optimizadas
+            </div>
+        </footer>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

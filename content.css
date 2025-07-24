@@ -1,0 +1,687 @@
+/* Content Script Styles - Acontplus SRI Tools v1.2.8-Enhanced-Pagination */
+/* Brand Identity: #D61672, #FFA901, #FFC303, #FFDF01 */
+/* Optimizado para interfaz mejorada con soporte de paginación automática */
+
+#acontplus-extractor-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999999 !important;
+  cursor: pointer;
+  animation: slideInBrand 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.acontplus-btn {
+  background: linear-gradient(135deg, #D61672 0%, #FFA901 100%);
+  color: white;
+  padding: 12px 18px;
+  border-radius: 24px;
+  box-shadow: 
+    0 4px 15px rgba(214, 22, 114, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  min-width: 180px; /* Aumentado para acomodar información de paginación */
+  justify-content: center;
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de brillo sutil */
+.acontplus-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transition: left 0.5s ease;
+}
+
+.acontplus-btn:hover::before {
+  left: 100%;
+}
+
+/* Estados del boton con Brand Identity v1.2.8-Enhanced */
+.acontplus-btn.success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  box-shadow: 
+    0 4px 15px rgba(40, 167, 69, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.acontplus-btn.warning {
+  background: linear-gradient(135deg, #FFC303 0%, #FFDF01 100%);
+  box-shadow: 
+    0 4px 15px rgba(255, 195, 3, 0.4),
+    0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.acontplus-btn.error {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  box-shadow: 
+    0 4px 15px rgba(220, 53, 69, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.acontplus-btn.analyzing {
+  background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+  box-shadow: 
+    0 4px 15px rgba(23, 162, 184, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* NUEVO: Estado de procesamiento de paginación */
+.acontplus-btn.processing-pagination {
+  background: linear-gradient(45deg, #D61672, #FFA901, #FFC303, #FFDF01);
+  background-size: 300% 300%;
+  animation: gradientShiftPagination 2s ease infinite;
+  box-shadow: 
+    0 4px 15px rgba(214, 22, 114, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+}
+
+@keyframes gradientShiftPagination {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+  75% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Hover effects mejorados para v1.2.8-Enhanced */
+.acontplus-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 
+    0 8px 20px rgba(214, 22, 114, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+}
+
+.acontplus-btn.success:hover {
+  box-shadow: 
+    0 8px 20px rgba(40, 167, 69, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+}
+
+.acontplus-btn.warning:hover {
+  box-shadow: 
+    0 8px 20px rgba(255, 195, 3, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.2) inset;
+  background: linear-gradient(135deg, #FFDF01 0%, #FFC303 100%);
+}
+
+.acontplus-btn.error:hover {
+  box-shadow: 
+    0 8px 20px rgba(220, 53, 69, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
+}
+
+.acontplus-btn.analyzing:hover {
+  box-shadow: 
+    0 8px 20px rgba(23, 162, 184, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+}
+
+.acontplus-btn.processing-pagination:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 10px 25px rgba(214, 22, 114, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+}
+
+.acontplus-icon {
+  font-size: 16px;
+  animation: pulseIcon 3s infinite ease-in-out;
+  display: inline-block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.acontplus-text {
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-size: 12px; /* Reducido ligeramente para acomodar más texto */
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Contador de documentos mejorado con soporte de paginación */
+.doc-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-left: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: countPulse 2s infinite ease-in-out;
+  min-width: 20px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* NUEVO: Indicador de paginación en el botón */
+.pagination-indicator {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  background: linear-gradient(135deg, #FFC303 0%, #FFDF01 100%);
+  color: #2c3e50;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: 6px;
+  border: 1px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.2px;
+  font-family: 'JetBrains Mono', monospace;
+  animation: paginationPulse 3s infinite ease-in-out;
+}
+
+@keyframes paginationPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Animaciones Brand Identity v1.2.8-Enhanced */
+@keyframes slideInBrand {
+  from {
+    transform: translateX(120%) scale(0.8) rotate(3deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseIcon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes countPulse {
+  0%, 100% {
+    transform: scale(1);
+    background: rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Animacion especial para estado de exito con paginación */
+.acontplus-btn.success .acontplus-icon {
+  animation: bounceSuccessPagination 2.5s infinite ease-in-out;
+}
+
+@keyframes bounceSuccessPagination {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-3px) scale(1.1);
+  }
+  60% {
+    transform: translateY(-1px) scale(1.05);
+  }
+}
+
+/* Animacion para estado de procesamiento de paginación */
+.acontplus-btn.processing-pagination .acontplus-icon {
+  animation: rotatePaginationProcessing 1.5s linear infinite;
+}
+
+@keyframes rotatePaginationProcessing {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1);
+  }
+  75% {
+    transform: rotate(270deg) scale(1.1);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Responsive design mejorado para v1.2.8-Enhanced */
+@media (max-width: 768px) {
+  #acontplus-extractor-btn {
+    top: 15px;
+    right: 15px;
+  }
+  
+  .acontplus-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+    min-width: 160px;
+    border-radius: 20px;
+  }
+  
+  .acontplus-icon {
+    font-size: 14px;
+  }
+  
+  .acontplus-text {
+    font-size: 11px;
+    max-width: 100px;
+  }
+  
+  .doc-count {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  .pagination-indicator {
+    font-size: 7px;
+    padding: 1px 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  #acontplus-extractor-btn {
+    top: 12px;
+    right: 12px;
+  }
+  
+  .acontplus-btn {
+    padding: 8px 12px;
+    font-size: 11px;
+    min-width: 140px;
+    border-radius: 18px;
+  }
+  
+  .acontplus-icon {
+    font-size: 13px;
+  }
+  
+  .acontplus-text {
+    font-size: 10px;
+    max-width: 80px;
+  }
+  
+  .doc-count {
+    font-size: 9px;
+    padding: 1px 3px;
+  }
+}
+
+/* Asegurar que el boton este siempre visible */
+#acontplus-extractor-btn {
+  position: fixed !important;
+  z-index: 999999 !important;
+}
+
+/* Evitar conflictos con estilos del SRI */
+#acontplus-extractor-btn * {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#acontplus-extractor-btn .acontplus-btn {
+  padding: 12px 18px !important;
+}
+
+#acontplus-extractor-btn .acontplus-icon,
+#acontplus-extractor-btn .acontplus-text,
+#acontplus-extractor-btn .doc-count {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* Estados adicionales para UX mejorado v1.2.8-Enhanced */
+.acontplus-btn.processing {
+  background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+  box-shadow: 
+    0 4px 15px rgba(111, 66, 193, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.acontplus-btn.processing .acontplus-icon {
+  animation: processing 1.5s linear infinite;
+}
+
+@keyframes processing {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.1); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* Badge de version mejorada */
+.version-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #FFC303 0%, #FFDF01 100%);
+  color: #2c3e50;
+  font-size: 7px;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: 6px;
+  border: 1px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Indicador de conexion exitosa mejorado */
+.acontplus-btn.connected::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  background: #00ff00;
+  border-radius: 50%;
+  border: 1px solid white;
+  box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3);
+  animation: connectionPulse 2s infinite ease-in-out;
+}
+
+@keyframes connectionPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.1);
+  }
+}
+
+/* Mejoras especificas para v1.2.8-Enhanced - paginación automática */
+.acontplus-btn-v128-enhanced {
+  min-height: 40px;
+  letter-spacing: 0.4px;
+}
+
+/* Estado de procesamiento de múltiples páginas */
+.acontplus-btn.multi-page-processing {
+  background: linear-gradient(45deg, #D61672, #FFA901, #17a2b8, #28a745);
+  background-size: 400% 400%;
+  animation: multiPageGradient 4s ease infinite;
+}
+
+@keyframes multiPageGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+  75% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Mejoras de accesibilidad v1.2.8-Enhanced */
+.acontplus-btn:focus {
+  outline: 2px solid rgba(214, 22, 114, 0.5);
+  outline-offset: 2px;
+}
+
+.acontplus-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Soporte para modo oscuro mejorado */
+@media (prefers-color-scheme: dark) {
+  .acontplus-btn {
+    box-shadow: 
+      0 4px 15px rgba(214, 22, 114, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  }
+  
+  .version-badge {
+    background: linear-gradient(135deg, #FFDF01 0%, #FFC303 100%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+  
+  .pagination-indicator {
+    background: linear-gradient(135deg, #FFDF01 0%, #FFC303 100%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* Animacion especial para primera aparicion con paginación v1.2.8-Enhanced */
+.acontplus-btn.first-load-v128-enhanced {
+  animation: firstLoadSequenceV128Enhanced 3s ease-out;
+}
+
+@keyframes firstLoadSequenceV128Enhanced {
+  0% {
+    transform: translateX(150%) scale(0.6) rotate(15deg);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  20% {
+    transform: translateX(50%) scale(0.8) rotate(8deg);
+    opacity: 0.3;
+    filter: blur(4px);
+  }
+  40% {
+    transform: translateX(20%) scale(0.9) rotate(5deg);
+    opacity: 0.6;
+    filter: blur(2px);
+  }
+  60% {
+    transform: translateX(-5%) scale(1.05) rotate(-2deg);
+    opacity: 0.8;
+    filter: blur(1px);
+  }
+  80% {
+    transform: translateX(2%) scale(1.02) rotate(1deg);
+    opacity: 0.9;
+    filter: blur(0.5px);
+  }
+  100% {
+    transform: translateX(0) scale(1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+/* Efectos especiales para indicar funcionalidad de paginación */
+.acontplus-btn.paginacion-detectada {
+  position: relative;
+}
+
+.acontplus-btn.paginacion-detectada::after {
+  content: 'PÁGINAS';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+  color: white;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  animation: paginacionIndicator 2s infinite ease-in-out;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+@keyframes paginacionIndicator {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Indicador de extraccion exitosa con múltiples páginas */
+.acontplus-btn.multipagina-detectada {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  box-shadow: 
+    0 4px 15px rgba(40, 167, 69, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  position: relative;
+}
+
+.acontplus-btn.multipagina-detectada::before {
+  content: '📄';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 12px;
+  animation: multiPagePulse 2s infinite ease-in-out;
+}
+
+@keyframes multiPagePulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+}
+
+/* Compatibilidad con pantallas de alta densidad */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .acontplus-btn {
+    border-width: 1px;
+  }
+  
+  .doc-count {
+    border-width: 0.5px;
+  }
+  
+  .pagination-indicator {
+    border-width: 0.5px;
+  }
+}
+
+/* Optimizaciones de rendimiento para v1.2.8-Enhanced */
+.acontplus-btn * {
+  will-change: transform, opacity;
+}
+
+.acontplus-btn {
+  contain: layout style paint;
+}
+
+/* Estados de error especificos para funcionalidad de paginación */
+.acontplus-btn.error-paginacion {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  animation: errorShakePagination 0.6s ease-in-out;
+}
+
+@keyframes errorShakePagination {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+/* Mejoras finales para la experiencia del usuario con paginación */
+.acontplus-btn:active {
+  transform: translateY(-1px) scale(0.98);
+  transition: all 0.1s ease;
+}
+
+.acontplus-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(50%);
+}
+
+/* Indicador de progreso para operaciones de paginación largas */
+.acontplus-btn.progress-pagination {
+  background: linear-gradient(90deg, #D61672 0%, #FFA901 25%, #FFC303 50%, #FFDF01 75%, #D61672 100%);
+  background-size: 300% 100%;
+  animation: progressPaginationIndicator 3s linear infinite;
+}
+
+@keyframes progressPaginationIndicator {
+  0% { background-position: 300% 0; }
+  100% { background-position: -300% 0; }
+}
+
+/* Indicador especial para completado de paginación */
+.acontplus-btn.pagination-completed {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  position: relative;
+}
+
+.acontplus-btn.pagination-completed::after {
+  content: '✅';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 14px;
+  animation: completedBounce 1s ease-in-out;
+}
+
+@keyframes completedBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-5px) scale(1.2);
+  }
+  60% {
+    transform: translateY(-2px) scale(1.1);
+  }
+}

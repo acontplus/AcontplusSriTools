@@ -460,11 +460,10 @@ class FacturasManager {
 
     if (shouldSelectAll) {
       this.facturas.forEach(factura => this.selectedFacturas.add(factura.id));
-      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Deseleccionar</span>');
+	  this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargar Seleccionados</span>');
     } else {
       this.selectedFacturas.clear();
-      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Seleccionar</span>');
-    }
+	  this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargar Seleccionados</span>');    }
 
     this.renderTable();
     this.updateSelectionCount();
@@ -495,11 +494,10 @@ class FacturasManager {
       masterCheckbox.indeterminate = this.selectedFacturas.size > 0 && this.selectedFacturas.size < this.facturas.length;
     }
 
-    if (this.selectAllBtn) {
-      const buttonText = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0 
-        ? 'Deseleccionar' 
-        : 'Seleccionar Todo';
-      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">' + buttonText + '</span>');
+    if (this.selectAllBtn) 
+	{
+		const buttonText = 'Descargar Seleccionados';
+		this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">' + buttonText + '</span>');
     }
   }
 

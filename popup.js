@@ -454,21 +454,53 @@ class FacturasManager {
     }
   }
 
-  toggleSelectAll() {
-    const masterCheckbox = document.getElementById('master-checkbox');
-    const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size === 0;
+	toggleSelectAll() {
+		// Nueva funcionalidad: Descargar XML de documentos seleccionados
+		this.descargarXMLSeleccionados();
+	}
 
-    if (shouldSelectAll) {
-      this.facturas.forEach(factura => this.selectedFacturas.add(factura.id));
-	  this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargar Seleccionados</span>');
-    } else {
-      this.selectedFacturas.clear();
-	  this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargar Seleccionados</span>');    }
+	async descargarXMLSeleccionados() {
+		if (this.selectedFacturas.size === 0) {
+			this.showNotification('Selecciona al menos un documento para descargar XML', 'warning');
+			return;
+		}
 
-    this.renderTable();
-    this.updateSelectionCount();
-  }
+		const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
+		
+		try {
+			const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+			
+			if (!tab || !tab.id) {
+				throw new Error('No se pudo obtener la pestaña activa');
+			}
 
+			if (!this.isDomainValid(tab.url)) {
+				throw new Error('Debes estar en el portal del SRI para descargar XML');
+			}
+
+			this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargando...</span>');
+			this.selectAllBtn.disabled = true;
+
+			const response = await this.sendMessageWithRetry(tab.id, { 
+				action: 'descargarXMLDocumentos',
+				documentos: facturasSeleccionadas
+			}, 3);
+			
+			if (response && response.success) {
+				this.showNotification(`Iniciando descarga de ${facturasSeleccionadas.length} archivos XML`, 'success');
+			} else {
+				throw new Error(response ? response.error : 'No se pudo iniciar la descarga de XML');
+			}
+			
+		} catch (error) {
+			console.error('Error descargando XML:', error);
+			this.showNotification(error.message, 'error');
+		} finally {
+			this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargar Seleccionados</span>');
+			this.selectAllBtn.disabled = false;
+		}
+	}
+	
   handleRowSelection(checkbox) {
     const facturaId = checkbox.closest('tr').dataset.id;
     

@@ -6,8 +6,7 @@
 window.SRIExtractorLoaded = true;
 console.log('🔍 Content Script cargado correctamente - Acontplus SRI Tools v1.4.1-Final');
 
-class SRIDocumentosExtractor 
-{
+class SRIDocumentosExtractor {
   constructor() {
     this.documentos = [];
     this.allDocuments = [];
@@ -79,12 +78,6 @@ class SRIDocumentosExtractor
           });
           return true;
 
-		case 'descargarXMLDocumentos':
-			this.procesarDescargaXML(request.documentos || [])
-				.then(result => sendResponse(result))
-				.catch(error => sendResponse({ success: false, error: error.message }));
-			return true;
-	
         default:
           console.warn('⚠️ Acción no reconocida:', message.action);
           sendResponse({ success: false, error: 'Acción no reconocida' });
@@ -828,155 +821,6 @@ class SRIDocumentosExtractor
   esperar(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-  
-  
-  
-  
-  async procesarDescargaXML(documentos) {
-    console.log('🔽 Iniciando descarga XML para', documentos.length, 'documentos');
-    
-    if (!documentos || documentos.length === 0) {
-        throw new Error('No se proporcionaron documentos para descargar');
-    }
-
-    // Detectar tipo de tabla (Recibidos/Emitidos)
-    const esRecibidos = !!document.getElementById('frmPrincipal:tablaCompRecibidos_data');
-    const esEmitidos = !!document.getElementById('frmPrincipal:tablaCompEmitidos_data');
-    
-    if (!esRecibidos && !esEmitidos) {
-        throw new Error('No se encontró tabla de documentos del SRI');
-    }
-
-    const tipoTabla = esRecibidos ? 'CompRecibidos' : 'CompEmitidos';
-    const urlDescarga = esRecibidos 
-        ? "https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/pages/consultas/recibidos/comprobantesRecibidos.jsf"
-        : "https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/pages/consultas/recuperarComprobantes.jsf";
-
-    // Extraer ViewState
-    const viewStateElement = document.querySelector("#javax\\.faces\\.ViewState");
-    if (!viewStateElement) {
-        throw new Error('No se pudo obtener ViewState de la sesión');
-    }
-    const viewState = viewStateElement.value;
-
-    let descargasExitosas = 0;
-    let descargasFallidas = 0;
-
-    for (let i = 0; i < documentos.length; i++) {
-        const documento = documentos[i];
-        
-        try {
-            console.log(`Descargando ${i + 1}/${documentos.length}: ${documento.numeroComprobante}`);
-            
-            await this.descargarXMLIndividual(documento, viewState, urlDescarga, tipoTabla);
-            descargasExitosas++;
-            
-            // Pausa entre descargas
-            await this.sleep(1000);
-            
-        } catch (error) {
-            console.error(`Error descargando ${documento.numeroComprobante}:`, error);
-            descargasFallidas++;
-        }
-    }
-
-    return {
-        success: true,
-        message: `Descarga completada: ${descargasExitosas} exitosos, ${descargasFallidas} fallidos`,
-        exitosos: descargasExitosas,
-        fallidos: descargasFallidas
-    };
-}
-
-	async descargarXMLIndividual(documento, viewState, urlDescarga, tipoTabla) {
-		// Buscar fila en la tabla actual
-		const fila = await this.encontrarFilaDocumento(documento, tipoTabla);
-		if (!fila) {
-			throw new Error(`No se encontró fila para documento ${documento.numeroComprobante}`);
-		}
-
-		const regsActual = fila.getAttribute('data-ri') || '0';
-		
-		// Construir FormData basado en lógica SriEload
-		const formData = new FormData();
-		formData.append('javax.faces.partial.ajax', 'true');
-		formData.append('javax.faces.source', `frmPrincipal:tabla${tipoTabla}:${regsActual}:lnkXml`);
-		formData.append('javax.faces.partial.execute', '@all');
-		formData.append('javax.faces.partial.render', `form-detalle-factura:panel-detalle-factura`);
-		formData.append('javax.faces.ViewState', viewState);
-		formData.append(`frmPrincipal:tabla${tipoTabla}:${regsActual}:lnkXml`, `frmPrincipal:tabla${tipoTabla}:${regsActual}:lnkXml`);
-
-		// Realizar solicitud
-		const response = await fetch(urlDescarga, {
-			headers: {
-				"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-				"accept-language": "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3",
-				"content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-				"sec-fetch-mode": "navigate"
-			},
-			referrer: "",
-			referrerPolicy: "strict-origin-when-cross-origin",
-			body: new URLSearchParams(formData),
-			method: "POST",
-			mode: "cors",
-			credentials: "include"
-		});
-
-		if (!response.ok) {
-			throw new Error(`Error HTTP: ${response.status}`);
-		}
-
-		// Crear archivo y descargar
-		const xmlData = await response.text();
-		const blob = new Blob([xmlData], { type: 'application/xml' });
-		const downloadLink = document.createElement('a');
-		
-		// Nombre de archivo basado en clave de acceso
-		const nombreArchivo = `${documento.claveAcceso || 'documento'}.xml`;
-		
-		downloadLink.href = window.URL.createObjectURL(blob);
-		downloadLink.download = nombreArchivo;
-		downloadLink.textContent = "Descargar XML";
-		
-		document.body.appendChild(downloadLink);
-		downloadLink.click();
-		
-		window.URL.revokeObjectURL(downloadLink.href);
-		document.body.removeChild(downloadLink);
-		
-		console.log(`✅ XML descargado: ${nombreArchivo}`);
-	}
-
-	async encontrarFilaDocumento(documento, tipoTabla) {
-		const tabla = document.getElementById(`frmPrincipal:tabla${tipoTabla}_data`);
-		if (!tabla) return null;
-
-		const filas = tabla.querySelectorAll('tr[data-ri]');
-		
-		for (const fila of filas) {
-			const celdas = fila.querySelectorAll('td[role="gridcell"]');
-			
-			for (const celda of celdas) {
-				const textoCelda = celda.textContent || '';
-				
-				// Buscar por clave de acceso
-				if (documento.claveAcceso && textoCelda.includes(documento.claveAcceso)) {
-					return fila;
-				}
-				
-				// Buscar por número de comprobante
-				if (documento.numeroComprobante && textoCelda.includes(documento.numeroComprobante)) {
-					return fila;
-				}
-			}
-		}
-		
-		return null;
-	}
-  
-  
-  
-  
 }
 
 // Inicializar el extractor

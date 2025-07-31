@@ -454,59 +454,21 @@ class FacturasManager {
     }
   }
 
-	toggleSelectAll() {
-		// Nueva funcionalidad: Descargar XML de documentos seleccionados
-		this.descargarXMLSeleccionados();
-	}
+  toggleSelectAll() {
+    const masterCheckbox = document.getElementById('master-checkbox');
+    const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size === 0;
 
-	async descargarXMLSeleccionados() {
-		console.log('🔽 Iniciando descarga XML...');  // AGREGAR ESTA LÍNEA
-		
-		if (this.selectedFacturas.size === 0) {
-			this.showNotification('Selecciona al menos un documento para descargar XML', 'warning');
-			return;
-		}
+    if (shouldSelectAll) {
+      this.facturas.forEach(factura => this.selectedFacturas.add(factura.id));
+      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Deseleccionar</span>');
+    } else {
+      this.selectedFacturas.clear();
+      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Seleccionar</span>');
+    }
 
-		const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
-		console.log('📋 Documentos seleccionados:', facturasSeleccionadas);  // AGREGAR ESTA LÍNEA
-		
-		try {
-			const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-			
-			if (!tab || !tab.id) {
-				throw new Error('No se pudo obtener la pestaña activa');
-			}
-
-			if (!this.isDomainValid(tab.url)) {
-				throw new Error('Debes estar en el portal del SRI para descargar XML');
-			}
-
-			this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargando...</span>');
-			this.selectAllBtn.disabled = true;
-
-			console.log('📤 Enviando mensaje a content script...');  // AGREGAR ESTA LÍNEA
-			
-			const response = await this.sendMessageWithRetry(tab.id, { 
-				action: 'descargarXMLDocumentos',
-				documentos: facturasSeleccionadas
-			}, 3);
-			
-			console.log('📥 Respuesta recibida:', response);  // AGREGAR ESTA LÍNEA
-			
-			if (response && response.success) {
-				this.showNotification(`Iniciando descarga de ${facturasSeleccionadas.length} archivos XML`, 'success');
-			} else {
-				throw new Error(response ? response.error : 'No se pudo iniciar la descarga de XML');
-			}
-			
-		} catch (error) {
-			console.error('Error descargando XML:', error);
-			this.showNotification(error.message, 'error');
-		} finally {
-			this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Descargar Seleccionados</span>');
-			this.selectAllBtn.disabled = false;
-		}
-	}	
+    this.renderTable();
+    this.updateSelectionCount();
+  }
 
   handleRowSelection(checkbox) {
     const facturaId = checkbox.closest('tr').dataset.id;
@@ -533,10 +495,11 @@ class FacturasManager {
       masterCheckbox.indeterminate = this.selectedFacturas.size > 0 && this.selectedFacturas.size < this.facturas.length;
     }
 
-    if (this.selectAllBtn) 
-	{
-		const buttonText = 'Descargar Seleccionados';
-		this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">' + buttonText + '</span>');
+    if (this.selectAllBtn) {
+      const buttonText = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0 
+        ? 'Deseleccionar' 
+        : 'Seleccionar Todo';
+      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">' + buttonText + '</span>');
     }
   }
 

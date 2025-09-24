@@ -133,14 +133,19 @@ class FacturasManager {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
 
-      await this.sendMessageWithRetry(tab.id, {
+      const response = await this.sendMessageWithRetry(tab.id, {
         action: 'descargarSeleccionados',
         facturas: facturasParaDescargar,
         formato: formato
       });
+
+      if (!response || !response.success) {
+        throw new Error(response.error || "El script de contenido no respondió.");
+      }
+
     } catch (error) {
       console.error('Error al iniciar la descarga:', error);
-      this.showNotification('Error al iniciar la descarga. Recarga la página del SRI.', 'error');
+      this.showNotification(`Error: ${error.message}`, 'error');
       this.handleDownloadComplete(0, facturasParaDescargar.length, facturasParaDescargar.length);
     }
   }

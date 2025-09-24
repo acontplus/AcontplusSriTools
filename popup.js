@@ -139,8 +139,12 @@ class FacturasManager {
         formato: formato
       });
 
-      if (!response || !response.success) {
-        throw new Error(response.error || "El script de contenido no respondió.");
+      if (response === undefined) {
+        throw new Error("No se recibió respuesta. Por favor, recarga la página del SRI e inténtalo de nuevo.");
+      }
+
+      if (!response.success) {
+        throw new Error(response.error || "El script de contenido reportó un error.");
       }
 
     } catch (error) {

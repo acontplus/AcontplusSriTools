@@ -130,28 +130,28 @@ class FacturasManager {
     this.safeSetHTML(this.downloadBtn, '<span class="btn-text">Iniciando...</span>');
 
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
 
-      const response = await this.sendMessageWithRetry(tab.id, {
-        action: 'descargarSeleccionados',
-        facturas: facturasParaDescargar,
-        formato: formato
-      });
-
-      // MODIFICACIÓN: Manejo robusto de la respuesta indefinida.
-      if (response === undefined) {
-        throw new Error("No se recibió respuesta. Por favor, recarga la página del SRI e inténtalo de nuevo.");
-      }
-
-      if (!response.success) {
-        throw new Error(response.error || "El script de contenido reportó un error.");
-      }
+        // NUEVO MÉTODO: Inyección de script para mayor robustez
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: (facturas, formato) => {
+                // Esta función se ejecuta en el contexto de la página del SRI
+                if (window.sriExtractorInstance) {
+                    window.sriExtractorInstance.descargarDocumentosSeleccionados(facturas, formato);
+                } else {
+                    // Esto no debería pasar si el content script está cargado
+                    console.error("Instancia del extractor no encontrada.");
+                }
+            },
+            args: [facturasParaDescargar, formato],
+        });
 
     } catch (error) {
-      console.error('Error al iniciar la descarga:', error);
-      this.showNotification(`Error: ${error.message}`, 'error');
-      this.handleDownloadComplete(0, facturasParaDescargar.length, facturasParaDescargar.length);
+        console.error('Error al iniciar la descarga:', error);
+        this.showNotification(`Error: ${error.message}. Recargue la página del SRI.`, 'error');
+        this.handleDownloadComplete(0, facturasParaDescargar.length, facturasParaDescargar.length);
     }
   }
 

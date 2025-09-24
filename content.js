@@ -98,10 +98,12 @@ class SRIDocumentosExtractor {
     let fallidos = 0;
     
     for (let i = 0; i < facturas.length; i++) {
+        // ACTUALIZACIÓN CRÍTICA: Leer el ViewState antes de CADA descarga
         this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.view_state;
         const factura = facturas[i];
         await this.updateProgress(`Descargando ${i + 1}/${facturas.length}...`);
         try {
+            // Usar el rowIndex guardado durante la extracción
             const originalIndex = factura.rowIndex;
             if (originalIndex === undefined || originalIndex < 0) {
                 console.warn(`No se encontró el índice de fila para el documento con ID ${factura.id}. Saltando.`);
@@ -113,14 +115,14 @@ class SRIDocumentosExtractor {
             if(exito) descargados++;
             else fallidos++;
 
-            await this.esperar(300); // Pausa ligeramente mayor para asegurar estabilidad
+            await this.esperar(300); // Pausa para estabilidad
         } catch (error) {
             console.error(`Error descargando ${factura.claveAcceso}:`, error);
             fallidos++;
         }
     }
     await this.updateProgress(`Descarga completada: ${descargados} exitosos, ${fallidos} fallidos.`);
-    // Send a final message to the popup
+    // Enviar mensaje final al popup
     chrome.runtime.sendMessage({ 
         action: 'descargaFinalizada', 
         exitosos: descargados, 

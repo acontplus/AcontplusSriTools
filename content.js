@@ -59,7 +59,7 @@ class SRIDocumentosExtractor {
           }).catch(error => {
             sendResponse({ success: false, error: error.message });
           });
-          return true;
+          return true; // Keep the message channel open for the asynchronous response
 
         case 'getPaginationInfo':
           const paginationInfo = this.getPaginationInfoRobusta();
@@ -76,7 +76,7 @@ class SRIDocumentosExtractor {
           }).catch(error => {
             sendResponse({ success: false, error: error.message });
           });
-          return true;
+          return true; // Keep the message channel open for the asynchronous response
 
         default:
           console.warn('⚠️ Acción no reconocida:', message.action);

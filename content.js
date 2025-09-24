@@ -90,39 +90,32 @@ class SRIDocumentosExtractor {
     console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);
     let descargados = 0;
     let fallidos = 0;
-  
+    
     for (let i = 0; i < facturas.length; i++) {
-      const factura = facturas[i];
-      // Notificar al popup sobre el progreso
-      chrome.runtime.sendMessage({ action: 'updateDownloadProgress', current: i + 1, total: facturas.length });
-  
-      try {
-        const originalIndex = factura.rowIndex;
-        if (originalIndex === undefined || originalIndex < 0) {
-          console.warn(`No se encontró el índice de fila para el documento con ID ${factura.id}. Saltando.`);
-          fallidos++;
-          continue;
-        }
-  
-        // Simular clic en el enlace de descarga
-        const selector = `#frmPrincipal\\:tabla${this.tipo_emisi}\\:${originalIndex}\\:lnk${formato.charAt(0).toUpperCase() + formato.slice(1)}`;
-        const linkElement = document.querySelector(selector);
+        // Se actualiza el ViewState antes de cada descarga para máxima estabilidad
+        this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.view_state;
+        const factura = facturas[i];
         
-        if (linkElement) {
-          linkElement.click();
-          descargados++;
-        } else {
-          console.error(`No se pudo encontrar el enlace de descarga para el documento con índice ${originalIndex}`);
-          fallidos++;
+        // Notificar al popup sobre el progreso
+        chrome.runtime.sendMessage({ action: 'updateDownloadProgress', current: i + 1, total: facturas.length });
+  
+        try {
+            const originalIndex = factura.rowIndex;
+            if (originalIndex === undefined || originalIndex < 0) {
+                console.warn(`No se encontró el índice de fila para el documento con ID ${factura.id}. Saltando.`);
+                fallidos++;
+                continue;
+            }
+
+            const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex);
+            if(exito) descargados++;
+            else fallidos++;
+
+            await this.esperar(300); // Pausa para estabilidad
+        } catch (error) {
+            console.error(`Error descargando ${factura.claveAcceso}:`, error);
+            fallidos++;
         }
-  
-        // Esperar un momento para que el navegador procese la descarga
-        await this.esperar(300);
-  
-      } catch (error) {
-        console.error(`Error al intentar descargar el documento ${factura.claveAcceso}:`, error);
-        fallidos++;
-      }
     }
   
     // Enviar mensaje final al popup
@@ -132,6 +125,62 @@ class SRIDocumentosExtractor {
       fallidos: fallidos,
       total: facturas.length
     });
+  }
+
+  async descargarUnicoDocumento(factura, formato, originalIndex) {
+    const url_links = window.location.href;
+    // MODIFICACIÓN: El nombre del archivo ahora usa el contenido de la columna "Numero"
+    const name_files = `${factura.numero.replace(/ /g, '_')}.${formato}`;
+    
+    let text_body = `frmPrincipal=frmPrincipal&javax.faces.ViewState=${encodeURIComponent(this.view_state)}&g-recaptcha-response=`;
+
+    if (this.tipo_emisi === "CompRecibidos") {
+        const fecha = new Date(factura.fechaEmision);
+        text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3Aano=${fecha.getFullYear()}&frmPrincipal%3Ames=${fecha.getMonth() + 1}&frmPrincipal%3Adia=${fecha.getDate()}`;
+    } else {
+        text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3AcalendarFechaDesde_input=${new Date(factura.fechaEmision).toLocaleDateString('es-EC')}`;
+    }
+    
+    text_body += `&frmPrincipal%3Atabla${this.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}=frmPrincipal%3Atabla${this.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}`;
+
+    const exito = await this.fetchParaDescarga(url_links, text_body, formato, name_files);
+    return exito;
+  }
+
+  async fetchParaDescarga(urlSRI, frmBody, frmFile, nameFile) {
+    try {
+        const response = await fetch(urlSRI, {
+            headers: {
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "content-type": "application/x-www-form-urlencoded",
+            },
+            body: frmBody,
+            method: "POST",
+        });
+
+        if (!response.ok) throw new Error(`Error en la respuesta del servidor: ${response.statusText}`);
+
+        const contentType = frmFile === 'xml' ? 'application/xml' : 'application/pdf';
+        const data = await response.blob();
+        const blob = new Blob([data], { type: contentType });
+        const downloadLink = document.createElement('a');
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.download = nameFile;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+        return new Promise(resolve => {
+            setTimeout(() => {
+                window.URL.revokeObjectURL(downloadLink.href);
+                document.body.removeChild(downloadLink);
+                resolve(true); // Download initiated successfully
+            }, 500);
+        });
+
+    } catch (error) {
+        console.error("Error en fetchParaDescarga:", error);
+        return false; // Download failed
+    }
   }
 
 

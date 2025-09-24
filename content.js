@@ -78,13 +78,6 @@ class SRIDocumentosExtractor {
           });
           return true;
 
-        case 'descargarSeleccionados':
-          // Confirma que la acción fue recibida y que el proceso comenzará
-          sendResponse({ success: true }); 
-          // Ejecuta la descarga de forma asíncrona
-          this.descargarDocumentosSeleccionados(message.facturas, message.formato);
-          return true; // Es importante para indicar que se manejará de forma asíncrona
-
         default:
           console.warn('⚠️ Acción no reconocida:', message.action);
           sendResponse({ success: false, error: 'Acción no reconocida' });
@@ -880,5 +873,5 @@ class SRIDocumentosExtractor {
   }
 }
 
-// Inicializar el extractor
-const extractor = new SRIDocumentosExtractor();
+// Inicializar el extractor y hacerlo globalmente accesible
+window.sriExtractorInstance = new SRIDocumentosExtractor();

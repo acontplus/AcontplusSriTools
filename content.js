@@ -107,7 +107,7 @@ class SRIDocumentosExtractor {
             }
 
             await this.descargarUnicoDocumento(factura, formato, originalIndex);
-            await this.esperar(1000); // Pausa para no sobrecargar el servidor
+            await this.esperar(200); // Pausa reducida para acelerar la descarga
         } catch (error) {
             console.error(`Error descargando ${factura.claveAcceso}:`, error);
         }
@@ -905,3 +905,5 @@ class SRIDocumentosExtractor {
 
 // Inicializar el extractor
 const extractor = new SRIDocumentosExtractor();
+
+

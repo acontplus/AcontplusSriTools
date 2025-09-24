@@ -79,9 +79,9 @@ class SRIDocumentosExtractor {
           return true;
 
         case 'descargarSeleccionados':
-          this.descargarDocumentosSeleccionados(message.facturas, message.formato)
-            .then(() => sendResponse({ success: true }))
-            .catch(err => sendResponse({ success: false, error: err.message }));
+          // Confirma que la acción fue recibida
+          sendResponse({ success: true }); 
+          this.descargarDocumentosSeleccionados(message.facturas, message.formato);
           return true;
 
         default:

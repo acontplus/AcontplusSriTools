@@ -1,4 +1,4 @@
-// Content Script para Acontplus SRI Tools v1.4.1-Final
+// Content Script para Acontplus SRI Tools v1.4.1 - Final
 // Integración de técnicas de paginación robustas con Acontplus SRI Tools
 // Interfaz limpia y optimizada para máxima usabilidad
 
@@ -95,6 +95,8 @@ class SRIDocumentosExtractor {
   async descargarDocumentosSeleccionados(facturas, formato) {
     console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);
     this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || "";
+    let descargados = 0;
+    let fallidos = 0;
     
     for (let i = 0; i < facturas.length; i++) {
         const factura = facturas[i];
@@ -103,16 +105,28 @@ class SRIDocumentosExtractor {
             const originalIndex = this.allDocuments.findIndex(doc => doc.id === factura.id);
             if (originalIndex === -1) {
                 console.warn(`No se encontró el documento con ID ${factura.id} para obtener su índice original.`);
+                fallidos++;
                 continue;
             }
 
-            await this.descargarUnicoDocumento(factura, formato, originalIndex);
-            await this.esperar(200); // Pausa reducida para acelerar la descarga
+            const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex);
+            if(exito) descargados++;
+            else fallidos++;
+
+            await this.esperar(300); // Pausa ligeramente mayor para asegurar estabilidad
         } catch (error) {
             console.error(`Error descargando ${factura.claveAcceso}:`, error);
+            fallidos++;
         }
     }
-    await this.updateProgress("Descarga completada.");
+    await this.updateProgress(`Descarga completada: ${descargados} exitosos, ${fallidos} fallidos.`);
+    // Send a final message to the popup
+    chrome.runtime.sendMessage({ 
+        action: 'descargaFinalizada', 
+        exitosos: descargados, 
+        fallidos: fallidos, 
+        total: facturas.length 
+    });
   }
 
   async descargarUnicoDocumento(factura, formato, originalIndex) {
@@ -130,7 +144,8 @@ class SRIDocumentosExtractor {
     
     text_body += `&frmPrincipal%3Atabla${this.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}=frmPrincipal%3Atabla${this.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}`;
 
-    await this.fetchParaDescarga(url_links, text_body, formato, name_files);
+    const exito = await this.fetchParaDescarga(url_links, text_body, formato, name_files);
+    return exito;
   }
 
   async fetchParaDescarga(urlSRI, frmBody, frmFile, nameFile) {
@@ -155,13 +170,18 @@ class SRIDocumentosExtractor {
         document.body.appendChild(downloadLink);
         downloadLink.click();
         
-        setTimeout(() => {
-            window.URL.revokeObjectURL(downloadLink.href);
-            document.body.removeChild(downloadLink);
-        }, 100);
+        return new Promise(resolve => {
+            setTimeout(() => {
+                window.URL.revokeObjectURL(downloadLink.href);
+                document.body.removeChild(downloadLink);
+                resolve(true); // Download initiated successfully
+            }, 500);
+        });
+
 
     } catch (error) {
         console.error("Error en fetchParaDescarga:", error);
+        return false; // Download failed
     }
   }
 
@@ -905,5 +925,3 @@ class SRIDocumentosExtractor {
 
 // Inicializar el extractor
 const extractor = new SRIDocumentosExtractor();
-
-

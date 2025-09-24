@@ -88,6 +88,14 @@ class FacturasManager {
     if (masterCheckbox) {
       masterCheckbox.addEventListener('change', () => this.toggleSelectAll());
     }
+
+    // Listener for completion message from content script
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.action === 'descargaFinalizada') {
+            this.handleDownloadComplete(message);
+            // sendResponse is not needed here as it's a one-way notification
+        }
+    });
   }
 
   // Búsqueda usando técnicas robustas integradas
@@ -192,8 +200,16 @@ class FacturasManager {
 
     const facturasParaDescargar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
     const formato = this.formatSelect.value;
+    const totalFiles = facturasParaDescargar.length;
 
-    this.showNotification(`Iniciando descarga de ${facturasParaDescargar.length} archivos ${formato.toUpperCase()}`, 'info');
+    this.showNotification(`Iniciando descarga de ${totalFiles} archivos ${formato.toUpperCase()}`, 'info');
+    
+    // Disable buttons during download
+    this.downloadBtn.disabled = true;
+    this.exportBtn.disabled = true;
+    this.newSearchBtn.disabled = true;
+    this.safeSetHTML(this.downloadBtn, `<span class="btn-text">Descargando 1/${totalFiles}...</span>`);
+
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       chrome.tabs.sendMessage(tabs[0].id, {
@@ -202,6 +218,31 @@ class FacturasManager {
         formato: formato
       });
     });
+  }
+
+  handleDownloadComplete(resultado) {
+      const { exitosos, fallidos, total } = resultado;
+      let message = `Descarga finalizada. ${exitosos}/${total} archivos descargados.`;
+      let type = 'success';
+
+      if (fallidos > 0) {
+          message += ` ${fallidos} descargas fallaron.`;
+          type = exitosos > 0 ? 'warning' : 'error';
+      }
+      
+      this.showNotification(message, type);
+
+      // Re-enable buttons and restore text
+      if (this.downloadBtn) {
+          this.downloadBtn.disabled = false;
+          this.safeSetHTML(this.downloadBtn, '<span class="btn-text">Descargar</span>');
+      }
+      if (this.exportBtn) {
+          this.exportBtn.disabled = this.selectedFacturas.size === 0;
+      }
+      if (this.newSearchBtn) {
+        this.newSearchBtn.disabled = false;
+      }
   }
 
   // Verificar dominio válido

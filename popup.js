@@ -15,6 +15,8 @@ class FacturasManager {
     this.noDataEl = null;
     this.newSearchBtn = null;
     this.exportBtn = null;
+    this.downloadBtn = null;
+    this.formatSelect = null;
     this.progressFillEl = null;
     this.paginationProgressEl = null;
     this.currentPageEl = null;
@@ -41,6 +43,8 @@ class FacturasManager {
       this.noDataEl = this.safeGetElement('no-data');
       this.newSearchBtn = this.safeGetElement('new-search');
       this.exportBtn = this.safeGetElement('export-selected');
+      this.downloadBtn = this.safeGetElement('download-selected');
+      this.formatSelect = this.safeGetElement('download-format');
 
       // Elementos de progreso existentes
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
@@ -64,6 +68,10 @@ class FacturasManager {
 
     if (this.exportBtn) {
       this.exportBtn.addEventListener('click', () => this.exportSelected());
+    }
+
+    if (this.downloadBtn) {
+      this.downloadBtn.addEventListener('click', () => this.startDownloads());
     }
 
     // Event listener para selección en tabla
@@ -174,6 +182,26 @@ class FacturasManager {
     } finally {
       // No restaurar botón inmediatamente - dejar que el proceso complete
     }
+  }
+
+  startDownloads() {
+    if (this.selectedFacturas.size === 0) {
+      this.showNotification('Selecciona documentos para descargar', 'warning');
+      return;
+    }
+
+    const facturasParaDescargar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
+    const formato = this.formatSelect.value;
+
+    this.showNotification(`Iniciando descarga de ${facturasParaDescargar.length} archivos ${formato.toUpperCase()}`, 'info');
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'descargarSeleccionados',
+        facturas: facturasParaDescargar,
+        formato: formato
+      });
+    });
   }
 
   // Verificar dominio válido
@@ -450,7 +478,7 @@ class FacturasManager {
 
   toggleSelectAll() {
     const masterCheckbox = document.getElementById('master-checkbox');
-    const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size === 0;
+    const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size !== this.facturas.length;
 
     if (shouldSelectAll) {
       this.facturas.forEach(factura => this.selectedFacturas.add(factura.id));
@@ -477,8 +505,14 @@ class FacturasManager {
   updateSelectionCount() {
     this.updateCounts();
     
+    const hasSelection = this.selectedFacturas.size > 0;
+
     if (this.exportBtn) {
-      this.exportBtn.disabled = this.selectedFacturas.size === 0;
+      this.exportBtn.disabled = !hasSelection;
+    }
+    
+    if (this.downloadBtn) {
+        this.downloadBtn.disabled = !hasSelection;
     }
 
     const masterCheckbox = document.getElementById('master-checkbox');
@@ -486,6 +520,7 @@ class FacturasManager {
       masterCheckbox.checked = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0;
       masterCheckbox.indeterminate = this.selectedFacturas.size > 0 && this.selectedFacturas.size < this.facturas.length;
     }
+
   }
 
   exportSelected() {

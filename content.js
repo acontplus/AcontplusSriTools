@@ -648,7 +648,7 @@ class SRIDocumentosExtractor {
       
       const documentoProcesado = {
         id: tipoComprobanteFinal + '_' + serie + '_' + numeroComprobante + '_' + index + '_' + Date.now(),
-        numero: datos.numero,
+        numero: datos.tipoSerie,
         ruc: ruc,
         razonSocial: razonSocial,
         tipoComprobante: tipoComprobanteFinal,
@@ -825,3 +825,4 @@ class SRIDocumentosExtractor {
 
 // Inicializar el extractor
 const extractor = new SRIDocumentosExtractor();
+

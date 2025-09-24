@@ -1,4 +1,4 @@
-// Content Script para extraer documentos electronicos del SRI - VERSION 1.4.1-Final
+// Content Script para Acontplus SRI Tools v1.4.1-Final
 // Integración de técnicas de paginación robustas con Acontplus SRI Tools
 // Interfaz limpia y optimizada para máxima usabilidad
 
@@ -78,6 +78,12 @@ class SRIDocumentosExtractor {
           });
           return true;
 
+        case 'descargarSeleccionados':
+          this.descargarDocumentosSeleccionados(message.facturas, message.formato)
+            .then(() => sendResponse({ success: true }))
+            .catch(err => sendResponse({ success: false, error: err.message }));
+          return true;
+
         default:
           console.warn('⚠️ Acción no reconocida:', message.action);
           sendResponse({ success: false, error: 'Acción no reconocida' });
@@ -85,6 +91,80 @@ class SRIDocumentosExtractor {
       }
     });
   }
+
+  async descargarDocumentosSeleccionados(facturas, formato) {
+    console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);
+    this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || "";
+    
+    for (let i = 0; i < facturas.length; i++) {
+        const factura = facturas[i];
+        await this.updateProgress(`Descargando ${i + 1}/${facturas.length}...`);
+        try {
+            const originalIndex = this.allDocuments.findIndex(doc => doc.id === factura.id);
+            if (originalIndex === -1) {
+                console.warn(`No se encontró el documento con ID ${factura.id} para obtener su índice original.`);
+                continue;
+            }
+
+            await this.descargarUnicoDocumento(factura, formato, originalIndex);
+            await this.esperar(1000); // Pausa para no sobrecargar el servidor
+        } catch (error) {
+            console.error(`Error descargando ${factura.claveAcceso}:`, error);
+        }
+    }
+    await this.updateProgress("Descarga completada.");
+  }
+
+  async descargarUnicoDocumento(factura, formato, originalIndex) {
+    const url_links = window.location.href;
+    const name_files = `${this.tipo_emisi === 'CompRecibidos' ? 'REC' : 'EMI'}_${factura.tipoComprobante}_${factura.serie}-${factura.numeroComprobante}.${formato}`;
+    
+    let text_body = `frmPrincipal=frmPrincipal&javax.faces.ViewState=${encodeURIComponent(this.view_state)}&g-recaptcha-response=`;
+
+    if (this.tipo_emisi === "CompRecibidos") {
+        const fecha = new Date(factura.fechaEmision);
+        text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3Aano=${fecha.getFullYear()}&frmPrincipal%3Ames=${fecha.getMonth() + 1}&frmPrincipal%3Adia=${fecha.getDate()}`;
+    } else {
+        text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3AcalendarFechaDesde_input=${new Date(factura.fechaEmision).toLocaleDateString('es-EC')}`;
+    }
+    
+    text_body += `&frmPrincipal%3Atabla${this.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}=frmPrincipal%3Atabla${this.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}`;
+
+    await this.fetchParaDescarga(url_links, text_body, formato, name_files);
+  }
+
+  async fetchParaDescarga(urlSRI, frmBody, frmFile, nameFile) {
+    try {
+        const response = await fetch(urlSRI, {
+            headers: {
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "content-type": "application/x-www-form-urlencoded",
+            },
+            body: frmBody,
+            method: "POST",
+        });
+
+        if (!response.ok) throw new Error(`Error en la respuesta del servidor: ${response.statusText}`);
+
+        const contentType = frmFile === 'xml' ? 'application/xml' : 'application/pdf';
+        const data = await response.blob();
+        const blob = new Blob([data], { type: contentType });
+        const downloadLink = document.createElement('a');
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.download = nameFile;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+        setTimeout(() => {
+            window.URL.revokeObjectURL(downloadLink.href);
+            document.body.removeChild(downloadLink);
+        }, 100);
+
+    } catch (error) {
+        console.error("Error en fetchParaDescarga:", error);
+    }
+  }
+
 
   // Detectar tipo de emisión usando técnica robusta
   detectarTipoEmisionRobusta() {
@@ -825,4 +905,3 @@ class SRIDocumentosExtractor {
 
 // Inicializar el extractor
 const extractor = new SRIDocumentosExtractor();
-

@@ -52,6 +52,15 @@
             <button id="export-selected" class="btn btn-primary" disabled title="Exportar documentos seleccionados a Excel">
                 <span class="btn-text">Exportar Excel</span>
             </button>
+            <div class="download-controls">
+                <select id="download-format" class="format-select">
+                    <option value="xml" selected>XML</option>
+                    <option value="pdf">PDF</option>
+                </select>
+                <button id="download-selected" class="btn btn-accent" disabled title="Descargar archivos seleccionados">
+                    <span class="btn-text">Descargar</span>
+                </button>
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -76,7 +85,7 @@
             <h3>No se encontraron comprobantes</h3>
             <p>Navega a una pagina del SRI con comprobantes electronicos y utiliza "Buscar" para extraer todos los documentos automaticamente.</p>
             <div style="background: linear-gradient(135deg, #D61672 0%, #FFA901 100%); color: white; padding: 8px 12px; border-radius: 6px; font-size: 11px; margin: 8px 0;">
-                <strong>? Nuevo:</strong> Integracion con tecnicas robustas de paginacion
+                <strong>?? Nuevo:</strong> Integracion con tecnicas robustas de paginacion
             </div>
         </div>
 

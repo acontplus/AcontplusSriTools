@@ -94,17 +94,17 @@ class SRIDocumentosExtractor {
 
   async descargarDocumentosSeleccionados(facturas, formato) {
     console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);
-    this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || "";
     let descargados = 0;
     let fallidos = 0;
     
     for (let i = 0; i < facturas.length; i++) {
+        this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.view_state;
         const factura = facturas[i];
         await this.updateProgress(`Descargando ${i + 1}/${facturas.length}...`);
         try {
-            const originalIndex = this.allDocuments.findIndex(doc => doc.id === factura.id);
-            if (originalIndex === -1) {
-                console.warn(`No se encontró el documento con ID ${factura.id} para obtener su índice original.`);
+            const originalIndex = factura.rowIndex;
+            if (originalIndex === undefined || originalIndex < 0) {
+                console.warn(`No se encontró el índice de fila para el documento con ID ${factura.id}. Saltando.`);
                 fallidos++;
                 continue;
             }
@@ -450,7 +450,7 @@ class SRIDocumentosExtractor {
             const celdas = filaEspecifica.querySelectorAll('td[role="gridcell"]');
             
             if (celdas.length >= 8) {
-              const documento = this.extraerDatosFilaEspecifica(celdas, this.tipoComprobante, i);
+              const documento = this.extraerDatosFilaEspecifica(celdas, this.tipoComprobante, i, regs_actual);
               if (documento) {
                 this.documentos.push(documento);
               }
@@ -693,7 +693,7 @@ class SRIDocumentosExtractor {
           continue;
         }
         
-        const documento = this.extraerDatosFilaEspecifica(celdas, tipoComprobante, i);
+        const documento = this.extraerDatosFilaEspecifica(celdas, tipoComprobante, i, regsActual);
         if (documento) {
           this.documentos.push(documento);
         }
@@ -707,7 +707,7 @@ class SRIDocumentosExtractor {
     this.guardarDatos();
   }
 
-  extraerDatosFilaEspecifica(celdas, tipoComprobante, index) {
+  extraerDatosFilaEspecifica(celdas, tipoComprobante, index, rowIndex) {
     try {
       let datos;
       
@@ -747,6 +747,7 @@ class SRIDocumentosExtractor {
       const numeroComprobante = tipoSerieData[2];
       
       const documentoProcesado = {
+        rowIndex: rowIndex,
         id: tipoComprobanteFinal + '_' + serie + '_' + numeroComprobante + '_' + index + '_' + Date.now(),
         numero: datos.tipoSerie,
         ruc: ruc,

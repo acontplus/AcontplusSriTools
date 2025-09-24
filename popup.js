@@ -14,7 +14,6 @@ class FacturasManager {
     this.tableContainerEl = null;
     this.noDataEl = null;
     this.newSearchBtn = null;
-    this.selectAllBtn = null;
     this.exportBtn = null;
     this.progressFillEl = null;
     this.paginationProgressEl = null;
@@ -41,7 +40,6 @@ class FacturasManager {
       this.tableContainerEl = this.safeGetElement('table-container');
       this.noDataEl = this.safeGetElement('no-data');
       this.newSearchBtn = this.safeGetElement('new-search');
-      this.selectAllBtn = this.safeGetElement('select-all');
       this.exportBtn = this.safeGetElement('export-selected');
 
       // Elementos de progreso existentes
@@ -62,10 +60,6 @@ class FacturasManager {
     // Event listeners existentes
     if (this.newSearchBtn) {
       this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
-    }
-
-    if (this.selectAllBtn) {
-      this.selectAllBtn.addEventListener('click', () => this.toggleSelectAll());
     }
 
     if (this.exportBtn) {
@@ -460,10 +454,8 @@ class FacturasManager {
 
     if (shouldSelectAll) {
       this.facturas.forEach(factura => this.selectedFacturas.add(factura.id));
-      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Deseleccionar</span>');
     } else {
       this.selectedFacturas.clear();
-      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">Seleccionar</span>');
     }
 
     this.renderTable();
@@ -493,13 +485,6 @@ class FacturasManager {
     if (masterCheckbox) {
       masterCheckbox.checked = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0;
       masterCheckbox.indeterminate = this.selectedFacturas.size > 0 && this.selectedFacturas.size < this.facturas.length;
-    }
-
-    if (this.selectAllBtn) {
-      const buttonText = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0 
-        ? 'Deseleccionar' 
-        : 'Seleccionar Todo';
-      this.safeSetHTML(this.selectAllBtn, '<span class="btn-text">' + buttonText + '</span>');
     }
   }
 

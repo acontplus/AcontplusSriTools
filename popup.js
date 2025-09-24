@@ -141,7 +141,7 @@ class FacturasManager {
                 if (window.sriExtractorInstance) {
                     window.sriExtractorInstance.descargarDocumentosSeleccionados(facturas, formato);
                 } else {
-                    // Esto no debería pasar si el content script está cargado
+                     // Esto no debería pasar si el content script está cargado
                     console.error("Instancia del extractor no encontrada.");
                 }
             },

@@ -139,6 +139,7 @@ class FacturasManager {
         formato: formato
       });
 
+      // MODIFICACIÓN: Manejo robusto de la respuesta indefinida.
       if (response === undefined) {
         throw new Error("No se recibió respuesta. Por favor, recarga la página del SRI e inténtalo de nuevo.");
       }

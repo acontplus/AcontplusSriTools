@@ -16,7 +16,6 @@ class FacturasManager {
     this.newSearchBtn = null;
     this.exportBtn = null;
     this.downloadBtn = null;
-    this.formatSelect = null;
     this.progressFillEl = null;
     this.paginationProgressEl = null;
     this.currentPageEl = null;
@@ -44,7 +43,6 @@ class FacturasManager {
       this.newSearchBtn = this.safeGetElement('new-search');
       this.exportBtn = this.safeGetElement('export-selected');
       this.downloadBtn = this.safeGetElement('download-selected');
-      this.formatSelect = this.safeGetElement('download-format');
 
       // Elementos de progreso existentes
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
@@ -61,7 +59,6 @@ class FacturasManager {
   }
 
   setupEventListeners() {
-    // Event listeners existentes
     if (this.newSearchBtn) {
       this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
     }
@@ -69,12 +66,11 @@ class FacturasManager {
     if (this.exportBtn) {
       this.exportBtn.addEventListener('click', () => this.exportSelected());
     }
-
+    
     if (this.downloadBtn) {
-      this.downloadBtn.addEventListener('click', () => this.startDownloads());
+        this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     }
 
-    // Event listener para selección en tabla
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox') {
@@ -83,19 +79,70 @@ class FacturasManager {
       });
     }
 
-    // Master checkbox
     const masterCheckbox = document.getElementById('master-checkbox');
     if (masterCheckbox) {
       masterCheckbox.addEventListener('change', () => this.toggleSelectAll());
     }
 
-    // Listener for completion message from content script
+    // Listener for download progress updates from content script
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.action === 'descargaFinalizada') {
-            this.handleDownloadComplete(message);
-            // sendResponse is not needed here as it's a one-way notification
+        if (message.action === 'updateDownloadProgress') {
+            this.updateDownloadButtonProgress(message.current, message.total);
+        } else if (message.action === 'descargaFinalizada') {
+            this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         }
     });
+  }
+
+  updateDownloadButtonProgress(current, total) {
+    if (this.downloadBtn) {
+        this.safeSetHTML(this.downloadBtn, `<span class="btn-text">Descargando ${current}/${total}...</span>`);
+    }
+  }
+  
+  handleDownloadComplete(exitosos, fallidos, total) {
+    if (this.downloadBtn) {
+        this.downloadBtn.disabled = false;
+        this.safeSetHTML(this.downloadBtn, '<span class="btn-text">Descargar</span>');
+    }
+    this.exportBtn.disabled = this.selectedFacturas.size === 0;
+    
+    let message = `Descarga finalizada. ${exitosos} de ${total} archivos descargados.`;
+    let type = 'success';
+    if(fallidos > 0) {
+        message += ` ${fallidos} fallaron.`;
+        type = fallidos === total ? 'error' : 'warning';
+    }
+    this.showNotification(message, type);
+  }
+
+  async descargarSeleccionados() {
+    if (this.selectedFacturas.size === 0) {
+      this.showNotification('Selecciona al menos un documento para descargar', 'warning');
+      return;
+    }
+
+    const formato = document.getElementById('download-format').value;
+    const facturasParaDescargar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
+
+    this.downloadBtn.disabled = true;
+    this.exportBtn.disabled = true;
+    this.safeSetHTML(this.downloadBtn, '<span class="btn-text">Iniciando...</span>');
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
+
+      await this.sendMessageWithRetry(tab.id, {
+        action: 'descargarSeleccionados',
+        facturas: facturasParaDescargar,
+        formato: formato
+      });
+    } catch (error) {
+      console.error('Error al iniciar la descarga:', error);
+      this.showNotification('Error al iniciar la descarga. Recarga la página del SRI.', 'error');
+      this.handleDownloadComplete(0, facturasParaDescargar.length, facturasParaDescargar.length);
+    }
   }
 
   // Búsqueda usando técnicas robustas integradas
@@ -107,7 +154,6 @@ class FacturasManager {
       this.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Conectando...</span>');
     }
     
-    // Mostrar estado de loading inmediatamente
     this.showState('loading');
     
     try {
@@ -123,7 +169,6 @@ class FacturasManager {
 
       console.log('Pestaña activa encontrada:', tab.url);
 
-      // Inyectar content script si no está cargado
       try {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
@@ -145,7 +190,6 @@ class FacturasManager {
         }
       }
 
-      // Iniciar búsqueda completa automática usando técnicas robustas
       this.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Iniciando...</span>');
       
       const response = await this.sendMessageWithRetry(tab.id, { 
@@ -161,12 +205,10 @@ class FacturasManager {
         this.showNotification('🔍 Búsqueda iniciada en todas las páginas disponibles', 'info');
         this.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Procesando...</span>');
         
-        // Actualizar información inicial
         if (response.paginationInfo) {
           this.paginationInfo = response.paginationInfo;
         }
         
-        // Iniciar monitoreo de progreso
         this.startProgressPolling();
       } else {
         throw new Error(response ? response.error : 'No se pudo iniciar la búsqueda');
@@ -188,64 +230,10 @@ class FacturasManager {
       this.showState('no-data');
       
     } finally {
-      // No restaurar botón inmediatamente - dejar que el proceso complete
+      // No restaurar botón inmediatamente
     }
   }
 
-  startDownloads() {
-    if (this.selectedFacturas.size === 0) {
-      this.showNotification('Selecciona documentos para descargar', 'warning');
-      return;
-    }
-
-    const facturasParaDescargar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
-    const formato = this.formatSelect.value;
-    const totalFiles = facturasParaDescargar.length;
-
-    this.showNotification(`Iniciando descarga de ${totalFiles} archivos ${formato.toUpperCase()}`, 'info');
-    
-    // Disable buttons during download
-    this.downloadBtn.disabled = true;
-    this.exportBtn.disabled = true;
-    this.newSearchBtn.disabled = true;
-    this.safeSetHTML(this.downloadBtn, `<span class="btn-text">Descargando 1/${totalFiles}...</span>`);
-
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: 'descargarSeleccionados',
-        facturas: facturasParaDescargar,
-        formato: formato
-      });
-    });
-  }
-
-  handleDownloadComplete(resultado) {
-      const { exitosos, fallidos, total } = resultado;
-      let message = `Descarga finalizada. ${exitosos}/${total} archivos descargados.`;
-      let type = 'success';
-
-      if (fallidos > 0) {
-          message += ` ${fallidos} descargas fallaron.`;
-          type = exitosos > 0 ? 'warning' : 'error';
-      }
-      
-      this.showNotification(message, type);
-
-      // Re-enable buttons and restore text
-      if (this.downloadBtn) {
-          this.downloadBtn.disabled = false;
-          this.safeSetHTML(this.downloadBtn, '<span class="btn-text">Descargar</span>');
-      }
-      if (this.exportBtn) {
-          this.exportBtn.disabled = this.selectedFacturas.size === 0;
-      }
-      if (this.newSearchBtn) {
-        this.newSearchBtn.disabled = false;
-      }
-  }
-
-  // Verificar dominio válido
   isDomainValid(url) {
     const validDomains = [
       'sri.gob.ec',
@@ -256,7 +244,6 @@ class FacturasManager {
     return validDomains.some(domain => url.includes(domain));
   }
 
-  // Enviar mensaje con reintentos
   async sendMessageWithRetry(tabId, message, maxRetries) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -278,7 +265,6 @@ class FacturasManager {
     }
   }
 
-  // Función de espera
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -307,25 +293,20 @@ class FacturasManager {
     }, 300000);
   }
 
-  // Manejar finalización de búsqueda
   handleSearchComplete(progress) {
     console.log('✅ Búsqueda completa finalizada:', progress);
     
-    // Procesar todos los documentos encontrados
     this.facturas = progress.allDocuments || [];
     this.paginationInfo = progress.paginationInfo || { current: progress.totalPages || 1, total: progress.totalPages || 1 };
     
-    // Actualizar displays
     this.updateDisplay();
     this.selectedFacturas.clear();
     this.updateSelectionCount();
 
-    // Calcular estadísticas
     const totalDocuments = this.facturas.length;
     const totalPages = this.paginationInfo.total;
     const optimization = progress.optimization;
 
-    // Mensaje de finalización
     let message = '✅ Búsqueda completada: ' + totalDocuments + ' documentos encontrados';
     if (totalPages > 1) {
       message += ' en ' + totalPages + ' página(s)';
@@ -336,13 +317,11 @@ class FacturasManager {
 
     this.showNotification(message, 'success');
 
-    // Restaurar botón buscar
     if (this.newSearchBtn) {
       this.newSearchBtn.disabled = false;
       this.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Buscar</span>');
     }
 
-    // Mostrar tabla con resultados
     if (totalDocuments > 0) {
       this.showState('table');
       console.log('📊 Mostrando ' + totalDocuments + ' documentos en tabla');
@@ -351,7 +330,6 @@ class FacturasManager {
       console.log('📭 No se encontraron documentos');
     }
 
-    // Log detallado para debugging
     console.log('📈 Resumen final:', {
       documentos: totalDocuments,
       páginas: totalPages,
@@ -359,30 +337,24 @@ class FacturasManager {
     });
   }
 
-  // Mostrar progreso con información detallada
   updateProgressDisplay(progress) {
-    // Actualizar barra de progreso
     if (this.progressFillEl && progress.currentPage && progress.totalPages) {
       const percentage = (progress.currentPage / progress.totalPages) * 100;
       this.progressFillEl.style.width = percentage + '%';
     }
 
-    // Actualizar texto de página actual
     if (this.currentPageEl) {
       this.safeSetText(this.currentPageEl, (progress.currentPage || 1).toString());
     }
 
-    // Actualizar total de páginas
     if (this.totalPagesEl) {
       this.safeSetText(this.totalPagesEl, (progress.totalPages || 1).toString());
     }
 
-    // Mostrar barra de progreso
     if (this.paginationProgressEl) {
       this.paginationProgressEl.style.display = 'block';
     }
 
-    // Actualizar contadores en tiempo real
     if (progress.documentosEncontrados !== undefined) {
       const totalCountEl = document.getElementById('total-count');
       if (totalCountEl) {
@@ -390,12 +362,10 @@ class FacturasManager {
       }
     }
 
-    // Actualizar botón con progreso
     if (this.newSearchBtn && progress.mensaje) {
       this.safeSetHTML(this.newSearchBtn, '<span class="btn-text">' + progress.mensaje + '</span>');
     }
 
-    // Log detallado del progreso
     const porcentaje = progress.porcentaje || Math.round((progress.currentPage / progress.totalPages) * 100);
     console.log('📊 Progreso: ' + porcentaje + '% - Página ' + progress.currentPage + '/' + progress.totalPages + ' - ' + (progress.documentosEncontrados || 0) + ' documentos');
   }
@@ -519,7 +489,7 @@ class FacturasManager {
 
   toggleSelectAll() {
     const masterCheckbox = document.getElementById('master-checkbox');
-    const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size !== this.facturas.length;
+    const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size === 0;
 
     if (shouldSelectAll) {
       this.facturas.forEach(factura => this.selectedFacturas.add(factura.id));
@@ -546,14 +516,11 @@ class FacturasManager {
   updateSelectionCount() {
     this.updateCounts();
     
-    const hasSelection = this.selectedFacturas.size > 0;
-
     if (this.exportBtn) {
-      this.exportBtn.disabled = !hasSelection;
+      this.exportBtn.disabled = this.selectedFacturas.size === 0;
     }
-    
     if (this.downloadBtn) {
-        this.downloadBtn.disabled = !hasSelection;
+      this.downloadBtn.disabled = this.selectedFacturas.size === 0;
     }
 
     const masterCheckbox = document.getElementById('master-checkbox');
@@ -561,7 +528,6 @@ class FacturasManager {
       masterCheckbox.checked = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0;
       masterCheckbox.indeterminate = this.selectedFacturas.size > 0 && this.selectedFacturas.size < this.facturas.length;
     }
-
   }
 
   exportSelected() {
@@ -733,7 +699,6 @@ class FacturasManager {
 
     this.safeSetHTML(this.tbodyEl, tableHTML);
 
-    // Actualizar totales
     const totalAmount = this.facturas.reduce((sum, f) => sum + (f.importeTotal || 0), 0);
     const totalAmountEl = document.querySelector('.total-amount');
     if (totalAmountEl) {

@@ -186,6 +186,43 @@ body {
     border-radius: 0 8px 8px 0;
 }
 
+/* ===== SECCIÓN DE UBICACIÓN DE DESCARGA ===== */
+.download-path-section {
+    padding: 10px 15px;
+    background: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+.path-label {
+    font-weight: 600;
+    color: #495057;
+}
+.path-display {
+    flex-grow: 1;
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #495057;
+}
+.btn-discreet {
+    background: none;
+    border: 1px solid #ced4da;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.btn-discreet:hover {
+    background-color: #f8f9fa;
+}
+
+
 /* ===== LOADING Y NO DATA ===== */
 .loading, .no-data {
   padding: 60px 20px;

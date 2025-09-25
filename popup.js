@@ -16,7 +16,9 @@ class FacturasManager {
     this.newSearchBtn = null;
     this.exportBtn = null;
     this.downloadBtn = null;
-    this.verifyBtn = null; // Nuevo botón
+    this.verifyBtn = null;
+    this.changePathBtn = null;
+    this.pathDisplayEl = null;
     this.progressFillEl = null;
     this.paginationProgressEl = null;
     this.currentPageEl = null;
@@ -44,6 +46,8 @@ class FacturasManager {
       this.exportBtn = this.safeGetElement('export-selected');
       this.downloadBtn = this.safeGetElement('download-selected');
       this.verifyBtn = this.safeGetElement('verify-downloads');
+      this.changePathBtn = this.safeGetElement('change-download-path');
+      this.pathDisplayEl = this.safeGetElement('download-path-display');
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
       this.currentPageEl = this.safeGetElement('current-page');
       this.totalPagesEl = this.safeGetElement('total-pages');
@@ -61,6 +65,7 @@ class FacturasManager {
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportSelected());
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     if (this.verifyBtn) this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
+    if (this.changePathBtn) this.changePathBtn.addEventListener('click', () => this.changeDownloadPath());
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -71,10 +76,12 @@ class FacturasManager {
     const masterCheckbox = document.getElementById('master-checkbox');
     if (masterCheckbox) masterCheckbox.addEventListener('change', () => this.toggleSelectAll());
 
-    // Listener para mensajes directos
+    // Listener para mensajes directos (descargas, etc.)
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'updateDownloadProgress') this.updateDownloadButtonProgress(message.current, message.total);
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
+        else if (message.action === 'verificationError') this.showNotification(`Error de verificación: ${message.error}`, 'error');
+        else if (message.action === 'pathSelected') this.updatePathDisplay(message.path);
     });
 
     // Listener para cambios en el storage (progreso y verificación)
@@ -89,12 +96,39 @@ class FacturasManager {
         }
         if (changes.lastVerification) {
             const verification = changes.lastVerification.newValue;
-            if (verification) {
+            if(verification) {
                 this.handleVerificationComplete(verification.foundIds, verification.total);
                 chrome.storage.local.remove('lastVerification');
             }
         }
     });
+  }
+
+  async changeDownloadPath() {
+      try {
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
+          
+          this.showNotification('Abriendo selector de carpetas... El popup se cerrará.', 'info');
+
+          await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: () => {
+                  if (window.sriExtractorInstance) {
+                      window.sriExtractorInstance.solicitarYGuardarUbicacionDescarga();
+                  }
+              }
+          });
+      } catch (error) {
+          console.error("Error al iniciar el cambio de ruta:", error);
+          this.showNotification('Error al cambiar la ubicación.', 'error');
+      }
+  }
+  
+  updatePathDisplay(path) {
+      if (this.pathDisplayEl) {
+          this.pathDisplayEl.value = path || "Descargas del Navegador (Predeterminado)";
+      }
   }
 
   async verifyDownloads() {
@@ -128,17 +162,16 @@ class FacturasManager {
   
   handleVerificationComplete(foundIds, total) {
       const foundSet = new Set(foundIds);
-      const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
-      
-      facturasSeleccionadas.forEach(factura => {
+      // Actualiza todas las filas, no solo las seleccionadas, para reflejar el estado.
+      this.facturas.forEach(factura => {
           const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
           if(verificadoCell) {
               verificadoCell.innerHTML = foundSet.has(factura.id) ? '✔️' : '';
           }
       });
-
       this.showNotification(`Verificación completada: ${foundIds.length} de ${total} archivos encontrados.`, 'success');
   }
+
 
   updateDownloadButtonProgress(current, total) {
     if (this.downloadBtn) {
@@ -455,7 +488,7 @@ class FacturasManager {
   }
 
   loadStoredData() {
-    chrome.storage.local.get(['facturasData', 'lastExtraction', 'lastVerification']).then(result => {
+    chrome.storage.local.get(['facturasData', 'lastExtraction', 'lastVerification', 'downloadPathName']).then(result => {
       if (result.facturasData && result.facturasData.length > 0) {
         this.facturas = result.facturasData;
         this.updateDisplay();
@@ -471,6 +504,9 @@ class FacturasManager {
             this.handleVerificationComplete(result.lastVerification.foundIds, result.lastVerification.total);
             chrome.storage.local.remove('lastVerification');
         }
+
+        // Mostrar la ruta de descarga guardada
+        this.updatePathDisplay(result.downloadPathName);
         
         console.log('✅ Datos cargados del almacenamiento:', this.facturas.length, 'documentos');
       } else {

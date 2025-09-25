@@ -1,6 +1,5 @@
 /* ACONTPLUS SRI TOOLS v1.4.1 - Final */
 /* Paleta de colores: #D61672, #FFA901, #FFC303, #FFDF01 */
-/* LAYOUT: Enhanced wide layout with all columns visible */
 
 /* ===== RESET Y BASE ===== */
 * {
@@ -14,9 +13,8 @@ body {
   font-size: 13px;
   line-height: 1.4;
   color: #2c3e50;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  width: 1280px;
-  max-width: 98vw;
+  background: #f8f9fa;
+  width: 1200px;
   overflow-x: hidden;
   margin: 0 auto;
 }
@@ -25,8 +23,7 @@ body {
   display: flex;
   flex-direction: column;
   background: #ffffff;
-  box-shadow: 0 0 30px rgba(214, 22, 114, 0.1);
-  margin: 0 auto;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
   width: 100%;
 }
 
@@ -189,43 +186,6 @@ body {
     border-radius: 0 8px 8px 0;
 }
 
-/* ===== NUEVA SECCIÓN DE UBICACIÓN DE DESCARGA ===== */
-.download-path-section {
-    padding: 10px 15px;
-    background: #e9ecef;
-    border-bottom: 1px solid #dee2e6;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12px;
-}
-.path-label {
-    font-weight: 600;
-    color: #495057;
-}
-.path-display {
-    flex-grow: 1;
-    padding: 6px 8px;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    background-color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #495057;
-}
-.btn-discreet {
-    background: none;
-    border: 1px solid #ced4da;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-}
-.btn-discreet:hover {
-    background-color: #f8f9fa;
-}
-
-
 /* ===== LOADING Y NO DATA ===== */
 .loading, .no-data {
   padding: 60px 20px;
@@ -281,12 +241,13 @@ body {
 /* Ajuste de Columnas */
 .checkbox-col { width: 4%; }
 .counter-col { width: 4%; }
-.numero-col { width: 15%; }
+.numero-col { width: 20%; }
 .ruc-col { width: 12%; }
 .razon-col { width: 30%; text-align: left; }
 .fecha-col { width: 10%; }
-.amount-col { width: 10%; text-align: right; }
+.amount-col { width: 15%; text-align: right; }
 .verificado-col { width: 5%; text-align: center; }
+
 
 .facturas-table tbody tr:hover {
   background-color: rgba(214, 22, 114, 0.05);

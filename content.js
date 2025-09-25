@@ -111,7 +111,7 @@ class SRIDocumentosExtractor {
             if(exito) descargados++;
             else fallidos++;
 
-            await this.esperar(300); // Pausa para estabilidad
+            await this.esperar(500); // Aumentado a 500ms para mayor estabilidad
         } catch (error) {
             console.error(`Error descargando ${factura.claveAcceso}:`, error);
             fallidos++;

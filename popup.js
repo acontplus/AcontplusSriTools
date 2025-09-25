@@ -76,7 +76,7 @@ class FacturasManager {
     const masterCheckbox = document.getElementById('master-checkbox');
     if (masterCheckbox) masterCheckbox.addEventListener('change', () => this.toggleSelectAll());
 
-    // Listener para mensajes directos (descargas, etc.)
+    // Listener para mensajes directos
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'updateDownloadProgress') this.updateDownloadButtonProgress(message.current, message.total);
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
@@ -92,13 +92,6 @@ class FacturasManager {
             if (progress) {
                 if (progress.completed) this.handleSearchComplete(progress);
                 else this.updateProgressDisplay(progress);
-            }
-        }
-        if (changes.lastVerification) {
-            const verification = changes.lastVerification.newValue;
-            if(verification) {
-                this.handleVerificationComplete(verification.foundIds, verification.total);
-                chrome.storage.local.remove('lastVerification');
             }
         }
     });
@@ -169,7 +162,8 @@ class FacturasManager {
               verificadoCell.innerHTML = foundSet.has(factura.id) ? '✔️' : '';
           }
       });
-      this.showNotification(`Verificación completada: ${foundIds.length} de ${total} archivos encontrados.`, 'success');
+
+      this.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
   }
 
 

@@ -111,7 +111,7 @@ class SRIDocumentosExtractor {
             if(exito) descargados++;
             else fallidos++;
 
-            await this.esperar(350); // Aumentado a 500ms para mayor estabilidad
+            await this.esperar(400); // Aumentado a 500ms para mayor estabilidad
         } catch (error) {
             console.error(`Error descargando ${factura.claveAcceso}:`, error);
             fallidos++;
@@ -174,7 +174,7 @@ class SRIDocumentosExtractor {
                 window.URL.revokeObjectURL(downloadLink.href);
                 document.body.removeChild(downloadLink);
                 resolve(true); // Download initiated successfully
-            },350);
+            },400);
         });
 
     } catch (error) {

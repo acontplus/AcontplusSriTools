@@ -88,6 +88,10 @@ class SRIDocumentosExtractor {
   
   async verificarDescargasEnPagina(facturas) {
       try {
+          if (!window.showDirectoryPicker) {
+              chrome.runtime.sendMessage({ action: 'verificationError', error: 'API no soportada.' });
+              return;
+          }
           const dirHandle = await window.showDirectoryPicker();
           const downloadedFiles = new Set();
           for await (const entry of dirHandle.values()) {
@@ -109,6 +113,7 @@ class SRIDocumentosExtractor {
       } catch (error) {
           if (error.name !== 'AbortError') {
               console.error('Error al verificar descargas:', error);
+              chrome.runtime.sendMessage({ action: 'verificationError', error: error.message });
           }
       }
   }

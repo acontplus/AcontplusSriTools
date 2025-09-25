@@ -131,6 +131,14 @@ class FacturasManager {
   }
   
   handleVerificationComplete(foundFiles, totalFiles) {
+      // Primero, limpia todos los vistos actuales de las filas seleccionadas
+      const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
+      facturasSeleccionadas.forEach(factura => {
+          const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
+          if(verificadoCell) verificadoCell.innerHTML = '';
+      });
+      
+      // Luego, añade el visto solo a los encontrados
       foundFiles.forEach(facturaId => {
           const verificadoCell = document.querySelector(`td[data-verified-id="${facturaId}"]`);
           if (verificadoCell) {
@@ -184,11 +192,11 @@ class FacturasManager {
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: (facturas, formato) => {
-                // This function is executed in the context of the SRI page
+                // Esta función se ejecuta en el contexto de la página del SRI
                 if (window.sriExtractorInstance) {
                     window.sriExtractorInstance.descargarDocumentosSeleccionados(facturas, formato);
                 } else {
-                     // This should not happen if the content script is loaded
+                     // Esto no debería pasar si el content script está cargado
                     console.error("Instancia del extractor no encontrada.");
                 }
             },

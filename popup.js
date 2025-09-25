@@ -16,6 +16,7 @@ class FacturasManager {
     this.newSearchBtn = null;
     this.exportBtn = null;
     this.downloadBtn = null;
+    this.verifyBtn = null; // Nuevo botón
     this.progressFillEl = null;
     this.paginationProgressEl = null;
     this.currentPageEl = null;
@@ -43,6 +44,7 @@ class FacturasManager {
       this.newSearchBtn = this.safeGetElement('new-search');
       this.exportBtn = this.safeGetElement('export-selected');
       this.downloadBtn = this.safeGetElement('download-selected');
+      this.verifyBtn = this.safeGetElement('verify-downloads'); // Nuevo
 
       // Elementos de progreso existentes
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
@@ -70,6 +72,10 @@ class FacturasManager {
     if (this.downloadBtn) {
         this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     }
+    
+    if (this.verifyBtn) {
+        this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
+    }
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -92,6 +98,59 @@ class FacturasManager {
             this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         }
     });
+  }
+
+  async verifyDownloads() {
+      if (this.selectedFacturas.size === 0) {
+          this.showNotification('Seleccione al menos un documento para verificar', 'warning');
+          return;
+      }
+
+      if (!window.showDirectoryPicker) {
+          this.showNotification('Tu navegador no soporta esta función. Intenta actualizarlo.', 'error');
+          return;
+      }
+
+      try {
+          const dirHandle = await window.showDirectoryPicker();
+          const downloadedFiles = new Set();
+          
+          for await (const entry of dirHandle.values()) {
+              if (entry.kind === 'file') {
+                  let normalizedName = entry.name.substring(0, entry.name.lastIndexOf('.'));
+                  downloadedFiles.add(normalizedName);
+              }
+          }
+
+          let foundCount = 0;
+          const facturasParaVerificar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
+
+          facturasParaVerificar.forEach(factura => {
+              const expectedFileName = factura.numero.replace(/ /g, '_');
+              const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
+
+              if (downloadedFiles.has(expectedFileName)) {
+                  if (verificadoCell) {
+                      verificadoCell.innerHTML = '✔️';
+                  }
+                  foundCount++;
+              } else {
+                   if (verificadoCell) {
+                      verificadoCell.innerHTML = ''; // Limpia si no se encuentra
+                  }
+              }
+          });
+
+          this.showNotification(`Verificación completada: ${foundCount} de ${facturasParaVerificar.length} archivos encontrados.`, 'success');
+
+      } catch (error) {
+          if (error.name === 'AbortError') {
+               this.showNotification('Verificación cancelada por el usuario.', 'info');
+          } else {
+              console.error('Error al verificar descargas:', error);
+              this.showNotification('Error al leer la carpeta. Asegúrate de dar los permisos necesarios.', 'error');
+          }
+      }
   }
 
   updateDownloadButtonProgress(current, total) {
@@ -667,7 +726,7 @@ class FacturasManager {
     if (this.facturas.length === 0) {
       this.safeSetHTML(this.tbodyEl, 
         '<tr>' +
-          '<td colspan="8" class="text-center text-muted" style="padding: 40px;">' + 
+          '<td colspan="9" class="text-center text-muted" style="padding: 40px;">' + 
             '<div style="color: #D61672; font-size: 24px; margin-bottom: 8px;">📄</div>' +
             '<div style="font-weight: 600; margin-bottom: 4px;">No se encontraron documentos electronicos</div>' +
             '<div style="font-size: 11px; color: #6c757d;">Utiliza "Buscar" para analizar todas las paginas disponibles</div>' +
@@ -680,31 +739,23 @@ class FacturasManager {
     console.log('DEBUGGING: Iniciando renderizado de ' + this.facturas.length + ' registros de ' + this.paginationInfo.total + ' páginas');
 
     const tableHTML = this.facturas.map((factura, index) => {
-      const tipoCompacto = this.convertirTipoDocumento(factura.tipoComprobante);
-      const documentoCompleto = factura.serie + '-' + factura.numeroComprobante;
-      const typeClass = this.getDocumentTypeClass(tipoCompacto);
       const contador = index + 1;
       
-      return '<tr class="' + (this.selectedFacturas.has(factura.id) ? 'selected' : '') + '" ' +
-            'data-id="' + factura.id + '" ' +
-            'data-row-index="' + index + '" ' +
-            'style="animation: fadeInRow 0.3s ease-out ' + (index * 0.01) + 's both;">' +
-          '<td class="checkbox-col">' +
-            '<input type="checkbox" ' +
-                   (this.selectedFacturas.has(factura.id) ? 'checked' : '') + 
-                   ' data-id="' + factura.id + '">' +
-          '</td>' +
-          '<td class="counter-col">' + contador + '</td>' +
-          '<td class="numero-col">' + (factura.numero || '') + '</td>' +
-          '<td class="ruc-col">' + (factura.ruc || '') + '</td>' +
-          '<td class="razon-col">' + (factura.razonSocial || '') + '</td>' +
-          '<td class="fecha-col">' + (factura.fechaEmision || '') + '</td>' +
-          '<td class="clave-col" style="display: none;">' + (factura.claveAcceso || '') + '</td>' +
-          '<td class="amount-col">$' + (factura.importeTotal || 0).toFixed(2) + '</td>' +
-          '<td class="fecha-autorizacion-col" style="display: none;">' + (factura.fechaAutorizacion || '') + '</td>' +
-          '<td class="valor-sin-impuestos-col" style="display: none;">$' + (factura.valorSinImpuestos || 0).toFixed(2) + '</td>' +
-          '<td class="iva-col" style="display: none;">$' + (factura.iva || 0).toFixed(2) + '</td>' +
-        '</tr>';
+      return `<tr class="${(this.selectedFacturas.has(factura.id) ? 'selected' : '')}" 
+            data-id="${factura.id}" 
+            data-row-index="${index}" 
+            style="animation: fadeInRow 0.3s ease-out ${index * 0.01}s both;">
+          <td class="checkbox-col">
+            <input type="checkbox" ${(this.selectedFacturas.has(factura.id) ? 'checked' : '')} data-id="${factura.id}">
+          </td>
+          <td class="counter-col">${contador}</td>
+          <td class="numero-col">${factura.numero || ''}</td>
+          <td class="ruc-col">${factura.ruc || ''}</td>
+          <td class="razon-col">${factura.razonSocial || ''}</td>
+          <td class="fecha-col">${factura.fechaEmision || ''}</td>
+          <td class="amount-col">$${(factura.importeTotal || 0).toFixed(2)}</td>
+          <td class="verificado-col" data-verified-id="${factura.id}"></td>
+        </tr>`;
     }).join('');
 
     this.safeSetHTML(this.tbodyEl, tableHTML);

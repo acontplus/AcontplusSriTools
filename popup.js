@@ -98,6 +98,8 @@ class FacturasManager {
             this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         } else if (message.action === 'verificationComplete') {
             this.handleVerificationComplete(message.found, message.total);
+        } else if (message.action === 'verificationError') {
+            this.showNotification(`Error de verificación: ${message.error}`, 'error');
         }
     });
   }
@@ -107,26 +109,55 @@ class FacturasManager {
           this.showNotification('Seleccione al menos un documento para verificar', 'warning');
           return;
       }
-      
+
       const facturasParaVerificar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
 
       try {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
           
-          chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              func: (facturas) => {
-                  if (window.sriExtractorInstance) {
-                      window.sriExtractorInstance.verificarDescargasEnPagina(facturas);
+          // Esta función se inyectará y ejecutará en el contexto de la página del SRI
+          const injectedFunction = async (facturas) => {
+              try {
+                  if (!window.showDirectoryPicker) {
+                      chrome.runtime.sendMessage({ action: 'verificationError', error: 'Tu navegador no soporta esta función.' });
+                      return;
                   }
-              },
-              args: [facturasParaVerificar]
+                  const dirHandle = await window.showDirectoryPicker();
+                  const downloadedFiles = new Set();
+                  for await (const entry of dirHandle.values()) {
+                      if (entry.kind === 'file') {
+                          let normalizedName = entry.name.substring(0, entry.name.lastIndexOf('.'));
+                          downloadedFiles.add(normalizedName);
+                      }
+                  }
+                  const foundFiles = facturas
+                      .filter(factura => downloadedFiles.has(factura.numero.replace(/ /g, '_')))
+                      .map(factura => factura.id);
+
+                  chrome.runtime.sendMessage({
+                      action: 'verificationComplete',
+                      found: foundFiles,
+                      total: facturas.length
+                  });
+
+              } catch (error) {
+                  if (error.name !== 'AbortError') { // No mostrar error si el usuario cancela
+                      console.error('Error al verificar descargas en la página:', error);
+                      chrome.runtime.sendMessage({ action: 'verificationError', error: error.message });
+                  }
+              }
+          };
+
+          await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: injectedFunction,
+              args: [facturasParaVerificar],
           });
 
-      } catch(error) {
-          console.error("Error al iniciar la verificación:", error);
-          this.showNotification('Error al iniciar la verificación.', 'error');
+      } catch (error) {
+          console.error("Error al inyectar script de verificación:", error);
+          this.showNotification('Error al iniciar la verificación. Asegúrate de estar en la página del SRI.', 'error');
       }
   }
   

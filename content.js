@@ -85,6 +85,33 @@ class SRIDocumentosExtractor {
       }
     });
   }
+  
+  async verificarDescargasEnPagina(facturas) {
+      try {
+          const dirHandle = await window.showDirectoryPicker();
+          const downloadedFiles = new Set();
+          for await (const entry of dirHandle.values()) {
+              if (entry.kind === 'file') {
+                  let normalizedName = entry.name.substring(0, entry.name.lastIndexOf('.'));
+                  downloadedFiles.add(normalizedName);
+              }
+          }
+          const foundFiles = facturas
+              .filter(factura => downloadedFiles.has(factura.numero.replace(/ /g, '_')))
+              .map(factura => factura.id);
+
+          chrome.runtime.sendMessage({
+              action: 'verificationComplete',
+              found: foundFiles,
+              total: facturas.length
+          });
+
+      } catch (error) {
+          if (error.name !== 'AbortError') {
+              console.error('Error al verificar descargas:', error);
+          }
+      }
+  }
 
   async descargarDocumentosSeleccionados(facturas, formato) {
     console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);

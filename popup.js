@@ -96,6 +96,14 @@ class FacturasManager {
                 }
             }
         }
+        // NUEVO: Listener para resultados de verificación
+        if (namespace === 'local' && changes.lastVerification) {
+            const verification = changes.lastVerification.newValue;
+            if(verification) {
+                this.handleVerificationComplete(verification.foundIds, verification.total);
+                chrome.storage.local.remove('lastVerification');
+            }
+        }
     });
   }
 
@@ -156,12 +164,21 @@ class FacturasManager {
   }
   
   handleVerificationComplete(foundIds, total) {
+      // Primero, limpia todos los vistos actuales de las filas seleccionadas
+      const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
+      facturasSeleccionadas.forEach(factura => {
+          const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
+          if(verificadoCell) verificadoCell.innerHTML = '';
+      });
+      
+      // Luego, añade el visto solo a los encontrados
       foundIds.forEach(facturaId => {
           const verificadoCell = document.querySelector(`td[data-verified-id="${facturaId}"]`);
           if (verificadoCell) {
               verificadoCell.innerHTML = '✔️';
           }
       });
+
       this.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
   }
 

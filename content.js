@@ -89,7 +89,7 @@ class SRIDocumentosExtractor {
   async verificarDescargasEnPagina(facturas) {
       try {
           if (!window.showDirectoryPicker) {
-              chrome.runtime.sendMessage({ action: 'verificationError', error: 'API no soportada.' });
+              chrome.runtime.sendMessage({ action: 'verificationError', error: 'Tu navegador no soporta esta función.' });
               return;
           }
           const dirHandle = await window.showDirectoryPicker();
@@ -104,10 +104,13 @@ class SRIDocumentosExtractor {
               .filter(factura => downloadedFiles.has(factura.numero.replace(/ /g, '_')))
               .map(factura => factura.id);
 
-          chrome.runtime.sendMessage({
-              action: 'verificationComplete',
-              found: foundFiles,
-              total: facturas.length
+          // Guardar resultados en storage para que el popup los recoja al reabrirse
+          await chrome.storage.local.set({ 
+              lastVerification: { 
+                  foundIds: foundFiles, 
+                  total: facturas.length,
+                  timestamp: Date.now() 
+              } 
           });
 
       } catch (error) {

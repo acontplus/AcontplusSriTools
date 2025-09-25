@@ -96,8 +96,6 @@ class FacturasManager {
             this.updateDownloadButtonProgress(message.current, message.total);
         } else if (message.action === 'descargaFinalizada') {
             this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
-        } else if (message.action === 'verificationComplete') {
-            this.handleVerificationComplete(message.found, message.total);
         } else if (message.action === 'verificationError') {
             this.showNotification(`Error de verificación: ${message.error}`, 'error');
         }
@@ -109,75 +107,41 @@ class FacturasManager {
           this.showNotification('Seleccione al menos un documento para verificar', 'warning');
           return;
       }
-
+      
       const facturasParaVerificar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
 
       try {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
           
-          // Esta función se inyectará y ejecutará en el contexto de la página del SRI
-          const injectedFunction = async (facturas) => {
-              try {
-                  if (!window.showDirectoryPicker) {
-                      chrome.runtime.sendMessage({ action: 'verificationError', error: 'Tu navegador no soporta esta función.' });
-                      return;
-                  }
-                  const dirHandle = await window.showDirectoryPicker();
-                  const downloadedFiles = new Set();
-                  for await (const entry of dirHandle.values()) {
-                      if (entry.kind === 'file') {
-                          let normalizedName = entry.name.substring(0, entry.name.lastIndexOf('.'));
-                          downloadedFiles.add(normalizedName);
-                      }
-                  }
-                  const foundFiles = facturas
-                      .filter(factura => downloadedFiles.has(factura.numero.replace(/ /g, '_')))
-                      .map(factura => factura.id);
+          this.showNotification('Abriendo selector de carpetas... El popup se cerrará.', 'info');
 
-                  chrome.runtime.sendMessage({
-                      action: 'verificationComplete',
-                      found: foundFiles,
-                      total: facturas.length
-                  });
-
-              } catch (error) {
-                  if (error.name !== 'AbortError') { // No mostrar error si el usuario cancela
-                      console.error('Error al verificar descargas en la página:', error);
-                      chrome.runtime.sendMessage({ action: 'verificationError', error: error.message });
-                  }
-              }
-          };
-
+          // Inyecta y ejecuta la función en la página, que SÍ puede abrir el selector sin cerrar.
           await chrome.scripting.executeScript({
               target: { tabId: tab.id },
-              func: injectedFunction,
-              args: [facturasParaVerificar],
+              func: (facturas) => {
+                  if (window.sriExtractorInstance) {
+                      window.sriExtractorInstance.verificarDescargasEnPagina(facturas);
+                  }
+              },
+              args: [facturasParaVerificar]
           });
-
-      } catch (error) {
-          console.error("Error al inyectar script de verificación:", error);
-          this.showNotification('Error al iniciar la verificación. Asegúrate de estar en la página del SRI.', 'error');
+          // El popup se cerrará después de esta línea, es el comportamiento normal.
+      } catch(error) {
+          console.error("Error al iniciar la verificación:", error);
+          this.showNotification('Error al iniciar la verificación.', 'error');
       }
   }
   
-  handleVerificationComplete(foundFiles, totalFiles) {
-      // Primero, limpia todos los vistos actuales de las filas seleccionadas
-      const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
-      facturasSeleccionadas.forEach(factura => {
-          const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
-          if(verificadoCell) verificadoCell.innerHTML = '';
-      });
-      
-      // Luego, añade el visto solo a los encontrados
-      foundFiles.forEach(facturaId => {
+  handleVerificationComplete(foundIds, total) {
+      foundIds.forEach(facturaId => {
           const verificadoCell = document.querySelector(`td[data-verified-id="${facturaId}"]`);
           if (verificadoCell) {
               verificadoCell.innerHTML = '✔️';
           }
       });
 
-      this.showNotification(`Verificación completada: ${foundFiles.length} de ${totalFiles} archivos encontrados.`, 'success');
+      this.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
   }
 
   updateDownloadButtonProgress(current, total) {
@@ -219,15 +183,12 @@ class FacturasManager {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
 
-        // NUEVO MÉTODO: Inyección de script para mayor robustez
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: (facturas, formato) => {
-                // Esta función se ejecuta en el contexto de la página del SRI
                 if (window.sriExtractorInstance) {
                     window.sriExtractorInstance.descargarDocumentosSeleccionados(facturas, formato);
                 } else {
-                     // Esto no debería pasar si el content script está cargado
                     console.error("Instancia del extractor no encontrada.");
                 }
             },
@@ -522,7 +483,7 @@ class FacturasManager {
   }
 
   loadStoredData() {
-    chrome.storage.local.get(['facturasData', 'lastExtraction']).then(result => {
+    chrome.storage.local.get(['facturasData', 'lastExtraction', 'lastVerification']).then(result => {
       if (result.facturasData && result.facturasData.length > 0) {
         this.facturas = result.facturasData;
         this.updateDisplay();
@@ -533,6 +494,12 @@ class FacturasManager {
           if (extractionTimestamp) {
             this.safeSetText(extractionTimestamp, this.formatTimestamp(extractionDate));
           }
+        }
+        
+        // Cargar y aplicar resultados de verificación
+        if (result.lastVerification && (Date.now() - result.lastVerification.timestamp < 10000)) {
+            this.handleVerificationComplete(result.lastVerification.foundIds, result.lastVerification.total);
+            chrome.storage.local.remove('lastVerification');
         }
         
         console.log('✅ Datos cargados del almacenamiento:', this.facturas.length, 'documentos');

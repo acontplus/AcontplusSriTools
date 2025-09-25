@@ -280,7 +280,6 @@ class SRIDocumentosExtractor {
   // Detectar tipo de emisión usando técnica robusta
   detectarTipoEmisionRobusta() {
     try {
-      // Usar selectores específicos del portal SRI
       const tablaRecibidos = document.querySelector('#frmPrincipal\\:tablaCompRecibidos_data');
       const tablaEmitidos = document.querySelector('#frmPrincipal\\:tablaCompEmitidos_data');
       

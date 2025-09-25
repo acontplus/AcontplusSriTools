@@ -17,8 +17,8 @@ class FacturasManager {
     this.exportBtn = null;
     this.downloadBtn = null;
     this.verifyBtn = null;
-    this.changePathBtn = null; // Nuevo botón
-    this.pathDisplayEl = null; // Nuevo campo de texto
+    this.changePathBtn = null;
+    this.pathDisplayEl = null;
     this.progressFillEl = null;
     this.paginationProgressEl = null;
     this.currentPageEl = null;
@@ -46,8 +46,8 @@ class FacturasManager {
       this.exportBtn = this.safeGetElement('export-selected');
       this.downloadBtn = this.safeGetElement('download-selected');
       this.verifyBtn = this.safeGetElement('verify-downloads');
-      this.changePathBtn = this.safeGetElement('change-download-path'); // Nuevo
-      this.pathDisplayEl = this.safeGetElement('download-path-display'); // Nuevo
+      this.changePathBtn = this.safeGetElement('change-download-path');
+      this.pathDisplayEl = this.safeGetElement('download-path-display');
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
       this.currentPageEl = this.safeGetElement('current-page');
       this.totalPagesEl = this.safeGetElement('total-pages');
@@ -65,7 +65,7 @@ class FacturasManager {
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportSelected());
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     if (this.verifyBtn) this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
-    if (this.changePathBtn) this.changePathBtn.addEventListener('click', () => this.changeDownloadPath()); // Nuevo
+    if (this.changePathBtn) this.changePathBtn.addEventListener('click', () => this.changeDownloadPath());
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -76,12 +76,26 @@ class FacturasManager {
     const masterCheckbox = document.getElementById('master-checkbox');
     if (masterCheckbox) masterCheckbox.addEventListener('change', () => this.toggleSelectAll());
 
+    // Listener para mensajes directos (descargas, etc.)
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'updateDownloadProgress') this.updateDownloadButtonProgress(message.current, message.total);
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
-        else if (message.action === 'verificationComplete') this.handleVerificationComplete(message.found, message.total);
         else if (message.action === 'verificationError') this.showNotification(`Error de verificación: ${message.error}`, 'error');
         else if (message.action === 'pathSelected') this.updatePathDisplay(message.path);
+    });
+
+    // NUEVO: Listener para cambios en el storage (progreso de búsqueda)
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'local' && changes.progressStatus) {
+            const progress = changes.progressStatus.newValue;
+            if (progress) {
+                if (progress.completed) {
+                    this.handleSearchComplete(progress);
+                } else {
+                    this.updateProgressDisplay(progress);
+                }
+            }
+        }
     });
   }
 
@@ -141,18 +155,14 @@ class FacturasManager {
       }
   }
   
-  handleVerificationComplete(foundFiles, totalFiles) {
-      const foundIds = new Set(foundFiles);
-      const facturasSeleccionadas = this.facturas.filter(f => this.selectedFacturas.has(f.id));
-      
-      facturasSeleccionadas.forEach(factura => {
-          const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
-          if(verificadoCell) {
-              verificadoCell.innerHTML = foundIds.has(factura.id) ? '✔️' : '';
+  handleVerificationComplete(foundIds, total) {
+      foundIds.forEach(facturaId => {
+          const verificadoCell = document.querySelector(`td[data-verified-id="${facturaId}"]`);
+          if (verificadoCell) {
+              verificadoCell.innerHTML = '✔️';
           }
       });
-
-      this.showNotification(`Verificación completada: ${foundFiles.length} de ${totalFiles} archivos encontrados.`, 'success');
+      this.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
   }
 
   updateDownloadButtonProgress(current, total) {
@@ -277,7 +287,6 @@ class FacturasManager {
           this.paginationInfo = response.paginationInfo;
         }
         
-        this.startProgressPolling();
       } else {
         throw new Error(response ? response.error : 'No se pudo iniciar la búsqueda');
       }
@@ -297,8 +306,6 @@ class FacturasManager {
       this.showNotification(errorMessage, 'error');
       this.showState('no-data');
       
-    } finally {
-      // No restaurar botón inmediatamente
     }
   }
 
@@ -335,30 +342,6 @@ class FacturasManager {
 
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  startProgressPolling() {
-    const pollInterval = setInterval(async () => {
-      try {
-        const result = await chrome.storage.local.get(['progressStatus']);
-        const progress = result.progressStatus;
-
-        if (progress) {
-          if (progress.completed) {
-            clearInterval(pollInterval);
-            this.handleSearchComplete(progress);
-          } else {
-            this.updateProgressDisplay(progress);
-          }
-        }
-      } catch (error) {
-        console.warn('Error consultando progreso:', error);
-      }
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(pollInterval);
-    }, 300000);
   }
 
   handleSearchComplete(progress) {

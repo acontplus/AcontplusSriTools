@@ -174,7 +174,7 @@ class SRIDocumentosExtractor {
                 window.URL.revokeObjectURL(downloadLink.href);
                 document.body.removeChild(downloadLink);
                 resolve(true); // Download initiated successfully
-            },500);
+            }, 500);
         });
 
     } catch (error) {

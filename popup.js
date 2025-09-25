@@ -90,12 +90,14 @@ class FacturasManager {
       masterCheckbox.addEventListener('change', () => this.toggleSelectAll());
     }
 
-    // Listener for download progress updates from content script
+    // Listener for progress updates from content script
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'updateDownloadProgress') {
             this.updateDownloadButtonProgress(message.current, message.total);
         } else if (message.action === 'descargaFinalizada') {
             this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
+        } else if (message.action === 'verificationComplete') {
+            this.handleVerificationComplete(message.found, message.total);
         }
     });
   }
@@ -105,52 +107,38 @@ class FacturasManager {
           this.showNotification('Seleccione al menos un documento para verificar', 'warning');
           return;
       }
-
-      if (!window.showDirectoryPicker) {
-          this.showNotification('Tu navegador no soporta esta función. Intenta actualizarlo.', 'error');
-          return;
-      }
+      
+      const facturasParaVerificar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
 
       try {
-          const dirHandle = await window.showDirectoryPicker();
-          const downloadedFiles = new Set();
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
           
-          for await (const entry of dirHandle.values()) {
-              if (entry.kind === 'file') {
-                  let normalizedName = entry.name.substring(0, entry.name.lastIndexOf('.'));
-                  downloadedFiles.add(normalizedName);
-              }
-          }
-
-          let foundCount = 0;
-          const facturasParaVerificar = this.facturas.filter(f => this.selectedFacturas.has(f.id));
-
-          facturasParaVerificar.forEach(factura => {
-              const expectedFileName = factura.numero.replace(/ /g, '_');
-              const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
-
-              if (downloadedFiles.has(expectedFileName)) {
-                  if (verificadoCell) {
-                      verificadoCell.innerHTML = '✔️';
+          chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: (facturas) => {
+                  if (window.sriExtractorInstance) {
+                      window.sriExtractorInstance.verificarDescargasEnPagina(facturas);
                   }
-                  foundCount++;
-              } else {
-                   if (verificadoCell) {
-                      verificadoCell.innerHTML = ''; // Limpia si no se encuentra
-                  }
-              }
+              },
+              args: [facturasParaVerificar]
           });
 
-          this.showNotification(`Verificación completada: ${foundCount} de ${facturasParaVerificar.length} archivos encontrados.`, 'success');
-
-      } catch (error) {
-          if (error.name === 'AbortError') {
-               this.showNotification('Verificación cancelada por el usuario.', 'info');
-          } else {
-              console.error('Error al verificar descargas:', error);
-              this.showNotification('Error al leer la carpeta. Asegúrate de dar los permisos necesarios.', 'error');
-          }
+      } catch(error) {
+          console.error("Error al iniciar la verificación:", error);
+          this.showNotification('Error al iniciar la verificación.', 'error');
       }
+  }
+  
+  handleVerificationComplete(foundFiles, totalFiles) {
+      foundFiles.forEach(facturaId => {
+          const verificadoCell = document.querySelector(`td[data-verified-id="${facturaId}"]`);
+          if (verificadoCell) {
+              verificadoCell.innerHTML = '✔️';
+          }
+      });
+
+      this.showNotification(`Verificación completada: ${foundFiles.length} de ${totalFiles} archivos encontrados.`, 'success');
   }
 
   updateDownloadButtonProgress(current, total) {
@@ -196,11 +184,11 @@ class FacturasManager {
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: (facturas, formato) => {
-                // Esta función se ejecuta en el contexto de la página del SRI
+                // This function is executed in the context of the SRI page
                 if (window.sriExtractorInstance) {
                     window.sriExtractorInstance.descargarDocumentosSeleccionados(facturas, formato);
                 } else {
-                     // Esto no debería pasar si el content script está cargado
+                     // This should not happen if the content script is loaded
                     console.error("Instancia del extractor no encontrada.");
                 }
             },

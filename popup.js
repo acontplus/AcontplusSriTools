@@ -17,6 +17,7 @@ class FacturasManager {
     this.exportBtn = null;
     this.downloadBtn = null;
     this.verifyBtn = null;
+    this.selectMissingBtn = null; // Nuevo botón
     // Elementos de ruta de descarga eliminados
     this.progressFillEl = null;
     this.paginationProgressEl = null;
@@ -45,6 +46,7 @@ class FacturasManager {
       this.exportBtn = this.safeGetElement('export-selected');
       this.downloadBtn = this.safeGetElement('download-selected');
       this.verifyBtn = this.safeGetElement('verify-downloads');
+      this.selectMissingBtn = this.safeGetElement('select-missing'); // Nuevo botón
       // Referencias a elementos de ruta de descarga eliminadas
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
       this.currentPageEl = this.safeGetElement('current-page');
@@ -63,7 +65,7 @@ class FacturasManager {
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportSelected());
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     if (this.verifyBtn) this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
-    // Event listener para changePathBtn eliminado
+    if (this.selectMissingBtn) this.selectMissingBtn.addEventListener('click', () => this.seleccionarFaltantes()); // Nuevo listener
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -79,7 +81,6 @@ class FacturasManager {
         if (message.action === 'updateDownloadProgress') this.updateDownloadButtonProgress(message.current, message.total);
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         else if (message.action === 'verificationError') this.showNotification(`Error de verificación: ${message.error}`, 'error');
-        // Listener para 'pathSelected' eliminado
     });
 
     // Listener para cambios en el storage (progreso y verificación)
@@ -95,9 +96,39 @@ class FacturasManager {
     });
   }
 
-  // Función changeDownloadPath eliminada
-  
-  // Función updatePathDisplay eliminada
+  seleccionarFaltantes() {
+    if (!this.tbodyEl) {
+        this.showNotification('No hay documentos en la tabla para seleccionar.', 'warning');
+        return;
+    }
+
+    const rows = this.tbodyEl.querySelectorAll('tr');
+    let seleccionados = 0;
+
+    rows.forEach(row => {
+        const verificadoCell = row.querySelector('.verificado-col');
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        
+        // Si la celda de verificado está vacía y hay un checkbox, lo seleccionamos
+        if (verificadoCell && checkbox && verificadoCell.innerHTML.trim() === '') {
+            const facturaId = row.dataset.id;
+            if (facturaId && !this.selectedFacturas.has(facturaId)) {
+                this.selectedFacturas.add(facturaId);
+                checkbox.checked = true;
+                row.classList.add('selected'); // Sincroniza el estilo visual
+                seleccionados++;
+            }
+        }
+    });
+
+    this.updateSelectionCount(); // Actualiza contadores y botones
+
+    if (seleccionados > 0) {
+        this.showNotification(`${seleccionados} documentos faltantes han sido seleccionados.`, 'info');
+    } else {
+        this.showNotification('No se encontraron documentos faltantes para seleccionar.', 'info');
+    }
+  }
 
   async verifyDownloads() {
       if (this.selectedFacturas.size === 0) {
@@ -130,7 +161,6 @@ class FacturasManager {
   
   handleVerificationComplete(foundIds, total) {
       const foundSet = new Set(foundIds);
-      // Actualiza todas las filas, no solo las seleccionadas, para reflejar el estado.
       this.facturas.forEach(factura => {
           const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
           if(verificadoCell) {
@@ -200,7 +230,6 @@ class FacturasManager {
     }
   }
 
-  // Búsqueda usando técnicas robustas integradas
   async startNewSearchRobusta() {
     console.log('🔍 Iniciando búsqueda completa automática...');
     
@@ -468,13 +497,10 @@ class FacturasManager {
           if (extractionTimestamp) this.safeSetText(extractionTimestamp, this.formatTimestamp(extractionDate));
         }
         
-        // Cargar y aplicar resultados de verificación
         if (result.lastVerification && (Date.now() - result.lastVerification.timestamp < 10000)) {
             this.handleVerificationComplete(result.lastVerification.foundIds, result.lastVerification.total);
             chrome.storage.local.remove('lastVerification');
         }
-
-        // Lógica para mostrar ruta de descarga eliminada
         
         console.log('✅ Datos cargados del almacenamiento:', this.facturas.length, 'documentos');
       } else {
@@ -543,8 +569,10 @@ class FacturasManager {
     
     if (checkbox.checked) {
       this.selectedFacturas.add(facturaId);
+      checkbox.closest('tr').classList.add('selected');
     } else {
       this.selectedFacturas.delete(facturaId);
+      checkbox.closest('tr').classList.remove('selected');
     }
     
     this.updateSelectionCount();

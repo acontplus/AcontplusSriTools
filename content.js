@@ -86,35 +86,7 @@ class SRIDocumentosExtractor {
     });
   }
   
-  async solicitarYGuardarUbicacionDescarga() {
-      try {
-          if (!window.showDirectoryPicker) {
-              chrome.runtime.sendMessage({ action: 'verificationError', error: 'Tu navegador no soporta esta función.' });
-              return;
-          }
-          const dirHandle = await window.showDirectoryPicker();
-          
-          // Guardar el handle en IndexedDB
-          const db = await this.openDb();
-          const tx = db.transaction('fileHandles', 'readwrite');
-          const store = tx.objectStore('fileHandles');
-          await store.put(dirHandle, 'downloadDirHandle');
-          await tx.done;
-
-          // Guardar el nombre en chrome.storage.local para acceso rápido del popup
-          await chrome.storage.local.set({ downloadPathName: dirHandle.name });
-
-          // Notificar al popup para que actualice la UI
-          chrome.runtime.sendMessage({ action: 'pathSelected', path: dirHandle.name });
-
-      } catch (error) {
-          if (error.name !== 'AbortError') {
-              console.error('Error al solicitar ubicación de descarga:', error);
-              chrome.runtime.sendMessage({ action: 'verificationError', error: error.message });
-          }
-      }
-  }
-
+  // Lógica de selección de directorio eliminada
 
   async verificarDescargasEnPagina(facturas) {
       try {
@@ -155,7 +127,8 @@ class SRIDocumentosExtractor {
       let descargados = 0;
       let fallidos = 0;
       
-      const dirHandle = await this.getDirHandle();
+      // La variable dirHandle se establece en null para usar siempre el método de descarga predeterminado
+      const dirHandle = null;
 
       for (let i = 0; i < facturas.length; i++) {
           this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.view_state;
@@ -223,13 +196,13 @@ class SRIDocumentosExtractor {
         const blob = await response.blob();
         
         if (dirHandle) {
-            // Guardar directamente en la carpeta seleccionada
+            // Esta sección ya no se usará, pero se mantiene como referencia
             const fileHandle = await dirHandle.getFileHandle(nameFile, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(blob);
             await writable.close();
         } else {
-            // Fallback a la descarga normal del navegador
+            // Fallback a la descarga normal del navegador (ahora es el único método)
             const downloadLink = document.createElement('a');
             downloadLink.href = window.URL.createObjectURL(blob);
             downloadLink.download = nameFile;
@@ -248,33 +221,7 @@ class SRIDocumentosExtractor {
   }
 
 
-  // --- Helper functions for IndexedDB ---
-  openDb() {
-      return new Promise((resolve, reject) => {
-          const request = indexedDB.open('AcontplusSRIToolsDB', 1);
-          request.onupgradeneeded = () => {
-              request.result.createObjectStore('fileHandles');
-          };
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-      });
-  }
-
-  async getDirHandle() {
-      try {
-          const db = await this.openDb();
-          const tx = db.transaction('fileHandles', 'readonly');
-          const store = tx.objectStore('fileHandles');
-          const handle = await store.get('downloadDirHandle');
-          if (handle && await handle.queryPermission({ mode: 'readwrite' }) === 'granted') {
-              return handle;
-          }
-          return null;
-      } catch (error) {
-          console.error("Error getting dir handle:", error);
-          return null;
-      }
-  }
+  // --- Helper functions for IndexedDB eliminadas: openDb, getDirHandle ---
 
 
   // Detectar tipo de emisión usando técnica robusta

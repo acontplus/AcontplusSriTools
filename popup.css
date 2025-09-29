@@ -14,7 +14,7 @@ body {
   line-height: 1.4;
   color: #2c3e50;
   background: #f8f9fa;
-  width: 1200px;
+  width: 1800px; /* Ancho aumentado para mostrar todas las columnas */
   overflow-x: hidden;
   margin: 0 auto;
 }
@@ -186,8 +186,6 @@ body {
     border-radius: 0 8px 8px 0;
 }
 
-/* ===== ESTILOS DE UBICACIÓN DE DESCARGA ELIMINADOS ===== */
-
 /* ===== LOADING Y NO DATA ===== */
 .loading, .no-data {
   padding: 60px 20px;
@@ -234,6 +232,7 @@ body {
   padding: 10px 8px;
   text-align: center;
   font-weight: 600;
+  white-space: nowrap;
 }
 .facturas-table td {
   padding: 8px;
@@ -241,14 +240,19 @@ body {
 }
 
 /* Ajuste de Columnas */
-.checkbox-col { width: 4%; }
-.counter-col { width: 4%; }
-.numero-col { width: 20%; }
-.ruc-col { width: 12%; }
-.razon-col { width: 30%; text-align: left; }
-.fecha-col { width: 10%; }
-.amount-col { width: 15%; text-align: right; }
-.verificado-col { width: 5%; text-align: center; }
+.checkbox-col { width: 3%; }
+.counter-col { width: 3%; }
+.tipo-col { width: 5%; }
+.numero-col { width: 12%; }
+.ruc-col { width: 8%; }
+.razon-col { width: 18%; text-align: left; }
+.fecha-col { width: 7%; }
+.fecha-auth-col { width: 10%; }
+.clave-acceso-col { width: 15%; text-align: left; }
+.subtotal-col { width: 5%; text-align: right; }
+.iva-col { width: 5%; text-align: right; }
+.amount-col { width: 7%; text-align: right; }
+.verificado-col { width: 2%; text-align: center; }
 
 
 .facturas-table tbody tr:hover {

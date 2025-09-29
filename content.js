@@ -365,7 +365,6 @@ class SRIDocumentosExtractor {
     return false;
   }
 
-  // CORREGIDO: Mapea las cabeceras antes de extraer
   async extraerDocumentosPaginaActual() {
     this.documentos = [];
     this.intentos = 0;
@@ -375,7 +374,7 @@ class SRIDocumentosExtractor {
         this.mapearCabeceras(tablaElement);
     } else {
         console.error("No se encontró el elemento <table> padre para mapear cabeceras.");
-        return; // Detener si no se puede mapear
+        return; 
     }
 
     for (let i = 1; i <= this.regs_total; i++) {
@@ -453,7 +452,6 @@ class SRIDocumentosExtractor {
     }
   }
 
-  // CORREGIDO: Mapea las cabeceras antes de extraer
   extraerDocumentos(tbody, tipoComprobante) {
     const regsTotal = tbody.childElementCount;
     this.documentos = [];
@@ -483,46 +481,36 @@ class SRIDocumentosExtractor {
     this.guardarDatos();
   }
 
-  // NUEVO: Mapeo dinámico de cabeceras
   mapearCabeceras(tablaElement) {
     const headerMap = {};
     const headerCells = tablaElement.querySelectorAll('thead th');
     
     headerCells.forEach((th, index) => {
-        const text = (th.textContent || '').trim().toLowerCase();
-        if (text.includes('ruc') && text.includes('social')) headerMap.rucEmisorRaw = index;
-        if (text.includes('número') && text.includes('comprobante')) headerMap.numero = index;
+        const text = (th.textContent || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (text.includes('ruc') && (text.includes('social') || text.includes('receptor'))) headerMap.rucEmisorRaw = index;
+        if (text.includes('número de comprobante')) headerMap.numero = index;
         if (text.includes('clave de acceso')) headerMap.claveAcceso = index;
-        if (text.includes('emisión')) headerMap.fechaEmision = index;
-        if (text.includes('autorización')) headerMap.fechaAutorizacion = index;
-        if (text.includes('sin impuestos') || text.includes('subtotal')) headerMap.valorSinImpuestos = index;
+        if (text.includes('fecha y hora de emisión')) headerMap.fechaEmision = index;
+        if (text.includes('fecha y hora de autorización')) headerMap.fechaAutorizacion = index;
+        if (text.includes('valor sin impuestos')) headerMap.valorSinImpuestos = index;
+        if (text.includes('iva') && text.length < 5) headerMap.iva = index;
         if (text.includes('importe total')) headerMap.importeTotal = index;
     });
-
-    const requiredKeys = ['rucEmisorRaw', 'numero', 'claveAcceso', 'fechaEmision', 'fechaAutorizacion', 'valorSinImpuestos', 'importeTotal'];
-    const missingKeys = requiredKeys.filter(key => headerMap[key] === undefined);
-
-    if (missingKeys.length > 0) {
-        console.warn('No se pudieron mapear las siguientes cabeceras:', missingKeys.join(', '));
-        // Fallback al mapeo por defecto si la detección falla
-        this.headerMap = this.tipoComprobante === 'R'
-            ? { rucEmisorRaw: 1, numero: 2, claveAcceso: 3, fechaEmision: 5, fechaAutorizacion: 6, valorSinImpuestos: 7, importeTotal: 8 }
-            : { rucEmisorRaw: 1, claveAcceso: 2, numero: 3, fechaEmision: 5, fechaAutorizacion: 6, valorSinImpuestos: 7, importeTotal: 8 };
-        console.log('Usando mapeo por defecto:', this.headerMap);
-    } else {
-        this.headerMap = headerMap;
-        console.log('Mapeo de cabeceras exitoso:', this.headerMap);
-    }
+    this.headerMap = headerMap;
+    console.log('Mapeo de cabeceras:', this.headerMap);
   }
   
-  // CORREGIDO: Usa el mapeo dinámico
   extraerDatosFilaEspecifica(celdas, tipoComprobante, index, rowIndex) {
     try {
       const h = this.headerMap;
+      if (Object.keys(h).length < 7) {
+          console.error("Mapeo de cabeceras incompleto, no se puede extraer la fila.");
+          return null;
+      }
 
       const importeTotal = this.extraerNumeroCelda(celdas[h.importeTotal]);
       const valorSinImpuestos = this.extraerNumeroCelda(celdas[h.valorSinImpuestos]);
-      const iva = parseFloat((importeTotal - valorSinImpuestos).toFixed(2));
+      const iva = h.iva !== undefined ? this.extraerNumeroCelda(celdas[h.iva]) : parseFloat((importeTotal - valorSinImpuestos).toFixed(2));
 
       const datos = {
         rucEmisorRaw: this.extraerTextoCelda(celdas[h.rucEmisorRaw]),
@@ -552,7 +540,7 @@ class SRIDocumentosExtractor {
         importeTotal: importeTotal
       };
     } catch (error) {
-      console.warn('⚠️ Error procesando fila ' + index + ':', error);
+      console.warn('⚠️ Error procesando fila ' + index + ' con mapeo:', error, 'Mapeo:', this.headerMap);
       return null;
     }
   }

@@ -86,8 +86,6 @@ class SRIDocumentosExtractor {
     });
   }
   
-  // Lógica de selección de directorio eliminada
-
   async verificarDescargasEnPagina(facturas) {
       try {
           if (!window.showDirectoryPicker) {
@@ -127,7 +125,6 @@ class SRIDocumentosExtractor {
       let descargados = 0;
       let fallidos = 0;
       
-      // La variable dirHandle se establece en null para usar siempre el método de descarga predeterminado
       const dirHandle = null;
 
       for (let i = 0; i < facturas.length; i++) {
@@ -195,34 +192,22 @@ class SRIDocumentosExtractor {
 
         const blob = await response.blob();
         
-        if (dirHandle) {
-            // Esta sección ya no se usará, pero se mantiene como referencia
-            const fileHandle = await dirHandle.getFileHandle(nameFile, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(blob);
-            await writable.close();
-        } else {
-            // Fallback a la descarga normal del navegador (ahora es el único método)
-            const downloadLink = document.createElement('a');
-            downloadLink.href = window.URL.createObjectURL(blob);
-            downloadLink.download = nameFile;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            setTimeout(() => {
-                window.URL.revokeObjectURL(downloadLink.href);
-                document.body.removeChild(downloadLink);
-            }, 100);
-        }
+        const downloadLink = document.createElement('a');
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.download = nameFile;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        setTimeout(() => {
+            window.URL.revokeObjectURL(downloadLink.href);
+            document.body.removeChild(downloadLink);
+        }, 100);
+        
         return true;
     } catch (error) {
         console.error("Error en fetchParaDescarga:", error);
         return false;
     }
   }
-
-
-  // --- Helper functions for IndexedDB eliminadas: openDb, getDirHandle ---
-
 
   // Detectar tipo de emisión usando técnica robusta
   detectarTipoEmisionRobusta() {
@@ -485,21 +470,32 @@ class SRIDocumentosExtractor {
   extraerDatosFilaEspecifica(celdas, tipoComprobante, index, rowIndex) {
     try {
       let datos;
-      if (tipoComprobante === 'R') {
+      // Asumimos que la estructura de columnas es similar para emitidos y recibidos
+      const importeTotal = this.extraerNumeroCelda(celdas[8]);
+      const valorSinImpuestos = this.extraerNumeroCelda(celdas[7]);
+      const iva = parseFloat((importeTotal - valorSinImpuestos).toFixed(2));
+
+      if (tipoComprobante === 'R') { // Recibidos
         datos = {
           rucEmisorRaw: this.extraerTextoCelda(celdas[1]),
           tipoSerie: this.extraerTextoCelda(celdas[2]),
           claveAcceso: this.extraerTextoCelda(celdas[3]),
           fechaEmision: this.extraerTextoCelda(celdas[5]),
-          importeTotal: this.extraerNumeroCelda(celdas[8])
+          fechaAutorizacion: this.extraerTextoCelda(celdas[6]),
+          valorSinImpuestos: valorSinImpuestos,
+          iva: iva,
+          importeTotal: importeTotal
         };
-      } else {
+      } else { // Emitidos
         datos = {
           rucEmisorRaw: this.extraerTextoCelda(celdas[1]),
           claveAcceso: this.extraerTextoCelda(celdas[2]),
           tipoSerie: this.extraerTextoCelda(celdas[3]),
           fechaEmision: this.extraerTextoCelda(celdas[5]),
-          importeTotal: this.extraerNumeroCelda(celdas[8])
+          fechaAutorizacion: this.extraerTextoCelda(celdas[6]),
+          valorSinImpuestos: valorSinImpuestos,
+          iva: iva,
+          importeTotal: importeTotal
         };
       }
       
@@ -508,7 +504,7 @@ class SRIDocumentosExtractor {
       
       return {
         rowIndex,
-        id: `${tipoSerieData[0]}_${tipoSerieData[1]}_${tipoSerieData[2]}_${index}_${Date.now()}`,
+        id: `${datos.claveAcceso || Date.now()}`,
         numero: datos.tipoSerie,
         ruc: rucRazonData[0],
         razonSocial: rucRazonData[1],
@@ -517,6 +513,9 @@ class SRIDocumentosExtractor {
         numeroComprobante: tipoSerieData[2],
         claveAcceso: datos.claveAcceso,
         fechaEmision: this.formatearFecha(datos.fechaEmision),
+        fechaAutorizacion: this.formatearFechaHora(datos.fechaAutorizacion),
+        valorSinImpuestos: datos.valorSinImpuestos,
+        iva: datos.iva,
         importeTotal: datos.importeTotal
       };
     } catch (error) {
@@ -561,6 +560,16 @@ class SRIDocumentosExtractor {
     const match = fechaTexto.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
     if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
     return fechaTexto;
+  }
+  
+  formatearFechaHora(fechaTexto) {
+    if (!fechaTexto) return '';
+    const match = fechaTexto.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2}):(\d{1,2})/);
+    if (match) {
+        return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')} ${match[4].padStart(2, '0')}:${match[5].padStart(2, '0')}:${match[6].padStart(2, '0')}`;
+    }
+    // Fallback para solo fecha si no se encuentra la hora
+    return this.formatearFecha(fechaTexto);
   }
 
   async updateProgress(progress) {

@@ -17,6 +17,7 @@ class SRIDocumentosExtractor {
     this.isProcessingPagination = false;
     this.currentPage = 1;
     this.totalPages = 1;
+    this.headerMap = {}; // Mapa dinámico de columnas
     
     // Variables adaptadas para paginación robusta
     this.tipo_emisi = ""; // CompRecibidos o CompEmitidos
@@ -59,7 +60,7 @@ class SRIDocumentosExtractor {
           }).catch(error => {
             sendResponse({ success: false, error: error.message });
           });
-          return true; // Keep the message channel open for the asynchronous response
+          return true;
 
         case 'getPaginationInfo':
           const paginationInfo = this.getPaginationInfoRobusta();
@@ -76,7 +77,7 @@ class SRIDocumentosExtractor {
           }).catch(error => {
             sendResponse({ success: false, error: error.message });
           });
-          return true; // Keep the message channel open for the asynchronous response
+          return true;
 
         default:
           console.warn('⚠️ Acción no reconocida:', message.action);
@@ -209,7 +210,6 @@ class SRIDocumentosExtractor {
     }
   }
 
-  // Detectar tipo de emisión usando técnica robusta
   detectarTipoEmisionRobusta() {
     try {
       const tablaRecibidos = document.querySelector('#frmPrincipal\\:tablaCompRecibidos_data');
@@ -234,7 +234,6 @@ class SRIDocumentosExtractor {
     }
   }
 
-  // Procesamiento completo usando técnicas robustas
   async procesarTodasLasPaginasRobusta(config = {}) {
     console.log('🚀 === INICIANDO BÚSQUEDA COMPLETA ROBUSTA ===');
     
@@ -284,7 +283,6 @@ class SRIDocumentosExtractor {
     }
   }
 
-  // Lógica principal de descarga
   async ejecutarLogicaDescargaRobusta() {
     console.log('🔄 Ejecutando lógica robusta adaptada...');
     if (this.movimiento === "REPAGINAR") {
@@ -367,10 +365,19 @@ class SRIDocumentosExtractor {
     return false;
   }
 
+  // CORREGIDO: Mapea las cabeceras antes de extraer
   async extraerDocumentosPaginaActual() {
     this.documentos = [];
     this.intentos = 0;
     
+    const tablaElement = this.body_tabla.closest('table');
+    if(tablaElement) {
+        this.mapearCabeceras(tablaElement);
+    } else {
+        console.error("No se encontró el elemento <table> padre para mapear cabeceras.");
+        return; // Detener si no se puede mapear
+    }
+
     for (let i = 1; i <= this.regs_total; i++) {
       try {
         this.intentos++;
@@ -446,9 +453,18 @@ class SRIDocumentosExtractor {
     }
   }
 
+  // CORREGIDO: Mapea las cabeceras antes de extraer
   extraerDocumentos(tbody, tipoComprobante) {
     const regsTotal = tbody.childElementCount;
     this.documentos = [];
+
+    const tablaElement = tbody.closest('table');
+    if(tablaElement) {
+        this.mapearCabeceras(tablaElement);
+    } else {
+        console.error("No se encontró el elemento <table> padre para mapear cabeceras.");
+        return; 
+    }
 
     for (let i = 0; i < regsTotal; i++) {
       try {
@@ -467,37 +483,54 @@ class SRIDocumentosExtractor {
     this.guardarDatos();
   }
 
+  // NUEVO: Mapeo dinámico de cabeceras
+  mapearCabeceras(tablaElement) {
+    const headerMap = {};
+    const headerCells = tablaElement.querySelectorAll('thead th');
+    
+    headerCells.forEach((th, index) => {
+        const text = (th.textContent || '').trim().toLowerCase();
+        if (text.includes('ruc') && text.includes('social')) headerMap.rucEmisorRaw = index;
+        if (text.includes('número') && text.includes('comprobante')) headerMap.numero = index;
+        if (text.includes('clave de acceso')) headerMap.claveAcceso = index;
+        if (text.includes('emisión')) headerMap.fechaEmision = index;
+        if (text.includes('autorización')) headerMap.fechaAutorizacion = index;
+        if (text.includes('sin impuestos') || text.includes('subtotal')) headerMap.valorSinImpuestos = index;
+        if (text.includes('importe total')) headerMap.importeTotal = index;
+    });
+
+    const requiredKeys = ['rucEmisorRaw', 'numero', 'claveAcceso', 'fechaEmision', 'fechaAutorizacion', 'valorSinImpuestos', 'importeTotal'];
+    const missingKeys = requiredKeys.filter(key => headerMap[key] === undefined);
+
+    if (missingKeys.length > 0) {
+        console.warn('No se pudieron mapear las siguientes cabeceras:', missingKeys.join(', '));
+        // Fallback al mapeo por defecto si la detección falla
+        this.headerMap = this.tipoComprobante === 'R'
+            ? { rucEmisorRaw: 1, numero: 2, claveAcceso: 3, fechaEmision: 5, fechaAutorizacion: 6, valorSinImpuestos: 7, importeTotal: 8 }
+            : { rucEmisorRaw: 1, claveAcceso: 2, numero: 3, fechaEmision: 5, fechaAutorizacion: 6, valorSinImpuestos: 7, importeTotal: 8 };
+        console.log('Usando mapeo por defecto:', this.headerMap);
+    } else {
+        this.headerMap = headerMap;
+        console.log('Mapeo de cabeceras exitoso:', this.headerMap);
+    }
+  }
+  
+  // CORREGIDO: Usa el mapeo dinámico
   extraerDatosFilaEspecifica(celdas, tipoComprobante, index, rowIndex) {
     try {
-      let datos;
-      // Asumimos que la estructura de columnas es similar para emitidos y recibidos
-      const importeTotal = this.extraerNumeroCelda(celdas[8]);
-      const valorSinImpuestos = this.extraerNumeroCelda(celdas[7]);
+      const h = this.headerMap;
+
+      const importeTotal = this.extraerNumeroCelda(celdas[h.importeTotal]);
+      const valorSinImpuestos = this.extraerNumeroCelda(celdas[h.valorSinImpuestos]);
       const iva = parseFloat((importeTotal - valorSinImpuestos).toFixed(2));
 
-      if (tipoComprobante === 'R') { // Recibidos
-        datos = {
-          rucEmisorRaw: this.extraerTextoCelda(celdas[1]),
-          tipoSerie: this.extraerTextoCelda(celdas[2]),
-          claveAcceso: this.extraerTextoCelda(celdas[3]),
-          fechaEmision: this.extraerTextoCelda(celdas[5]),
-          fechaAutorizacion: this.extraerTextoCelda(celdas[6]),
-          valorSinImpuestos: valorSinImpuestos,
-          iva: iva,
-          importeTotal: importeTotal
-        };
-      } else { // Emitidos
-        datos = {
-          rucEmisorRaw: this.extraerTextoCelda(celdas[1]),
-          claveAcceso: this.extraerTextoCelda(celdas[2]),
-          tipoSerie: this.extraerTextoCelda(celdas[3]),
-          fechaEmision: this.extraerTextoCelda(celdas[5]),
-          fechaAutorizacion: this.extraerTextoCelda(celdas[6]),
-          valorSinImpuestos: valorSinImpuestos,
-          iva: iva,
-          importeTotal: importeTotal
-        };
-      }
+      const datos = {
+        rucEmisorRaw: this.extraerTextoCelda(celdas[h.rucEmisorRaw]),
+        tipoSerie: this.extraerTextoCelda(celdas[h.numero]),
+        claveAcceso: this.extraerTextoCelda(celdas[h.claveAcceso]),
+        fechaEmision: this.extraerTextoCelda(celdas[h.fechaEmision]),
+        fechaAutorizacion: this.extraerTextoCelda(celdas[h.fechaAutorizacion]),
+      };
       
       const rucRazonData = this.separarRucRazonSocial(datos.rucEmisorRaw);
       const tipoSerieData = this.separarTipoSerie(datos.tipoSerie);
@@ -514,9 +547,9 @@ class SRIDocumentosExtractor {
         claveAcceso: datos.claveAcceso,
         fechaEmision: this.formatearFecha(datos.fechaEmision),
         fechaAutorizacion: this.formatearFechaHora(datos.fechaAutorizacion),
-        valorSinImpuestos: datos.valorSinImpuestos,
-        iva: datos.iva,
-        importeTotal: datos.importeTotal
+        valorSinImpuestos: valorSinImpuestos,
+        iva: iva,
+        importeTotal: importeTotal
       };
     } catch (error) {
       console.warn('⚠️ Error procesando fila ' + index + ':', error);
@@ -568,7 +601,6 @@ class SRIDocumentosExtractor {
     if (match) {
         return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')} ${match[4].padStart(2, '0')}:${match[5].padStart(2, '0')}:${match[6].padStart(2, '0')}`;
     }
-    // Fallback para solo fecha si no se encuentra la hora
     return this.formatearFecha(fechaTexto);
   }
 

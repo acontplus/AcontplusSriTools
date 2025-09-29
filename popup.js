@@ -17,8 +17,7 @@ class FacturasManager {
     this.exportBtn = null;
     this.downloadBtn = null;
     this.verifyBtn = null;
-    this.selectMissingBtn = null; // Nuevo botón
-    // Elementos de ruta de descarga eliminados
+    this.selectMissingBtn = null; 
     this.progressFillEl = null;
     this.paginationProgressEl = null;
     this.currentPageEl = null;
@@ -46,8 +45,7 @@ class FacturasManager {
       this.exportBtn = this.safeGetElement('export-selected');
       this.downloadBtn = this.safeGetElement('download-selected');
       this.verifyBtn = this.safeGetElement('verify-downloads');
-      this.selectMissingBtn = this.safeGetElement('select-missing'); // Nuevo botón
-      // Referencias a elementos de ruta de descarga eliminadas
+      this.selectMissingBtn = this.safeGetElement('select-missing');
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
       this.currentPageEl = this.safeGetElement('current-page');
       this.totalPagesEl = this.safeGetElement('total-pages');
@@ -65,7 +63,7 @@ class FacturasManager {
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportSelected());
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     if (this.verifyBtn) this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
-    if (this.selectMissingBtn) this.selectMissingBtn.addEventListener('click', () => this.seleccionarFaltantes()); // Nuevo listener
+    if (this.selectMissingBtn) this.selectMissingBtn.addEventListener('click', () => this.seleccionarFaltantes());
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -76,14 +74,12 @@ class FacturasManager {
     const masterCheckbox = document.getElementById('master-checkbox');
     if (masterCheckbox) masterCheckbox.addEventListener('change', () => this.toggleSelectAll());
 
-    // Listener para mensajes directos
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'updateDownloadProgress') this.updateDownloadButtonProgress(message.current, message.total);
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         else if (message.action === 'verificationError') this.showNotification(`Error de verificación: ${message.error}`, 'error');
     });
 
-    // Listener para cambios en el storage (progreso y verificación)
     chrome.storage.onChanged.addListener((changes, namespace) => {
         if (namespace !== 'local') return;
         if (changes.progressStatus) {
@@ -109,19 +105,18 @@ class FacturasManager {
         const verificadoCell = row.querySelector('.verificado-col');
         const checkbox = row.querySelector('input[type="checkbox"]');
         
-        // Si la celda de verificado está vacía y hay un checkbox, lo seleccionamos
         if (verificadoCell && checkbox && verificadoCell.innerHTML.trim() === '') {
             const facturaId = row.dataset.id;
             if (facturaId && !this.selectedFacturas.has(facturaId)) {
                 this.selectedFacturas.add(facturaId);
                 checkbox.checked = true;
-                row.classList.add('selected'); // Sincroniza el estilo visual
+                row.classList.add('selected'); 
                 seleccionados++;
             }
         }
     });
 
-    this.updateSelectionCount(); // Actualiza contadores y botones
+    this.updateSelectionCount();
 
     if (seleccionados > 0) {
         this.showNotification(`${seleccionados} documentos faltantes han sido seleccionados.`, 'info');
@@ -617,7 +612,7 @@ class FacturasManager {
       'Numero': factura.numeroComprobante || '',
       'Fecha Emision': factura.fechaEmision || '',
       'Fecha Autorizacion': factura.fechaAutorizacion || '',
-      'Clave de Acceso': factura.claveAcceso || '',
+      'Clave de Acceso': factura.claveAcceso ? `'${factura.claveAcceso}` : '',
       'Subtotal': factura.valorSinImpuestos || 0,
       'IVA': factura.iva || 0,
       'Total': factura.importeTotal || 0
@@ -628,7 +623,7 @@ class FacturasManager {
 
     ws['!cols'] = [
       { width: 8 }, { width: 15 }, { width: 35 }, { width: 15 },
-      { width: 12 }, { width: 15 }, { width: 12 }, { width: 12 },
+      { width: 12 }, { width: 15 }, { width: 12 }, { width: 18 },
       { width: 50 }, { width: 12 }, { width: 12 }, { width: 12 }
     ];
 

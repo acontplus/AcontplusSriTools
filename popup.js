@@ -717,7 +717,7 @@ class FacturasManager {
     if (this.facturas.length === 0) {
       this.safeSetHTML(this.tbodyEl, 
         '<tr>' +
-          '<td colspan="8" class="text-center text-muted" style="padding: 40px;">' + 
+          '<td colspan="13" class="text-center text-muted" style="padding: 40px;">' + 
             '<div style="color: #D61672; font-size: 24px; margin-bottom: 8px;">📄</div>' +
             '<div style="font-weight: 600; margin-bottom: 4px;">No se encontraron documentos electronicos</div>' +
             '<div style="font-size: 11px; color: #6c757d;">Utiliza "Buscar" para analizar todas las paginas disponibles</div>' +
@@ -726,8 +726,6 @@ class FacturasManager {
       );
       return;
     }
-
-    console.log('DEBUGGING: Iniciando renderizado de ' + this.facturas.length + ' registros de ' + this.paginationInfo.total + ' páginas');
 
     const tableHTML = this.facturas.map((factura, index) => {
       const contador = index + 1;
@@ -740,10 +738,15 @@ class FacturasManager {
             <input type="checkbox" ${(this.selectedFacturas.has(factura.id) ? 'checked' : '')} data-id="${factura.id}">
           </td>
           <td class="counter-col">${contador}</td>
+          <td class="tipo-col">${factura.tipoComprobante || ''}</td>
           <td class="numero-col">${factura.numero || ''}</td>
           <td class="ruc-col">${factura.ruc || ''}</td>
           <td class="razon-col">${factura.razonSocial || ''}</td>
           <td class="fecha-col">${factura.fechaEmision || ''}</td>
+          <td class="fecha-auth-col">${factura.fechaAutorizacion || ''}</td>
+          <td class="clave-acceso-col">${factura.claveAcceso || ''}</td>
+          <td class="subtotal-col">$${(factura.valorSinImpuestos || 0).toFixed(2)}</td>
+          <td class="iva-col">$${(factura.iva || 0).toFixed(2)}</td>
           <td class="amount-col">$${(factura.importeTotal || 0).toFixed(2)}</td>
           <td class="verificado-col" data-verified-id="${factura.id}"></td>
         </tr>`;

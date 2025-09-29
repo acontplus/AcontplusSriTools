@@ -17,8 +17,7 @@ class FacturasManager {
     this.exportBtn = null;
     this.downloadBtn = null;
     this.verifyBtn = null;
-    this.changePathBtn = null;
-    this.pathDisplayEl = null;
+    // Elementos de ruta de descarga eliminados
     this.progressFillEl = null;
     this.paginationProgressEl = null;
     this.currentPageEl = null;
@@ -46,8 +45,7 @@ class FacturasManager {
       this.exportBtn = this.safeGetElement('export-selected');
       this.downloadBtn = this.safeGetElement('download-selected');
       this.verifyBtn = this.safeGetElement('verify-downloads');
-      this.changePathBtn = this.safeGetElement('change-download-path');
-      this.pathDisplayEl = this.safeGetElement('download-path-display');
+      // Referencias a elementos de ruta de descarga eliminadas
       this.paginationProgressEl = this.safeGetElement('pagination-progress');
       this.currentPageEl = this.safeGetElement('current-page');
       this.totalPagesEl = this.safeGetElement('total-pages');
@@ -65,7 +63,7 @@ class FacturasManager {
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportSelected());
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     if (this.verifyBtn) this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
-    if (this.changePathBtn) this.changePathBtn.addEventListener('click', () => this.changeDownloadPath());
+    // Event listener para changePathBtn eliminado
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -81,7 +79,7 @@ class FacturasManager {
         if (message.action === 'updateDownloadProgress') this.updateDownloadButtonProgress(message.current, message.total);
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         else if (message.action === 'verificationError') this.showNotification(`Error de verificación: ${message.error}`, 'error');
-        else if (message.action === 'pathSelected') this.updatePathDisplay(message.path);
+        // Listener para 'pathSelected' eliminado
     });
 
     // Listener para cambios en el storage (progreso y verificación)
@@ -97,32 +95,9 @@ class FacturasManager {
     });
   }
 
-  async changeDownloadPath() {
-      try {
-          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-          if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
-          
-          this.showNotification('Abriendo selector de carpetas... El popup se cerrará.', 'info');
-
-          await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              func: () => {
-                  if (window.sriExtractorInstance) {
-                      window.sriExtractorInstance.solicitarYGuardarUbicacionDescarga();
-                  }
-              }
-          });
-      } catch (error) {
-          console.error("Error al iniciar el cambio de ruta:", error);
-          this.showNotification('Error al cambiar la ubicación.', 'error');
-      }
-  }
+  // Función changeDownloadPath eliminada
   
-  updatePathDisplay(path) {
-      if (this.pathDisplayEl) {
-          this.pathDisplayEl.value = path || "Descargas del Navegador (Predeterminado)";
-      }
-  }
+  // Función updatePathDisplay eliminada
 
   async verifyDownloads() {
       if (this.selectedFacturas.size === 0) {
@@ -482,7 +457,7 @@ class FacturasManager {
   }
 
   loadStoredData() {
-    chrome.storage.local.get(['facturasData', 'lastExtraction', 'lastVerification', 'downloadPathName']).then(result => {
+    chrome.storage.local.get(['facturasData', 'lastExtraction', 'lastVerification']).then(result => {
       if (result.facturasData && result.facturasData.length > 0) {
         this.facturas = result.facturasData;
         this.updateDisplay();
@@ -499,8 +474,7 @@ class FacturasManager {
             chrome.storage.local.remove('lastVerification');
         }
 
-        // Mostrar la ruta de descarga guardada
-        this.updatePathDisplay(result.downloadPathName);
+        // Lógica para mostrar ruta de descarga eliminada
         
         console.log('✅ Datos cargados del almacenamiento:', this.facturas.length, 'documentos');
       } else {

@@ -21,13 +21,16 @@
         "*://srienlinea.sri.gob.ec/*"
       ],
       "js": ["content.js"],
-      "css": ["content.css"],
+      "css": ["styles/content.css"],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
+  "background": {
+    "service_worker": "background/background.js"
+  },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
     "default_title": "Acontplus SRI Tools v1.4.1 - Final"
   },
   "icons": {
@@ -37,7 +40,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup.html", "libs/*", "content.js"],
+      "resources": ["popup/popup.html", "libs/*", "content.js"],
       "matches": ["*://*.sri.gob.ec/*", "*://comprobantes-electronicos-internet/*"]
     }
   ],

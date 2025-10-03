@@ -1,7 +1,22 @@
 // Utilidades compartidas para Acontplus SRI Tools v1.4.1
-// Funciones de ayuda comunes
 
 class SRIUtils {
+  static formatearFecha(fechaTexto) {
+    if (!fechaTexto) return '';
+    const match = fechaTexto.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+    return fechaTexto;
+  }
+
+  static formatearFechaHora(fechaTexto) {
+    if (!fechaTexto) return '';
+    const match = fechaTexto.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2}):(\d{1,2})/);
+    if (match) {
+      return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')} ${match[4].padStart(2, '0')}:${match[5].padStart(2, '0')}:${match[6].padStart(2, '0')}`;
+    }
+    return this.formatearFecha(fechaTexto);
+  }
+
   static extraerTextoCelda(celda) {
     return celda ? (celda.textContent || '').trim() : '';
   }
@@ -32,27 +47,7 @@ class SRIUtils {
     }
     return [texto.trim(), '', ''];
   }
-
-  static formatearFecha(fechaTexto) {
-    if (!fechaTexto) return '';
-    const match = fechaTexto.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
-    return fechaTexto;
-  }
-
-  static formatearFechaHora(fechaTexto) {
-    if (!fechaTexto) return '';
-    const match = fechaTexto.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2}):(\d{1,2})/);
-    if (match) {
-        return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')} ${match[4].padStart(2, '0')}:${match[5].padStart(2, '0')}:${match[6].padStart(2, '0')}`;
-    }
-    return this.formatearFecha(fechaTexto);
-  }
-
-  static esperar(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 }
 
-// Exportar para uso en otros módulos
+// Exportar globalmente para compatibilidad con extensiones
 window.SRIUtils = SRIUtils;

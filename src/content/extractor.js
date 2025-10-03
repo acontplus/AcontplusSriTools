@@ -173,6 +173,23 @@ class SRIDocumentosExtractor {
     } catch (error) { console.warn('No se pudieron guardar los datos:', error); }
   }
 
+  esperar(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async updateProgress(progress) {
+    try {
+      await chrome.storage.local.set({
+        progressStatus: {
+          mensaje: progress,
+          documentosEncontrados: this.allDocuments.length,
+          currentPage: this.currentPage,
+          totalPages: this.totalPages
+        }
+      });
+    } catch (error) { console.warn('No se pudo actualizar progreso:', error); }
+  }
+
   // Delegar métodos de descarga al módulo correspondiente
   async verificarDescargasEnPagina(facturas) {
     return this.downloader.verificarDescargasEnPagina(facturas);

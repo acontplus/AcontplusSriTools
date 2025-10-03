@@ -247,25 +247,11 @@ class FacturasManager {
 
       console.log('Pestaña activa encontrada:', tab.url);
 
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => {
-            return window.SRIExtractorLoaded || false;
-          }
-        });
-      } catch (injectionError) {
-        console.log('Inyectando content script...');
-        try {
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['src/content/index.js']
-          });
-          await this.sleep(2000);
-        } catch (scriptError) {
-          console.error('Error inyectando script:', scriptError);
-          throw new Error('No se pudo cargar el script en la página');
-        }
+      // Verificar si el content script está cargado
+      const pingResponse = await this.sendMessageWithRetry(tab.id, { action: 'ping' }, 2);
+
+      if (!pingResponse || !pingResponse.success) {
+        throw new Error('Content script no está activo. Recarga la página del SRI.');
       }
 
       PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Iniciando...</span>');

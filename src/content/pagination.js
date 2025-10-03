@@ -2,8 +2,8 @@
 // Maneja la navegación y procesamiento de múltiples páginas
 
 class SRIPagination {
-  constructor(extractorInstance) {
-    this.extractor = extractorInstance;
+  constructor(extractor) {
+    this.extractor = extractor;
   }
 
   async procesarTodasLasPaginasRobusta(config = {}) {
@@ -72,19 +72,19 @@ class SRIPagination {
         if (current) {
           const pa = parseInt(current.textContent.match(/\d+/g)[1]);
           if (pa > 1) {
-            await this.updateProgress("Espere..Repaginado la cantidad visible...");
+            await this.extractor.updateProgress("Espere..Repaginado la cantidad visible...");
             const dmax = 300;
             const po = document.querySelector('.ui-paginator-rpp-options');
             if(po) {
-                const nd = po.querySelector("option");
-                if(nd) {
-                    nd.value = dmax;
-                    nd.textContent = dmax;
-                    nd.selected = true;
-                    po.dispatchEvent(new Event("change"));
-                    await SRIUtils.esperar(4000);
-                    return true;
-                }
+              const nd = po.querySelector("option");
+              if(nd) {
+                nd.value = dmax;
+                nd.textContent = dmax;
+                nd.selected = true;
+                po.dispatchEvent(new Event("change"));
+                await this.extractor.esperar(4000);
+                return true;
+              }
             }
           }
         }
@@ -110,12 +110,12 @@ class SRIPagination {
           await this.extraerDocumentosPaginaActual();
 
           if (await this.verificarPaginaSiguienteRobusta()) {
-            await this.updateProgress("Cambiando a la siguiente página...");
+            await this.extractor.updateProgress("Cambiando a la siguiente página...");
             await this.navegarSiguientePaginaRobusta();
-            await SRIUtils.esperar(4000);
+            await this.extractor.esperar(4000);
             await this.procesarPaginasRecursivamente();
           } else {
-            await this.updateProgress("Terminado... :-)");
+            await this.extractor.updateProgress("Terminado... :-)");
           }
         }
       }
@@ -129,7 +129,7 @@ class SRIPagination {
   }
 
   async navegarSiguientePaginaRobusta() {
-    const botonSiguiente = document.getElementsByClassName('ui-icon ui-icon-seek-next')[0];
+    const botonSiguiente = document.getElementsByClassName('ui-paginator-next ui-state-default ui-corner-all')[0];
     if (botonSiguiente) {
       botonSiguiente.click();
       return true;
@@ -143,10 +143,10 @@ class SRIPagination {
 
     const tablaElement = this.extractor.body_tabla.closest('table');
     if(tablaElement) {
-        this.mapearCabeceras(tablaElement);
+      this.mapearCabeceras(tablaElement);
     } else {
-        console.error("No se encontró el elemento <table> padre para mapear cabeceras.");
-        return;
+      console.error("No se encontró el elemento <table> padre para mapear cabeceras.");
+      return;
     }
 
     for (let i = 1; i <= this.extractor.regs_total; i++) {
@@ -164,7 +164,7 @@ class SRIPagination {
             }
           }
         }
-        await this.updateProgress("Procesando documentos " + i + " de " + this.extractor.regs_total);
+        await this.extractor.updateProgress("Procesando documentos " + i + " de " + this.extractor.regs_total);
         this.extractor.intentos = 0;
       } catch (error) {
         if (this.extractor.intentos < 2) i--;
@@ -174,49 +174,41 @@ class SRIPagination {
   }
 
   detectarTablaRobusta() {
+    console.log('🔍 Detectando tabla...');
     const tablaRecibidos = document.querySelector('#frmPrincipal\\:tablaCompRecibidos_data');
-    if (tablaRecibidos && tablaRecibidos.childElementCount > 0) return { encontrada: true, tabla: tablaRecibidos, tipo: 'R' };
+    console.log('📋 Tabla recibidos encontrada:', !!tablaRecibidos);
+    if (tablaRecibidos && tablaRecibidos.childElementCount > 0) {
+      console.log('✅ Usando tabla CompRecibidos, elementos:', tablaRecibidos.childElementCount);
+      return { encontrada: true, tabla: tablaRecibidos, tipo: 'R' };
+    }
 
     const tablaEmitidos = document.querySelector('#frmPrincipal\\:tablaCompEmitidos_data');
-    if (tablaEmitidos && tablaEmitidos.childElementCount > 0) return { encontrada: true, tabla: tablaEmitidos, tipo: 'E' };
+    console.log('📋 Tabla emitidos encontrada:', !!tablaEmitidos);
+    if (tablaEmitidos && tablaEmitidos.childElementCount > 0) {
+      console.log('✅ Usando tabla CompEmitidos, elementos:', tablaEmitidos.childElementCount);
+      return { encontrada: true, tabla: tablaEmitidos, tipo: 'E' };
+    }
 
+    console.log('❌ No se encontraron tablas válidas');
     return { encontrada: false };
-  }
-
-  getPaginationInfoRobusta() {
-    try {
-      const paginator = document.querySelector(`#frmPrincipal\\:tabla${this.extractor.tipo_emisi}_paginator_bottom`);
-      if (paginator) {
-        const current = paginator.querySelector('.ui-paginator-current');
-        if (current) {
-          const numbers = current.textContent.match(/\d+/g);
-          if (numbers && numbers.length >= 2) return { current: parseInt(numbers[1]), total: parseInt(numbers[1]) };
-        }
-      }
-    } catch(e) {}
-    return { current: 1, total: 1 };
-  }
-
-  detectCurrentPagination() {
-    const paginationInfo = this.getPaginationInfoRobusta();
-    this.extractor.currentPage = paginationInfo.current;
-    this.extractor.totalPages = paginationInfo.total;
   }
 
   mapearCabeceras(tablaElement) {
     const headerMap = {};
     const headerCells = tablaElement.querySelectorAll('thead th');
 
+    console.log('🗂️ Mapeando cabeceras, encontradas:', headerCells.length);
     headerCells.forEach((th, index) => {
-        const text = (th.textContent || '').trim().toLowerCase().replace(/\s+/g, ' ');
-        if (text.includes('ruc') && (text.includes('social') || text.includes('receptor'))) headerMap.rucEmisorRaw = index;
-        if (text.includes('número de comprobante')) headerMap.numero = index;
-        if (text.includes('clave de acceso')) headerMap.claveAcceso = index;
-        if (text.includes('fecha y hora de emisión')) headerMap.fechaEmision = index;
-        if (text.includes('fecha y hora de autorización')) headerMap.fechaAutorizacion = index;
-        if (text.includes('valor sin impuestos')) headerMap.valorSinImpuestos = index;
-        if (text.includes('iva') && text.length < 5) headerMap.iva = index;
-        if (text.includes('importe total')) headerMap.importeTotal = index;
+      const text = (th.textContent || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      console.log(`Cabecera ${index}: "${text}"`);
+      if (text.includes('ruc') && (text.includes('social') || text.includes('receptor'))) headerMap.rucEmisorRaw = index;
+      if (text.includes('número de comprobante')) headerMap.numero = index;
+      if (text.includes('clave de acceso')) headerMap.claveAcceso = index;
+      if (text.includes('fecha y hora de emisión')) headerMap.fechaEmision = index;
+      if (text.includes('fecha y hora de autorización')) headerMap.fechaAutorizacion = index;
+      if (text.includes('valor sin impuestos')) headerMap.valorSinImpuestos = index;
+      if (text.includes('iva') && text.length < 5) headerMap.iva = index;
+      if (text.includes('importe total')) headerMap.importeTotal = index;
     });
     this.extractor.headerMap = headerMap;
     console.log('Mapeo de cabeceras:', this.extractor.headerMap);
@@ -226,8 +218,8 @@ class SRIPagination {
     try {
       const h = this.extractor.headerMap;
       if (Object.keys(h).length < 7) {
-          console.error("Mapeo de cabeceras incompleto, no se puede extraer la fila.");
-          return null;
+        console.error("Mapeo de cabeceras incompleto, no se puede extraer la fila.");
+        return null;
       }
 
       const importeTotal = SRIUtils.extraerNumeroCelda(celdas[h.importeTotal]);
@@ -289,7 +281,21 @@ class SRIPagination {
       });
     } catch (error) { console.warn('No se pudo guardar resultado final:', error); }
   }
+
+  getPaginationInfoRobusta() {
+    try {
+      const paginator = document.querySelector(`#frmPrincipal\\:tabla${this.extractor.tipo_emisi}_paginator_bottom`);
+      if (paginator) {
+        const current = paginator.querySelector('.ui-paginator-current');
+        if (current) {
+          const numbers = current.textContent.match(/\d+/g);
+          if (numbers && numbers.length >= 2) return { current: parseInt(numbers[1]), total: parseInt(numbers[1]) };
+        }
+      }
+    } catch(e) {}
+    return { current: 1, total: 1 };
+  }
 }
 
-// Exportar para uso global
+// Exportar globalmente para compatibilidad con extensiones
 window.SRIPagination = SRIPagination;

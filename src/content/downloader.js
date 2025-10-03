@@ -1,0 +1,135 @@
+// Módulo de descarga para Acontplus SRI Tools v1.4.1
+// Maneja la descarga de documentos XML/PDF
+
+class SRIDownloader {
+  constructor(extractorInstance) {
+    this.extractor = extractorInstance;
+    this.view_state = "";
+  }
+
+  async verificarDescargasEnPagina(facturas) {
+    try {
+        if (!window.showDirectoryPicker) {
+            chrome.runtime.sendMessage({ action: 'verificationError', error: 'API no soportada.' });
+            return;
+        }
+        const dirHandle = await window.showDirectoryPicker();
+        const downloadedFiles = new Set();
+        for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file') {
+                let normalizedName = entry.name.substring(0, entry.name.lastIndexOf('.'));
+                downloadedFiles.add(normalizedName);
+            }
+        }
+        const foundFiles = facturas
+            .filter(factura => downloadedFiles.has(factura.numero.replace(/ /g, '_')))
+            .map(factura => factura.id);
+
+        await chrome.storage.local.set({
+            lastVerification: {
+                foundIds: foundFiles,
+                total: facturas.length,
+                timestamp: Date.now()
+            }
+        });
+
+    } catch (error) {
+        if (error.name !== 'AbortError') {
+            console.error('Error al verificar descargas:', error);
+            chrome.runtime.sendMessage({ action: 'verificationError', error: error.message });
+        }
+    }
+  }
+
+  async descargarDocumentosSeleccionados(facturas, formato) {
+    console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);
+    let descargados = 0;
+    let fallidos = 0;
+
+    const dirHandle = null;
+
+    for (let i = 0; i < facturas.length; i++) {
+        this.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.view_state;
+        const factura = facturas[i];
+
+        chrome.runtime.sendMessage({ action: 'updateDownloadProgress', current: i + 1, total: facturas.length });
+
+        try {
+            const originalIndex = factura.rowIndex;
+            if (originalIndex === undefined || originalIndex < 0) {
+                fallidos++;
+                continue;
+            }
+            const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex, dirHandle);
+            if(exito) descargados++;
+            else fallidos++;
+
+            await SRIUtils.esperar(500);
+        } catch (error) {
+            console.error(`Error descargando ${factura.claveAcceso}:`, error);
+            fallidos++;
+        }
+    }
+
+    chrome.runtime.sendMessage({
+      action: 'descargaFinalizada',
+      exitosos: descargados,
+      fallidos: fallidos,
+      total: facturas.length
+    });
+  }
+
+  async descargarUnicoDocumento(factura, formato, originalIndex, dirHandle) {
+    const url_links = window.location.href;
+    const name_files = `${factura.numero.replace(/ /g, '_')}.${formato}`;
+
+    let text_body = `frmPrincipal=frmPrincipal&javax.faces.ViewState=${encodeURIComponent(this.view_state)}&g-recaptcha-response=`;
+
+    if (this.extractor.tipo_emisi === "CompRecibidos") {
+        const fecha = new Date(factura.fechaEmision);
+        text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3Aano=${fecha.getFullYear()}&frmPrincipal%3Ames=${fecha.getMonth() + 1}&frmPrincipal%3Adia=${fecha.getDate()}`;
+    } else {
+        text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3AcalendarFechaDesde_input=${new Date(factura.fechaEmision).toLocaleDateString('es-EC')}`;
+    }
+
+    text_body += `&frmPrincipal%3Atabla${this.extractor.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}=frmPrincipal%3Atabla${this.extractor.tipo_emisi}%3A${originalIndex}%3Alnk${formato.charAt(0).toUpperCase() + formato.slice(1)}`;
+
+    const exito = await this.fetchParaDescarga(url_links, text_body, formato, name_files, dirHandle);
+    return exito;
+  }
+
+  async fetchParaDescarga(urlSRI, frmBody, frmFile, nameFile, dirHandle) {
+    try {
+        const response = await fetch(urlSRI, {
+            headers: {
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "content-type": "application/x-www-form-urlencoded",
+            },
+            body: frmBody,
+            method: "POST",
+        });
+
+        if (!response.ok) throw new Error(`Error en la respuesta del servidor: ${response.statusText}`);
+
+        const blob = await response.blob();
+
+        const downloadLink = document.createElement('a');
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.download = nameFile;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        setTimeout(() => {
+            window.URL.revokeObjectURL(downloadLink.href);
+            document.body.removeChild(downloadLink);
+        }, 100);
+
+        return true;
+    } catch (error) {
+        console.error("Error en fetchParaDescarga:", error);
+        return false;
+    }
+  }
+}
+
+// Exportar para uso global
+window.SRIDownloader = SRIDownloader;

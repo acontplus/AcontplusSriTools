@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acontplus SRI Tools v1.4.1 - Final</title>
-    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="../styles/popup.css">
     <!-- Google Fonts optimizada -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- SheetJS LOCAL - Solucion CSP -->
@@ -138,6 +138,12 @@
         </footer>
     </div>
 
-    <script src="popup.js"></script>
+    <!-- Scripts modulares del popup -->
+    <script src="src/popup/services/ui.js"></script>
+    <script src="src/popup/services/data.js"></script>
+    <script src="src/popup/components/table.js"></script>
+    <script src="src/popup/components/export.js"></script>
+    <script src="src/popup/components/notifications.js"></script>
+    <script src="src/popup/index.js"></script>
 </body>
 </html>

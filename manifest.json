@@ -20,14 +20,14 @@
         "*://comprobantes-electronicos-internet/*",
         "*://srienlinea.sri.gob.ec/*"
       ],
-      "js": ["content.js"],
+      "js": ["src/shared/utils.js", "src/content/downloader.js", "src/content/pagination.js", "src/content/extractor.js", "src/content/index.js"],
       "css": ["styles/content.css"],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
   "background": {
-    "service_worker": "background/background.js"
+    "service_worker": "src/background/index.js"
   },
   "action": {
     "default_popup": "popup/popup.html",
@@ -40,7 +40,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup/popup.html", "libs/*", "content.js"],
+      "resources": ["popup/popup.html", "libs/*", "src/content/index.js"],
       "matches": ["*://*.sri.gob.ec/*", "*://comprobantes-electronicos-internet/*"]
     }
   ],

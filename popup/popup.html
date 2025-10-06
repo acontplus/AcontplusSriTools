@@ -5,72 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acontplus SRI Tools v1.4.1 - Final</title>
     <link rel="stylesheet" href="../styles/popup.css">
+    <!-- Tailwind CSS for responsiveness -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Google Fonts optimizada -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- SheetJS LOCAL - Solucion CSP -->
     <script src="../libs/xlsx.full.min.js"></script>
 </head>
-<body>
-    <div class="container">
-        <!-- Header with Acontplus Branding v1.4.1 -->
-        <header class="header">
-            <div class="logo-section">
-                <!-- Logo SVG removed as requested -->
-                <div class="logo-text">
-                    <h1>ACONTPLUS</h1>
-                    <span class="tagline">SRI Tools v1.4.1 - Final</span>
+<body class="p-4 md:p-6 min-w-[600px]">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- 1. Cabecera con Logo y Título -->
+        <header class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <svg class="w-12 h-12 brand-logo" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill-opacity="0.3"/>
+                    <path d="M12 6C9.79 6 8 7.79 8 10C8 12.21 9.79 14 12 14C14.21 14 16 12.21 16 10C16 7.79 14.21 6 12 6ZM12 12C10.9 12 10 11.1 10 10C10 8.9 10.9 8 12 8C13.1 8 14 8.9 14 10C14 11.1 13.1 12 12 12Z"/>
+                    <path d="M17 15H7C6.45 15 6 15.45 6 16C6 16.55 6.45 17 7 17H17C17.55 17 18 16.55 18 16C18 15.45 17.55 15 17 15Z"/>
+                </svg>
+                <div>
+                    <h1 class="text-2xl font-bold brand-logo" style="font-family: 'Arial Rounded MT Bold', sans-serif;">ACONTPLUS</h1>
+                    <p class="text-sm text-gray-500">Facturar nunca fue tan fácil</p>
                 </div>
             </div>
-            <div class="extraction-info">
-                <span id="extraction-timestamp" class="timestamp">Cargando...</span>
-            </div>
+             <button id="start-process" class="btn-primary font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                <i class="fa-solid fa-play"></i>
+                Analizar Comprobantes
+            </button>
         </header>
 
-        <!-- Stats Panel - Centrado con 2 elementos -->
-        <div class="stats-panel">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-content">
-                        <div class="stat-value" id="total-count">0</div>
-                        <div class="stat-label">Total Documentos</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-content">
-                        <div class="stat-value" id="selected-count">0</div>
-                        <div class="stat-label">Seleccionados</div>
-                    </div>
-                </div>
+        <!-- 2. Contadores y Estadísticas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="card">
+                <p class="text-gray-500 text-sm">Total Documentos</p>
+                <p id="total-docs" class="text-3xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="card">
+                <p class="text-gray-500 text-sm">Seleccionados</p>
+                <p id="selected-docs" class="text-3xl font-bold" style="color: var(--brand-pink);">0</p>
+            </div>
+            <div class="card">
+                <p class="text-gray-500 text-sm">Descargados</p>
+                <p id="downloaded-docs" class="text-3xl font-bold text-green-600">0</p>
+            </div>
+            <div class="card">
+                <p class="text-gray-500 text-sm">Suma Total</p>
+                <p id="total-sum" class="text-2xl font-bold" style="color: var(--brand-pink);">$0.00</p>
             </div>
         </div>
 
-        <!-- Action Controls - Centrados -->
-        <div class="action-controls">
-            <button id="new-search" class="btn btn-secondary" title="Buscar documentos usando tecnicas robustas en todas las paginas">
-                <span class="btn-text">Buscar</span>
-            </button>
-            <button id="export-selected" class="btn btn-primary" disabled title="Exportar documentos seleccionados a Excel">
-                <span class="btn-text">Exportar Excel</span>
-            </button>
-            <div class="download-group">
-                <select id="download-format" class="btn-select">
-                    <option value="xml">XML</option>
-                    <option value="pdf">PDF</option>
-                </select>
-                <button id="download-selected" class="btn btn-primary" disabled title="Descargar archivos seleccionados">
-                    <span class="btn-text">Descargar</span>
-                </button>
+        <!-- 3. Panel de Acciones -->
+        <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <!-- Grupo de Descarga Principal -->
+                <div class="flex items-center">
+                    <select id="doc-type" class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50">
+                        <option value="xml">Descargar XML</option>
+                        <option value="pdf">Descargar PDF</option>
+                        <option value="both">Descargar XML y PDF</option>
+                    </select>
+                    <button id="download-btn" disabled class="bg-gray-400 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Descargar</span>
+                    </button>
+                </div>
+
+                <!-- Grupo de Acciones Secundarias -->
+                <div class="flex items-center gap-3">
+                     <button id="export-excel-btn" disabled class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Exportar</span>
+                    </button>
+                    <button id="verify-btn" disabled class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2">
+                        <i class="fa-solid fa-check-double"></i>
+                        Verificar
+                    </button>
+                </div>
             </div>
-             <button id="verify-downloads" class="btn btn-accent" title="Verificar qué documentos seleccionados ya están en una carpeta local">
-                <span class="btn-text">Verificar Descargas</span>
-            </button>
-            <button id="select-missing" class="btn btn-accent" title="Seleccionar documentos que no han sido verificados localmente">
-                <span class="btn-text">Seleccionar Faltantes</span>
-            </button>
+            <!-- Ubicación de Descarga -->
+            <div class="mt-4 pt-3 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-600">
+                <i class="fa-solid fa-folder-open text-gray-500"></i>
+                <span class="font-semibold">Ubicación de guardado:</span>
+                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-md">Carpeta de Descargas del Navegador</span>
+            </div>
         </div>
 
         <!-- Loading State -->
-        <div id="loading" class="loading">
+        <div id="loading" class="loading" style="display: none;">
             <div class="spinner"></div>
             <p>Cargando comprobantes electronicos...</p>
             <div id="pagination-progress" class="pagination-progress" style="display: none;">
@@ -85,57 +106,36 @@
             </div>
         </div>
 
-        <!-- No Data State -->
-        <div id="no-data" class="no-data" style="display: none;">
-            <div class="empty-icon">📄</div>
-            <h3>No se encontraron comprobantes</h3>
-            <p>Navega a una pagina del SRI con comprobantes electronicos y utiliza "Buscar" para extraer todos los documentos automaticamente.</p>
-        </div>
-
-        <!-- Table Container -->
-        <div id="table-container" class="table-container" style="display: none;">
-            <div class="table-wrapper">
-                <table class="facturas-table">
-                    <thead>
+        <!-- 4. Tabla de Documentos -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-white uppercase table-header">
                         <tr>
-                            <th class="checkbox-col">
-                                <input type="checkbox" id="master-checkbox" title="Seleccionar/Deseleccionar todos">
+                            <th scope="col" class="p-4">
+                                <input type="checkbox" id="select-all" class="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500">
                             </th>
-                            <th class="counter-col">Nro</th>
-                            <th class="tipo-col">Tipo</th>
-                            <th class="numero-col">Numero</th>
-                            <th class="ruc-col">RUC</th>
-                            <th class="razon-col">Razon Social</th>
-                            <th class="fecha-col">F. Emision</th>
-                            <th class="fecha-auth-col">F. Autorizacion</th>
-                            <th class="clave-acceso-col">Clave de Acceso</th>
-                            <th class="subtotal-col">Subtotal</th>
-                            <th class="iva-col">IVA</th>
-                            <th class="amount-col">Total</th>
-                            <th class="verificado-col" title="Verificado en carpeta local">✔️</th>
+                            <th scope="col" class="px-6 py-3">Nro</th>
+                            <th scope="col" class="px-6 py-3">Número Comprobante</th>
+                            <th scope="col" class="px-6 py-3">RUC</th>
+                            <th scope="col" class="px-6 py-3">Razón Social</th>
+                            <th scope="col" class="px-6 py-3">Fecha Emisión</th>
+                            <th scope="col" class="px-6 py-3 text-right">Total ($)</th>
+                            <th scope="col" class="px-6 py-3 text-center">Estado</th>
                         </tr>
                     </thead>
-                    <tbody id="facturas-tbody">
-                        <!-- Datos se cargan dinamicamente -->
+                    <tbody id="docs-table-body">
+                       <!-- Las filas se insertarán aquí dinámicamente -->
+                       <tr class="text-center"><td colspan="8" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione 'Analizar'.</td></tr>
                     </tbody>
-                    <tfoot id="facturas-totals" style="display: none;">
-                        <tr class="totals-row">
-                            <td colspan="11" class="text-right"><strong>TOTALES:</strong></td>
-                            <td class="amount-col total-amount">$0.00</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
+    </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-brand">
-                <span class="company">Acontplus S.A.S</span>
-                <span class="version-number">v1.4.1 Final</span>
-            </div>
-        </footer>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast bg-green-500 text-white">
+        <p id="toast-message"></p>
     </div>
 
     <!-- Scripts modulares del popup -->

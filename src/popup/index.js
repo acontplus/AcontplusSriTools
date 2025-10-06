@@ -42,15 +42,12 @@ class FacturasManager {
 
   async initializeDOM() {
     try {
-      this.tbodyEl = PopupUI.safeGetElement('facturas-tbody');
+      this.tbodyEl = PopupUI.safeGetElement('docs-table-body');
       this.loadingEl = PopupUI.safeGetElement('loading');
-      this.tableContainerEl = PopupUI.safeGetElement('table-container');
-      this.noDataEl = PopupUI.safeGetElement('no-data');
-      this.newSearchBtn = PopupUI.safeGetElement('new-search');
-      this.exportBtn = PopupUI.safeGetElement('export-selected');
-      this.downloadBtn = PopupUI.safeGetElement('download-selected');
-      this.verifyBtn = PopupUI.safeGetElement('verify-downloads');
-      this.selectMissingBtn = PopupUI.safeGetElement('select-missing');
+      this.newSearchBtn = PopupUI.safeGetElement('start-process');
+      this.exportBtn = PopupUI.safeGetElement('export-excel-btn');
+      this.downloadBtn = PopupUI.safeGetElement('download-btn');
+      this.verifyBtn = PopupUI.safeGetElement('verify-btn');
       this.paginationProgressEl = PopupUI.safeGetElement('pagination-progress');
       this.currentPageEl = PopupUI.safeGetElement('current-page');
       this.totalPagesEl = PopupUI.safeGetElement('total-pages');
@@ -68,7 +65,6 @@ class FacturasManager {
     if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportComponent.exportSelected());
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
     if (this.verifyBtn) this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
-    if (this.selectMissingBtn) this.selectMissingBtn.addEventListener('click', () => this.dataManager.seleccionarFaltantes());
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -76,7 +72,7 @@ class FacturasManager {
       });
     }
 
-    const masterCheckbox = document.getElementById('master-checkbox');
+    const masterCheckbox = document.getElementById('select-all');
     if (masterCheckbox) masterCheckbox.addEventListener('change', () => this.dataManager.toggleSelectAll());
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -116,18 +112,7 @@ class FacturasManager {
 
     if (this.dataManager.facturas.length > 0) {
       console.log('✅ Mostrando tabla con', this.dataManager.facturas.length, 'documentos');
-      PopupUI.showState({
-        loading: this.loadingEl,
-        table: this.tableContainerEl,
-        'no-data': this.noDataEl
-      }, 'table');
       this.tableComponent.applyTheme();
-    } else {
-      PopupUI.showState({
-        loading: this.loadingEl,
-        table: this.tableContainerEl,
-        'no-data': this.noDataEl
-      }, 'no-data');
     }
   }
 
@@ -208,7 +193,7 @@ class FacturasManager {
       return;
     }
 
-    const formato = document.getElementById('download-format').value;
+    const formato = document.getElementById('doc-type').value;
     const facturasParaDescargar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
 
     this.downloadBtn.disabled = true;
@@ -263,11 +248,7 @@ class FacturasManager {
       PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Conectando...</span>');
     }
 
-    PopupUI.showState({
-      loading: this.loadingEl,
-      table: this.tableContainerEl,
-      'no-data': this.noDataEl
-    }, 'loading');
+    if (this.loadingEl) this.loadingEl.style.display = 'block';
 
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -386,14 +367,10 @@ class FacturasManager {
       }
 
       this.showNotification(errorMessage, 'error');
-      PopupUI.showState({
-        loading: this.loadingEl,
-        table: this.tableContainerEl,
-        'no-data': this.noDataEl
-      }, 'no-data');
+      if (this.loadingEl) this.loadingEl.style.display = 'none';
       if (this.newSearchBtn) {
         this.newSearchBtn.disabled = false;
-        PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Buscar</span>');
+        PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Analizar Comprobantes</span>');
       }
     }
   }
@@ -449,7 +426,7 @@ class FacturasManager {
     }
 
     if (progress.documentosEncontrados !== undefined) {
-      const totalCountEl = document.getElementById('total-count');
+      const totalCountEl = document.getElementById('total-docs');
       if (totalCountEl) {
         PopupUI.safeSetText(totalCountEl, progress.documentosEncontrados.toString());
       }

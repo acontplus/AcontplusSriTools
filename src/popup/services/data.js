@@ -56,7 +56,7 @@ class DataManager {
       this.manager.downloadBtn.disabled = this.selectedFacturas.size === 0;
     }
 
-    const masterCheckbox = document.getElementById('master-checkbox');
+    const masterCheckbox = document.getElementById('select-all');
     if (masterCheckbox) {
       masterCheckbox.checked = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0;
       masterCheckbox.indeterminate = this.selectedFacturas.size > 0 && this.selectedFacturas.size < this.facturas.length;
@@ -64,7 +64,7 @@ class DataManager {
   }
 
   toggleSelectAll() {
-    const masterCheckbox = document.getElementById('master-checkbox');
+    const masterCheckbox = document.getElementById('select-all');
     const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size === 0;
 
     if (shouldSelectAll) {

@@ -29,10 +29,16 @@ class PopupUI {
 
   static showState(states, state) {
     const stateElements = {
-      loading: states.loadingEl,
-      table: states.tableContainerEl,
-      'no-data': states.noDataEl
+      loading: states.loading,
+      table: states.table,
+      'no-data': states['no-data']
     };
+
+    console.log('🎨 showState llamado:', state, 'elementos:', {
+      loading: !!stateElements.loading,
+      table: !!stateElements.table,
+      noData: !!stateElements['no-data']
+    });
 
     Object.values(stateElements).forEach(el => {
       if (el) el.style.display = 'none';
@@ -40,6 +46,9 @@ class PopupUI {
 
     if (stateElements[state]) {
       stateElements[state].style.display = state === 'table' ? 'flex' : 'block';
+      console.log('✅ Estado cambiado a:', state);
+    } else {
+      console.error('❌ Estado no encontrado:', state);
     }
   }
 

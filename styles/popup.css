@@ -68,6 +68,37 @@ body {
     visibility: visible;
 }
 
+/* Button states based on disabled attribute */
+#download-btn:disabled {
+    background-color: #9ca3af !important;
+    color: white !important;
+}
+
+#download-btn:not(:disabled) {
+    background-color: var(--brand-pink) !important;
+    color: white !important;
+}
+
+#export-excel-btn:disabled {
+    background-color: #9ca3af !important;
+    color: white !important;
+}
+
+#export-excel-btn:not(:disabled) {
+    background-color: var(--brand-pink) !important;
+    color: white !important;
+}
+
+#verify-btn:disabled {
+    background-color: #9ca3af !important;
+    color: white !important;
+}
+
+#verify-btn:not(:disabled) {
+    background-color: #6c757d !important;
+    color: white !important;
+}
+
 /* Loading styles */
 .loading {
     padding: 80px 20px;

@@ -567,9 +567,7 @@ body {
 }
 
 .facturas-table tbody tr::before {
-  content: '';
-  position: absolute;
-  left: 0;
+  left: 1;
   top: 0;
   bottom: 0;
   width: 0;
@@ -589,11 +587,11 @@ body {
 
 .facturas-table tbody tr.selected {
   background: linear-gradient(90deg, rgba(214, 22, 114, 0.12) 0%, rgba(255, 169, 1, 0.08) 100%);
-  border-left: 4px solid #D61672;
+  border-left: 2px solid #D61672;
 }
 
 .facturas-table tbody tr.selected::before {
-  width: 4px;
+  width: 2px;
 }
 
 .facturas-table tbody tr.selected:hover {

@@ -49,12 +49,35 @@ class DataManager {
   updateSelectionCount() {
     this.manager.updateCounts();
 
-    if (this.manager.exportBtn) {
-      this.manager.exportBtn.disabled = this.selectedFacturas.size === 0;
-    }
+    const hasSelection = this.selectedFacturas.size > 0;
+
+    // Habilitar/deshabilitar botones
     if (this.manager.downloadBtn) {
-      this.manager.downloadBtn.disabled = this.selectedFacturas.size === 0;
+      this.manager.downloadBtn.disabled = !hasSelection;
     }
+    if (this.manager.exportBtn) {
+      this.manager.exportBtn.disabled = !hasSelection;
+    }
+    if (this.manager.verifyBtn) {
+      this.manager.verifyBtn.disabled = !hasSelection;
+    }
+
+    // Cambiar estilos de los botones
+    const updateButton = (btn, enabledClass, hasSelection) => {
+      if (!btn) return;
+      if (hasSelection) {
+        btn.classList.remove('bg-gray-400');
+        btn.classList.add(enabledClass);
+      } else {
+        btn.classList.add('bg-gray-400');
+        btn.classList.remove(enabledClass);
+      }
+    };
+
+    updateButton(this.manager.downloadBtn, 'btn-primary', hasSelection);
+    updateButton(this.manager.exportBtn, 'btn-excel', hasSelection);
+    updateButton(this.manager.verifyBtn, 'btn-secondary', hasSelection);
+
 
     const masterCheckbox = document.getElementById('select-all');
     if (masterCheckbox) {

@@ -33,7 +33,6 @@ class FacturasManager {
   }
 
   async init() {
-    console.log('🚀 Inicializando Acontplus SRI Tools v' + this.version);
 
     await this.initializeDOM();
     PopupUI.initializeBrandIdentity(this.version);
@@ -58,7 +57,6 @@ class FacturasManager {
 
       this.tableComponent.initialize(this.tbodyEl);
       this.createMissingProgressElements();
-      console.log('✅ Elementos DOM inicializados correctamente');
     } catch (error) {
       console.error('Error inicializando elementos:', error);
       this.showNotification('Error inicializando interfaz', 'error');
@@ -117,6 +115,7 @@ class FacturasManager {
     this.renderTable();
 
     if (this.dataManager.facturas.length > 0) {
+      console.log('✅ Mostrando tabla con', this.dataManager.facturas.length, 'documentos');
       PopupUI.showState({
         loading: this.loadingEl,
         table: this.tableContainerEl,
@@ -259,8 +258,6 @@ class FacturasManager {
   }
 
   async startNewSearchRobusta() {
-    console.log('🔍 Iniciando búsqueda completa automática...');
-
     if (this.newSearchBtn) {
       this.newSearchBtn.disabled = true;
       PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Conectando...</span>');
@@ -282,9 +279,6 @@ class FacturasManager {
       if (!this.isDomainValid(tab.url)) {
         throw new Error('Navega a una página del SRI (*.sri.gob.ec)');
       }
-
-      console.log('Pestaña activa encontrada:', tab.url);
-
       // Verificar si el content script está cargado, si no, inyectarlo
       let pingResponse = null;
       try {
@@ -294,7 +288,6 @@ class FacturasManager {
       }
 
       if (!pingResponse || !pingResponse.success) {
-        console.log('Content script no detectado, inyectando scripts...');
         PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Cargando módulos...</span>');
         
         // Inyectar los scripts en orden
@@ -330,8 +323,6 @@ class FacturasManager {
             target: { tabId: tab.id },
             files: ['src/content/index.js']
           });
-
-          console.log('✅ Scripts inyectados, esperando inicialización...');
           
           // Esperar un momento para que se inicialicen
           await this.sleep(1500);
@@ -342,11 +333,9 @@ class FacturasManager {
             try {
               pingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
               if (pingResponse && pingResponse.success) {
-                console.log('✅ Content script respondiendo correctamente');
                 break;
               }
             } catch (e) {
-              console.log(`Intento ${i + 1}/3 de verificación...`);
               await this.sleep(500);
             }
           }
@@ -422,10 +411,7 @@ class FacturasManager {
   async sendMessageWithRetry(tabId, message, maxRetries) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log('Intento ' + attempt + '/' + maxRetries + ' enviando mensaje...');
-
         const response = await chrome.tabs.sendMessage(tabId, message);
-        console.log('Respuesta recibida:', response);
         return response;
 
       } catch (error) {
@@ -474,7 +460,6 @@ class FacturasManager {
     }
 
     const porcentaje = progress.porcentaje || Math.round((progress.currentPage / progress.totalPages) * 100);
-    console.log('📊 Progreso: ' + porcentaje + '% - Página ' + progress.currentPage + '/' + progress.totalPages + ' - ' + (progress.documentosEncontrados || 0) + ' documentos');
   }
 
   createMissingProgressElements() {
@@ -486,7 +471,6 @@ class FacturasManager {
         progressFill.className = 'progress-fill';
         progressBar.appendChild(progressFill);
         this.progressFillEl = progressFill;
-        console.log('Elemento progress-fill creado dinámicamente');
       }
     }
   }

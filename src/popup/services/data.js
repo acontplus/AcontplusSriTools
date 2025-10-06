@@ -13,6 +13,7 @@ class DataManager {
     chrome.storage.local.get(['facturasData', 'lastExtraction', 'lastVerification']).then(result => {
       if (result.facturasData && result.facturasData.length > 0) {
         this.facturas = result.facturasData;
+        this.manager.facturas = this.facturas; // SINCRONIZAR con manager principal
         this.manager.updateDisplay();
 
         if (result.lastExtraction) {
@@ -127,7 +128,14 @@ class DataManager {
     console.log('✅ Búsqueda completa finalizada:', progress);
 
     this.facturas = progress.allDocuments || [];
+    this.manager.facturas = this.facturas; // SINCRONIZAR con manager principal
     this.paginationInfo = progress.paginationInfo || { current: progress.totalPages || 1, total: progress.totalPages || 1 };
+
+    console.log('📦 Datos sincronizados:', {
+      dataManagerFacturas: this.facturas.length,
+      managerFacturas: this.manager.facturas.length,
+      primerosDocumentos: this.facturas.slice(0, 2)
+    });
 
     this.manager.updateDisplay();
     this.selectedFacturas.clear();

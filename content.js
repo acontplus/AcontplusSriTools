@@ -88,14 +88,12 @@ class SRIDownloader {
 
     } catch (error) {
       if (error.name !== 'AbortError') {
-        console.error('Error al verificar descargas:', error);
         chrome.runtime.sendMessage({ action: 'verificationError', error: error.message });
       }
     }
   }
 
   async descargarDocumentosSeleccionados(facturas, formato) {
-    console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);
     let descargados = 0;
     let fallidos = 0;
 
@@ -119,7 +117,6 @@ class SRIDownloader {
 
         await this.extractor.esperar(500);
       } catch (error) {
-        console.error(`Error descargando ${factura.claveAcceso}:`, error);
         fallidos++;
       }
     }
@@ -178,7 +175,6 @@ class SRIDownloader {
 
       return true;
     } catch (error) {
-      console.error("Error en fetchParaDescarga:", error);
       return false;
     }
   }
@@ -191,10 +187,7 @@ class SRIPagination {
   }
 
   async procesarTodasLasPaginasRobusta(config = {}) {
-    console.log('🚀 === INICIANDO BÚSQUEDA COMPLETA ROBUSTA ===');
-
     if (this.extractor.isProcessingPagination) {
-      console.log('⚠️ Ya se está procesando, evitando duplicados');
       return { success: false, error: 'Búsqueda ya en progreso' };
     }
 
@@ -208,7 +201,6 @@ class SRIPagination {
 
       this.extractor.tipoComprobante = resultadoInicial.tipo;
       const tipoTexto = this.extractor.tipoComprobante === 'R' ? 'RECIBIDOS' : 'EMITIDOS';
-      console.log('✅ Tabla detectada: Documentos', tipoTexto);
 
       await this.ejecutarLogicaDescargaRobusta();
 
@@ -218,8 +210,6 @@ class SRIPagination {
         tipoComprobante: tipoTexto,
         optimizacionAplicada: this.extractor.movimiento === "REPAGINAR"
       };
-
-      console.log('🎉 === BÚSQUEDA COMPLETA FINALIZADA ===', resumenFinal);
       await this.guardarResultadoFinalCompleto(resumenFinal);
       this.extractor.isProcessingPagination = false;
 
@@ -233,14 +223,12 @@ class SRIPagination {
       };
 
     } catch (error) {
-      console.error('❌ Error en búsqueda completa:', error);
       this.extractor.isProcessingPagination = false;
       return { success: false, error: error.message };
     }
   }
 
   async ejecutarLogicaDescargaRobusta() {
-    console.log('🔄 Ejecutando lógica robusta adaptada...');
     if (this.extractor.movimiento === "REPAGINAR") {
       await this.aplicarRepaginacionRobusta();
       this.extractor.movimiento = "PROCESAR";
@@ -275,7 +263,6 @@ class SRIPagination {
       }
       return false;
     } catch (error) {
-      console.error('❌ Error en repaginación:', error);
       return false;
     }
   }
@@ -383,7 +370,6 @@ class SRIPagination {
       if (text.includes('importe total')) headerMap.importeTotal = index;
     });
     this.extractor.headerMap = headerMap;
-    console.log('Mapeo de cabeceras:', this.extractor.headerMap);
   }
 
   extraerDatosFilaEspecifica(celdas, tipoComprobante, index, rowIndex) {
@@ -500,7 +486,6 @@ class SRIDocumentosExtractor {
   }
 
   init() {
-    console.log('SRI Documentos Extractor v' + this.version + ' iniciado - Acontplus S.A.S.');
     this.setupMessageListener();
     this.detectarTipoEmisionRobusta();
     this.detectCurrentPagination();
@@ -508,7 +493,6 @@ class SRIDocumentosExtractor {
 
   setupMessageListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      console.log('📨 Mensaje recibido:', message);
 
       switch (message.action) {
         case 'ping':
@@ -563,18 +547,14 @@ class SRIDocumentosExtractor {
       if (tablaRecibidos && tablaRecibidos.childElementCount > 0) {
         this.tipo_emisi = "CompRecibidos";
         this.body_tabla = tablaRecibidos;
-        console.log('📄 Tipo detectado: CompRecibidos');
       } else if (tablaEmitidos && tablaEmitidos.childElementCount > 0) {
         this.tipo_emisi = "CompEmitidos";
         this.body_tabla = tablaEmitidos;
-        console.log('📄 Tipo detectado: CompEmitidos');
       } else {
         if (window.location.href.includes('recibidos')) this.tipo_emisi = "CompRecibidos";
         else this.tipo_emisi = "CompEmitidos";
-        console.log('📄 Tipo detectado por URL:', this.tipo_emisi);
       }
     } catch (error) {
-      console.warn('⚠️ Error detectando tipo emisión:', error);
       this.tipo_emisi = "CompEmitidos";
     }
   }
@@ -673,5 +653,4 @@ class SRIDocumentosExtractor {
 
 // Inicializar el extractor y hacerlo globalmente accesible
 window.SRIExtractorLoaded = true;
-console.log('🔍 Content Script cargado correctamente - Acontplus SRI Tools v1.4.1-Final');
 window.sriExtractorInstance = new SRIDocumentosExtractor();

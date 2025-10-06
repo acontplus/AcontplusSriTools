@@ -1,7 +1,3 @@
-// Background Script principal modular para Acontplus SRI Tools v1.4.1 - Final
-// Punto de entrada que integra todos los servicios de background
-
-console.log('🚀 Background Script modular cargado - Acontplus SRI Tools v1.4.1-Final');
 
 // [MÓDULOS INCLUIDOS INLINE PARA COMPATIBILIDAD CON SERVICE WORKER]
 
@@ -40,7 +36,6 @@ class PerformanceMonitor {
 
   monitorearPerformance(evento, datos = {}) {
     const registro = { evento, timestamp: Date.now(), datos, version: '1.4.1-Final' };
-    console.log('📈 Performance:', registro);
     chrome.storage.local.get(['metricas']).then(result => {
       const metricas = result.metricas || [];
       metricas.push(registro);
@@ -56,17 +51,14 @@ class PerformanceMonitor {
       if (result.metricas) {
         const metricasLimpias = result.metricas.filter(metrica => (ahora - metrica.timestamp) < SEMANA_EN_MS);
         chrome.storage.local.set({ metricas: metricasLimpias, ultimaLimpieza: ahora });
-        console.log('🧹 Limpieza de datos completada');
       }
     });
   }
 
-  setupHeartbeat() { setInterval(() => console.log('💓 Background script activo - v1.4.1-Final'), 5 * 60 * 1000); }
-  setupCleanup() { setInterval(() => this.limpiarDatosAntiguos(), 24 * 60 * 60 * 1000); }
+  setupHeartbeat() { setInterval(() => this.limpiarDatosAntiguos(), 24 * 60 * 60 * 1000); }
 
   setupErrorHandling() {
     self.addEventListener('error', (event) => {
-      console.error('❌ Error global en background:', event.error);
       this.monitorearPerformance('error', { mensaje: event.error.message, linea: event.lineno, archivo: event.filename });
     });
   }
@@ -90,7 +82,6 @@ class NotificationManager {
 
   async migrarDatosVersionAnterior(versionAnterior) {
     try {
-      console.log('🔄 Migrando datos de v' + versionAnterior + ' a v1.4.1...');
       const datosAnteriores = await chrome.storage.local.get(['facturasData', 'lastExtraction', 'progressStatus']);
       if (datosAnteriores.facturasData) {
         await chrome.storage.local.set({
@@ -100,7 +91,6 @@ class NotificationManager {
           versionAnterior: versionAnterior
         });
       }
-      console.log('✅ Migración completada exitosamente');
     } catch (error) { console.error('❌ Error en migración:', error); }
   }
 }
@@ -111,7 +101,6 @@ class MessageHandler {
 
   setupListeners() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      console.log('📨 Background recibió mensaje:', message);
       this.handleMessage(message, sender, sendResponse);
       return true;
     });
@@ -134,9 +123,6 @@ class MessageHandler {
 
   async updateProgress(message) {
     this.stateManager.estadoActual = message.progress; this.stateManager.procesoActivo = true;
-    if (message.progress.includes('optimizacion') || message.progress.includes('repaginando')) {
-      console.log('📊 Progreso con optimización:', message.progress); this.stateManager.estadisticasRobustas.paginasOptimizadas++;
-    }
     await chrome.storage.local.set({ estadoActual: this.stateManager.estadoActual, procesoActivo: this.stateManager.procesoActivo, timestamp: Date.now() });
     return { success: true };
   }
@@ -146,7 +132,6 @@ class MessageHandler {
     this.stateManager.ultimaExtraccion = { fecha: new Date().toISOString(), documentos: message.documentos || 0, metodo: 'Tecnicas-Robustas-v1.4.1', optimizacionAplicada: message.optimizacionAplicada || false };
     this.stateManager.estadisticasRobustas.totalExtracciones++; this.stateManager.estadisticasRobustas.documentosProcesados += (message.documentos || 0);
     await chrome.storage.local.set({ estadoActual: this.stateManager.estadoActual, procesoActivo: this.stateManager.procesoActivo, ultimaExtraccion: this.stateManager.ultimaExtraccion, estadisticasRobustas: this.stateManager.estadisticasRobustas });
-    console.log('✅ Proceso completado:', this.stateManager.ultimaExtraccion);
     return { success: true };
   }
 
@@ -164,14 +149,13 @@ class LifecycleManager {
   constructor(stateManager, notificationManager) { this.stateManager = stateManager; this.notificationManager = notificationManager; this.setupListeners(); }
 
   setupListeners() {
-    chrome.runtime.onStartup.addListener(() => { console.log('🔄 Acontplus SRI Tools iniciado - v1.4.1-Final'); this.inicializarExtension(); });
+    chrome.runtime.onStartup.addListener(() => { this.inicializarExtension(); });
     chrome.runtime.onInstalled.addListener((details) => {
-      console.log('📦 Extensión instalada/actualizada:', details);
-      if (details.reason === 'install') { console.log('🎉 Primera instalación'); this.notificationManager.mostrarBienvenida(); }
-      else if (details.reason === 'update') { console.log('⬆️ Actualización completada'); this.notificationManager.mostrarActualizacion(details.previousVersion); }
+      if (details.reason === 'install') { this.notificationManager.mostrarBienvenida(); }
+      else if (details.reason === 'update') { this.notificationManager.mostrarActualizacion(details.previousVersion); }
       this.inicializarExtension();
     });
-    chrome.runtime.onSuspend.addListener(() => { console.log('😴 Background script suspendido - guardando estado...'); this.onSuspend(); });
+    chrome.runtime.onSuspend.addListener(() => { this.onSuspend(); });
   }
 
   async inicializarExtension() {
@@ -181,8 +165,7 @@ class LifecycleManager {
       if (result.ultimaExtraccion) this.stateManager.ultimaExtraccion = result.ultimaExtraccion;
       if (result.estadoActual) this.stateManager.estadoActual = result.estadoActual;
       else this.stateManager.estadoActual = "Listo para usar tecnicas robustas...";
-      console.log('✅ Extensión inicializada correctamente'); console.log('📊 Estadísticas cargadas:', this.stateManager.estadisticasRobustas);
-    } catch (error) { console.error('❌ Error inicializando extensión:', error); this.stateManager.estadoActual = "Error en inicialización..."; }
+    } catch (error) { this.stateManager.estadoActual = "Error en inicialización..."; }
   }
 
   async onSuspend() { await chrome.storage.local.set({ ultimoEstado: this.stateManager.estadoActual, fechaSuspension: new Date().toISOString() }); }

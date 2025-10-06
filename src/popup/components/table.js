@@ -45,6 +45,7 @@ class TableComponent {
       PopupUI.safeSetHTML(this.tbodyEl,
         '<tr class="text-center"><td colspan="8" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione \'Analizar\'.</td></tr>'
       );
+      this.renderTotals(); // Also clear totals
       return;
     }
 
@@ -70,6 +71,36 @@ class TableComponent {
     }).join('');
 
     PopupUI.safeSetHTML(this.tbodyEl, tableHTML);
+    this.renderTotals(); // Render totals after rendering table
+  }
+
+  renderTotals() {
+    const footerEl = document.getElementById('docs-table-footer');
+    if (!footerEl) return;
+
+    const facturas = this.manager.dataManager.facturas;
+
+    if (facturas.length === 0) {
+      PopupUI.safeSetHTML(footerEl, '');
+      return;
+    }
+
+    const totals = facturas.reduce((acc, factura) => {
+      acc.subtotal += factura.valorSinImpuestos || 0;
+      acc.iva += factura.iva || 0;
+      acc.total += factura.importeTotal || 0;
+      return acc;
+    }, { subtotal: 0, iva: 0, total: 0 });
+
+    const footerHTML = `
+      <tr class="border-t border-gray-200">
+        <td colspan="6" class="px-6 py-3 text-right text-gray-800">TOTAL:</td>
+        <td class="px-6 py-3 text-right text-gray-800">$${totals.total.toFixed(2)}</td>
+        <td></td>
+      </tr>
+    `;
+
+    PopupUI.safeSetHTML(footerEl, footerHTML);
   }
 
   applyTheme() {

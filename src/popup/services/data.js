@@ -36,14 +36,23 @@ class DataManager {
 
   handleVerificationComplete(foundIds, total) {
     const foundSet = new Set(foundIds);
+    
+    // Actualizar el estado de verificación en cada factura
     this.facturas.forEach(factura => {
-        const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
-        if(verificadoCell) {
-            verificadoCell.innerHTML = foundSet.has(factura.id) ? '✔️' : '';
-        }
+        factura.verificado = foundSet.has(factura.id);
     });
-
-    this.manager.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
+    
+    // Sincronizar con el manager principal
+    this.manager.facturas = this.facturas;
+    
+    // Forzar re-renderizado completo de la tabla
+    this.manager.renderTable();
+    
+    console.log('✅ Verificación completada:', {
+      encontrados: foundIds.length,
+      total: total,
+      faltantes: total - foundIds.length
+    });
   }
 
   updateSelectionCount() {
@@ -54,6 +63,9 @@ class DataManager {
     }
     if (this.manager.downloadBtn) {
       this.manager.downloadBtn.disabled = this.selectedFacturas.size === 0;
+    }
+    if (this.manager.verifyBtn) {
+      this.manager.verifyBtn.disabled = false; // Always enabled
     }
 
     const masterCheckbox = document.getElementById('select-all');

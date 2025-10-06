@@ -65,7 +65,7 @@ class TableComponent {
           <td class="px-6 py-3">${factura.razonSocial || ''}</td>
           <td class="px-6 py-3">${factura.fechaEmision || ''}</td>
           <td class="px-6 py-3 text-right">$${(factura.importeTotal || 0).toFixed(2)}</td>
-          <td class="px-6 py-3 text-center">${factura.verificado ? '✔️' : ''}</td>
+          <td class="px-6 py-3 text-center" data-verified-id="${factura.id}">${factura.verificado === true ? '✔️' : (factura.verificado === false ? '❌' : '')}</td>
       </tr>`;
     }).join('');
 

@@ -118,50 +118,91 @@ class FacturasManager {
 
   // Resto de métodos delegados o implementados directamente
   async verifyDownloads() {
-    if (this.dataManager.selectedFacturas.size === 0) {
-        this.showNotification('Seleccione al menos un documento para verificar', 'warning');
+    if (this.dataManager.facturas.length === 0) {
+        this.showNotification('No hay documentos para verificar. Primero busca documentos.', 'warning');
         return;
     }
 
-    const facturasParaVerificar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
-
     try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
-
-        // Verificar que el content script esté cargado
-        let isLoaded = false;
-        try {
-          const pingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
-          isLoaded = pingResponse && pingResponse.success;
-        } catch (e) {
-          isLoaded = false;
-        }
-
-        if (!isLoaded) {
-          throw new Error('La extensión no está cargada. Recarga la página del SRI y busca documentos primero.');
-        }
-
-        this.showNotification('Abriendo selector de carpetas... El popup se cerrará.', 'info');
-
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: (facturas) => {
-                if (window.sriExtractorInstance) {
-                    window.sriExtractorInstance.verificarDescargasEnPagina(facturas);
+        this.showNotification('Selecciona la carpeta donde están los archivos descargados...', 'info');
+        
+        // Crear input file para seleccionar carpeta completa
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = '.xml,.pdf';
+        
+        // Compatible con Chrome, Edge, Safari (macOS y Windows)
+        input.webkitdirectory = true;
+        input.directory = true; // Fallback para navegadores antiguos
+        
+        const files = await new Promise((resolve, reject) => {
+            input.onchange = (e) => {
+                const selectedFiles = Array.from(e.target.files);
+                if (selectedFiles.length > 0) {
+                    resolve(selectedFiles);
                 } else {
-                    console.error("Instancia del extractor no encontrada.");
-                    chrome.runtime.sendMessage({ 
-                      action: 'verificationError', 
-                      error: 'Extractor no inicializado' 
-                    });
+                    reject(new Error('No se seleccionaron archivos'));
                 }
-            },
-            args: [facturasParaVerificar]
+            };
+            
+            // Manejar cancelación en diferentes navegadores
+            input.oncancel = () => reject(new Error('Selección cancelada'));
+            
+            // Timeout para detectar cancelación en navegadores que no soportan oncancel
+            const timeoutId = setTimeout(() => {
+                if (!input.files || input.files.length === 0) {
+                    reject(new Error('Selección cancelada'));
+                }
+            }, 100);
+            
+            input.addEventListener('change', () => clearTimeout(timeoutId), { once: true });
+            
+            input.click();
         });
+
+        this.showNotification(`Verificando ${files.length} archivos...`, 'info');
+        
+        // Crear un Set con los nombres de archivos encontrados (sin ruta)
+        const fileNames = new Set(files.map(f => {
+            // Extraer solo el nombre del archivo, sin la ruta
+            // Compatible con rutas de Windows (backslash) y Unix (slash)
+            const parts = f.name.split(/[/\\]/);
+            return parts[parts.length - 1];
+        }));
+        
+        const foundIds = [];
+        let verificados = 0;
+        
+        // Verificar cada factura
+        for (const factura of this.dataManager.facturas) {
+            if (!factura.claveAcceso) continue;
+            
+            const xmlFileName = `${factura.claveAcceso}.xml`;
+            const pdfFileName = `${factura.claveAcceso}.pdf`;
+            
+            // Verificar si existe XML o PDF
+            if (fileNames.has(xmlFileName) || fileNames.has(pdfFileName)) {
+                foundIds.push(factura.id);
+                verificados++;
+            }
+        }
+
+        // Actualizar la UI con los resultados
+        this.dataManager.handleVerificationComplete(foundIds, this.dataManager.facturas.length);
+        
+        const noEncontrados = this.dataManager.facturas.length - verificados;
+        const mensaje = `✅ Verificación completada:\n${verificados} encontrados, ${noEncontrados} faltantes`;
+        
+        this.showNotification(mensaje, verificados > 0 ? 'success' : 'warning');
+
     } catch(error) {
-        console.error("Error al iniciar la verificación:", error);
-        this.showNotification(`Error: ${error.message}`, 'error');
+        if (error.message === 'Selección cancelada' || error.message === 'No se seleccionaron archivos') {
+            this.showNotification('Verificación cancelada', 'info');
+        } else {
+            console.error("Error al iniciar la verificación:", error);
+            this.showNotification(`Error: ${error.message}`, 'error');
+        }
     }
   }
 

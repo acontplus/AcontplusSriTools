@@ -36,37 +36,48 @@ class DataManager {
 
   handleVerificationComplete(foundIds, total) {
     const foundSet = new Set(foundIds);
-    
-    // Actualizar el estado de verificación en cada factura
     this.facturas.forEach(factura => {
-        factura.verificado = foundSet.has(factura.id);
+        const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
+        if(verificadoCell) {
+            verificadoCell.innerHTML = foundSet.has(factura.id) ? '✔️' : '';
+        }
     });
-    
-    // Sincronizar con el manager principal
-    this.manager.facturas = this.facturas;
-    
-    // Forzar re-renderizado completo de la tabla
-    this.manager.renderTable();
-    
-    console.log('✅ Verificación completada:', {
-      encontrados: foundIds.length,
-      total: total,
-      faltantes: total - foundIds.length
-    });
+
+    this.manager.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
   }
 
   updateSelectionCount() {
     this.manager.updateCounts();
 
-    if (this.manager.exportBtn) {
-      this.manager.exportBtn.disabled = this.selectedFacturas.size === 0;
-    }
+    const hasSelection = this.selectedFacturas.size > 0;
+
+    // Habilitar/deshabilitar botones
     if (this.manager.downloadBtn) {
-      this.manager.downloadBtn.disabled = this.selectedFacturas.size === 0;
+      this.manager.downloadBtn.disabled = !hasSelection;
+    }
+    if (this.manager.exportBtn) {
+      this.manager.exportBtn.disabled = !hasSelection;
     }
     if (this.manager.verifyBtn) {
-      this.manager.verifyBtn.disabled = false; // Always enabled
+      this.manager.verifyBtn.disabled = !hasSelection;
     }
+
+    // Cambiar estilos de los botones
+    const updateButton = (btn, enabledClass, hasSelection) => {
+      if (!btn) return;
+      if (hasSelection) {
+        btn.classList.remove('bg-gray-400');
+        btn.classList.add(enabledClass);
+      } else {
+        btn.classList.add('bg-gray-400');
+        btn.classList.remove(enabledClass);
+      }
+    };
+
+    updateButton(this.manager.downloadBtn, 'btn-primary', hasSelection);
+    updateButton(this.manager.exportBtn, 'btn-excel', hasSelection);
+    updateButton(this.manager.verifyBtn, 'btn-secondary', hasSelection);
+
 
     const masterCheckbox = document.getElementById('select-all');
     if (masterCheckbox) {

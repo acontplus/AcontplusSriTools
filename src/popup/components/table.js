@@ -45,6 +45,7 @@ class TableComponent {
       PopupUI.safeSetHTML(this.tbodyEl,
         '<tr class="text-center"><td colspan="8" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione \'Analizar\'.</td></tr>'
       );
+      this.renderTotals(); // Also clear totals
       return;
     }
 
@@ -64,30 +65,42 @@ class TableComponent {
           <td class="px-6 py-3">${factura.ruc || ''}</td>
           <td class="px-6 py-3">${factura.razonSocial || ''}</td>
           <td class="px-6 py-3">${factura.fechaEmision || ''}</td>
-          <td class="px-6 py-3 text-right">$${(factura.valorSinImpuestos || 0).toFixed(2)}</td>
-          <td class="px-6 py-3 text-right">$${(factura.iva || 0).toFixed(2)}</td>
           <td class="px-6 py-3 text-right">$${(factura.importeTotal || 0).toFixed(2)}</td>
-          <td class="px-6 py-3 text-center" data-verified-id="${factura.id}">${factura.verificado === true ? '✔️' : (factura.verificado === false ? '❌' : '')}</td>
+          <td class="px-6 py-3 text-center">${factura.verificado ? '✔️' : ''}</td>
       </tr>`;
     }).join('');
 
     PopupUI.safeSetHTML(this.tbodyEl, tableHTML);
+    this.renderTotals(); // Render totals after rendering table
+  }
 
-    const totalSubtotal = this.manager.dataManager.facturas.reduce((sum, f) => sum + (f.valorSinImpuestos || 0), 0);
-    const totalIva = this.manager.dataManager.facturas.reduce((sum, f) => sum + (f.iva || 0), 0);
-    const totalAmount = this.manager.dataManager.facturas.reduce((sum, f) => sum + (f.importeTotal || 0), 0);
+  renderTotals() {
+    const footerEl = document.getElementById('docs-table-footer');
+    if (!footerEl) return;
 
-    const totalSubtotalEl = document.getElementById('total-subtotal');
-    if (totalSubtotalEl) PopupUI.safeSetText(totalSubtotalEl, '$' + totalSubtotal.toFixed(2));
+    const facturas = this.manager.dataManager.facturas;
 
-    const totalIvaEl = document.getElementById('total-iva');
-    if (totalIvaEl) PopupUI.safeSetText(totalIvaEl, '$' + totalIva.toFixed(2));
+    if (facturas.length === 0) {
+      PopupUI.safeSetHTML(footerEl, '');
+      return;
+    }
 
-    const totalAmountEl = document.getElementById('total-amount');
-    if (totalAmountEl) PopupUI.safeSetText(totalAmountEl, '$' + totalAmount.toFixed(2));
+    const totals = facturas.reduce((acc, factura) => {
+      acc.subtotal += factura.valorSinImpuestos || 0;
+      acc.iva += factura.iva || 0;
+      acc.total += factura.importeTotal || 0;
+      return acc;
+    }, { subtotal: 0, iva: 0, total: 0 });
 
-    const totalsEl = document.getElementById('facturas-totals');
-    if (totalsEl) totalsEl.style.display = this.manager.dataManager.facturas.length > 0 ? 'table-footer-group' : 'none';
+    const footerHTML = `
+      <tr class="border-t border-gray-200">
+        <td colspan="6" class="px-6 py-3 text-right text-gray-800">TOTAL:</td>
+        <td class="px-6 py-3 text-right text-gray-800">$${totals.total.toFixed(2)}</td>
+        <td></td>
+      </tr>
+    `;
+
+    PopupUI.safeSetHTML(footerEl, footerHTML);
   }
 
   applyTheme() {

@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="../styles/popup.css">
     <!-- Tailwind CSS for responsiveness -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Google Fonts optimizada -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- SheetJS LOCAL - Solucion CSP -->
@@ -76,7 +78,7 @@
                         <i class="fa-solid fa-file-excel"></i>
                         <span>Exportar</span>
                     </button>
-                    <button id="verify-btn" class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2">
+                    <button id="verify-btn" disabled class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2">
                         <i class="fa-solid fa-check-double"></i>
                         Verificar
                     </button>
@@ -120,24 +122,16 @@
                             <th scope="col" class="px-6 py-3">RUC</th>
                             <th scope="col" class="px-6 py-3">Razón Social</th>
                             <th scope="col" class="px-6 py-3">Fecha Emisión</th>
-                            <th scope="col" class="px-6 py-3 text-right">Subtotal</th>
-                            <th scope="col" class="px-6 py-3 text-right">IVA</th>
                             <th scope="col" class="px-6 py-3 text-right">Total ($)</th>
                             <th scope="col" class="px-6 py-3 text-center">Estado</th>
                         </tr>
                     </thead>
                     <tbody id="docs-table-body">
                        <!-- Las filas se insertarán aquí dinámicamente -->
-                       <tr class="text-center"><td colspan="10" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione 'Analizar'.</td></tr>
+                       <tr class="text-center"><td colspan="8" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione 'Analizar'.</td></tr>
                     </tbody>
-                    <tfoot id="facturas-totals" style="display: none;">
-                        <tr class="totals-row">
-                            <td colspan="6" class="text-right px-6 py-3 font-bold">TOTALES:</td>
-                            <td class="px-6 py-3 text-right font-bold" id="total-subtotal">$0.00</td>
-                            <td class="px-6 py-3 text-right font-bold" id="total-iva">$0.00</td>
-                            <td class="px-6 py-3 text-right font-bold" id="total-amount">$0.00</td>
-                            <td></td>
-                        </tr>
+                    <tfoot id="docs-table-footer" class="bg-gray-50 font-bold">
+                        <!-- Totales se insertarán aquí -->
                     </tfoot>
                 </table>
             </div>

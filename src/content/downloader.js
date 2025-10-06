@@ -59,9 +59,22 @@ class SRIDownloader {
           fallidos++;
           continue;
         }
-        const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex, dirHandle);
-        if(exito) descargados++;
-        else fallidos++;
+        
+        if (formato === 'both') {
+            const exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex, dirHandle);
+            await this.extractor.esperar(250); // Pequeña pausa entre descargas
+            const exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex, dirHandle);
+            
+            if (exitoXml && exitoPdf) {
+                descargados++;
+            } else {
+                fallidos++;
+            }
+        } else {
+            const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex, dirHandle);
+            if(exito) descargados++;
+            else fallidos++;
+        }
 
         await this.extractor.esperar(500);
       } catch (error) {

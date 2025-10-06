@@ -1,0 +1,73 @@
+/* Local Fonts CSS - Alternativas a Google Fonts */
+
+/* Fuente Inter - Alternativa: Usar sistema de fuentes */
+@font-face {
+  font-family: 'Inter';
+  src: local('Inter'), local('Inter-Regular'),
+       local('SF Pro Display'), local('SF Pro Text'),
+       local('Helvetica Neue'), local('Helvetica'),
+       local('Arial'), local('Segoe UI');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: local('Inter-Medium'), local('Inter'),
+       local('SF Pro Display Medium'), local('SF Pro Text Medium'),
+       local('Helvetica Neue Bold'), local('Helvetica Bold'),
+       local('Arial Bold'), local('Segoe UI Bold');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: local('Inter-SemiBold'), local('Inter'),
+       local('SF Pro Display Semibold'), local('SF Pro Text Semibold'),
+       local('Helvetica Neue Bold'), local('Helvetica Bold'),
+       local('Arial Bold'), local('Segoe UI Bold');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: local('Inter-Bold'), local('Inter'),
+       local('SF Pro Display Bold'), local('SF Pro Text Bold'),
+       local('Helvetica Neue Bold'), local('Helvetica Bold'),
+       local('Arial Bold'), local('Segoe UI Bold');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fuente JetBrains Mono - Alternativa: Usar sistema de fuentes */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), local('JetBrainsMono-Regular'),
+       local('Monaco'), local('Consolas'), local('Liberation Mono'),
+       local('Courier New'), local('Courier');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono Medium'), local('JetBrainsMono-Medium'),
+       local('Monaco'), local('Consolas'), local('Liberation Mono Bold'),
+       local('Courier New Bold'), local('Courier Bold');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Declaraciones de fuentes para usar en CSS */
+:root {
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
+}

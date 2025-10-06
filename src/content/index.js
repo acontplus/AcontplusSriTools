@@ -7,4 +7,10 @@ console.log('🔍 Content Script modular cargado correctamente - Acontplus SRI T
 
 // Los módulos se cargan automáticamente por el manifest.json
 // Inicializar el extractor y hacerlo globalmente accesible
-window.sriExtractorInstance = new SRIDocumentosExtractor();
+console.log('🔍 Verificando disponibilidad de SRIDocumentosExtractor:', typeof SRIDocumentosExtractor);
+if (typeof SRIDocumentosExtractor === 'undefined') {
+  console.error('❌ SRIDocumentosExtractor no está definido. Verificar orden de carga de scripts.');
+} else {
+  console.log('✅ SRIDocumentosExtractor disponible, inicializando...');
+  window.sriExtractorInstance = new SRIDocumentosExtractor();
+}

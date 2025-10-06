@@ -132,3 +132,4 @@ class SRIDownloader {
 
 // Exportar globalmente para compatibilidad con extensiones
 window.SRIDownloader = SRIDownloader;
+console.log('✅ SRIDownloader exportado globalmente');

@@ -3,6 +3,7 @@
 
 class SRIDocumentosExtractor {
   constructor() {
+    console.log('🏗️ Construyendo SRIDocumentosExtractor...');
     this.documentos = [];
     this.allDocuments = [];
     this.tablaDetectada = null;
@@ -23,23 +24,31 @@ class SRIDocumentosExtractor {
     this.body_tabla = null;
     this.fila_tabla = null;
 
-    // Inicializar módulos
+    console.log('🔗 Inicializando módulos dependientes...');
+    console.log('📄 Verificando SRIPagination:', typeof SRIPagination);
     this.pagination = new SRIPagination(this);
+    console.log('📥 Verificando SRIDownloader:', typeof SRIDownloader);
     this.downloader = new SRIDownloader(this);
+    console.log('✅ Módulos inicializados correctamente');
 
     this.init();
   }
 
   init() {
-    console.log('SRI Documentos Extractor v' + this.version + ' iniciado - Acontplus S.A.S.');
+    console.log('🚀 SRI Documentos Extractor v' + this.version + ' iniciado - Acontplus S.A.S.');
+    console.log('🔧 Configurando message listener...');
     this.setupMessageListener();
+    console.log('🔍 Detectando tipo de emisión...');
     this.detectarTipoEmisionRobusta();
+    console.log('📄 Detectando paginación actual...');
     this.detectCurrentPagination();
+    console.log('✅ Inicialización completa del extractor');
   }
 
   setupMessageListener() {
+    console.log('👂 Configurando message listener para comunicación con popup...');
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      console.log('📨 Mensaje recibido:', message);
+      console.log('📨 Mensaje recibido desde popup/background:', message);
 
       switch (message.action) {
         case 'ping':
@@ -88,24 +97,28 @@ class SRIDocumentosExtractor {
 
   detectarTipoEmisionRobusta() {
     try {
+      console.log('🔍 Buscando tablas de comprobantes en el DOM...');
       const tablaRecibidos = document.querySelector('#frmPrincipal\\:tablaCompRecibidos_data');
       const tablaEmitidos = document.querySelector('#frmPrincipal\\:tablaCompEmitidos_data');
+
+      console.log('📊 Tabla recibidos encontrada:', !!tablaRecibidos, tablaRecibidos ? `con ${tablaRecibidos.childElementCount} filas` : '');
+      console.log('📊 Tabla emitidos encontrada:', !!tablaEmitidos, tablaEmitidos ? `con ${tablaEmitidos.childElementCount} filas` : '');
 
       if (tablaRecibidos && tablaRecibidos.childElementCount > 0) {
         this.tipo_emisi = "CompRecibidos";
         this.body_tabla = tablaRecibidos;
-        console.log('📄 Tipo detectado: CompRecibidos');
+        console.log('✅ Tipo detectado: CompRecibidos');
       } else if (tablaEmitidos && tablaEmitidos.childElementCount > 0) {
         this.tipo_emisi = "CompEmitidos";
         this.body_tabla = tablaEmitidos;
-        console.log('📄 Tipo detectado: CompEmitidos');
+        console.log('✅ Tipo detectado: CompEmitidos');
       } else {
         if (window.location.href.includes('recibidos')) this.tipo_emisi = "CompRecibidos";
         else this.tipo_emisi = "CompEmitidos";
-        console.log('📄 Tipo detectado por URL:', this.tipo_emisi);
+        console.log('⚠️ No se encontraron tablas con datos, tipo detectado por URL:', this.tipo_emisi);
       }
     } catch (error) {
-      console.warn('⚠️ Error detectando tipo emisión:', error);
+      console.warn('❌ Error detectando tipo emisión:', error);
       this.tipo_emisi = "CompEmitidos";
     }
   }
@@ -202,3 +215,4 @@ class SRIDocumentosExtractor {
 
 // Exportar para uso global
 window.SRIDocumentosExtractor = SRIDocumentosExtractor;
+console.log('✅ SRIDocumentosExtractor exportado globalmente');

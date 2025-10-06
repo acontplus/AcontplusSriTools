@@ -145,6 +145,19 @@ class FacturasManager {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
 
+        // Verificar que el content script esté cargado
+        let isLoaded = false;
+        try {
+          const pingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+          isLoaded = pingResponse && pingResponse.success;
+        } catch (e) {
+          isLoaded = false;
+        }
+
+        if (!isLoaded) {
+          throw new Error('La extensión no está cargada. Recarga la página del SRI y busca documentos primero.');
+        }
+
         this.showNotification('Abriendo selector de carpetas... El popup se cerrará.', 'info');
 
         await chrome.scripting.executeScript({
@@ -152,13 +165,19 @@ class FacturasManager {
             func: (facturas) => {
                 if (window.sriExtractorInstance) {
                     window.sriExtractorInstance.verificarDescargasEnPagina(facturas);
+                } else {
+                    console.error("Instancia del extractor no encontrada.");
+                    chrome.runtime.sendMessage({ 
+                      action: 'verificationError', 
+                      error: 'Extractor no inicializado' 
+                    });
                 }
             },
             args: [facturasParaVerificar]
         });
     } catch(error) {
         console.error("Error al iniciar la verificación:", error);
-        this.showNotification('Error al iniciar la verificación.', 'error');
+        this.showNotification(`Error: ${error.message}`, 'error');
     }
   }
 
@@ -201,6 +220,19 @@ class FacturasManager {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tab || !tab.id) throw new Error('No se pudo encontrar la pestaña activa.');
 
+        // Verificar que el content script esté cargado
+        let isLoaded = false;
+        try {
+          const pingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+          isLoaded = pingResponse && pingResponse.success;
+        } catch (e) {
+          isLoaded = false;
+        }
+
+        if (!isLoaded) {
+          throw new Error('La extensión no está cargada. Recarga la página del SRI y busca documentos primero.');
+        }
+
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: (facturas, formato) => {
@@ -208,6 +240,12 @@ class FacturasManager {
                     window.sriExtractorInstance.descargarDocumentosSeleccionados(facturas, formato);
                 } else {
                     console.error("Instancia del extractor no encontrada.");
+                    chrome.runtime.sendMessage({
+                      action: 'descargaFinalizada',
+                      exitosos: 0,
+                      fallidos: facturas.length,
+                      total: facturas.length
+                    });
                 }
             },
             args: [facturasParaDescargar, formato],
@@ -215,7 +253,7 @@ class FacturasManager {
 
     } catch (error) {
         console.error('Error al iniciar la descarga:', error);
-        this.showNotification(`Error: ${error.message}. Recargue la página del SRI.`, 'error');
+        this.showNotification(`Error: ${error.message}`, 'error');
         this.handleDownloadComplete(0, facturasParaDescargar.length, facturasParaDescargar.length);
     }
   }
@@ -247,11 +285,80 @@ class FacturasManager {
 
       console.log('Pestaña activa encontrada:', tab.url);
 
-      // Verificar si el content script está cargado
-      const pingResponse = await this.sendMessageWithRetry(tab.id, { action: 'ping' }, 2);
+      // Verificar si el content script está cargado, si no, inyectarlo
+      let pingResponse = null;
+      try {
+        pingResponse = await this.sendMessageWithRetry(tab.id, { action: 'ping' }, 1);
+      } catch (pingError) {
+        console.log('No se pudo hacer ping, content script no está cargado');
+      }
 
       if (!pingResponse || !pingResponse.success) {
-        throw new Error('Content script no está activo. Recarga la página del SRI.');
+        console.log('Content script no detectado, inyectando scripts...');
+        PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Cargando módulos...</span>');
+        
+        // Inyectar los scripts en orden
+        try {
+          // Inyectar CSS primero
+          await chrome.scripting.insertCSS({
+            target: { tabId: tab.id },
+            files: ['styles/content.css']
+          }).catch(e => console.log('CSS ya inyectado o no necesario'));
+
+          // Inyectar scripts en orden de dependencias
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['src/shared/utils.js']
+          });
+          
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['src/content/pagination.js']
+          });
+          
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['src/content/downloader.js']
+          });
+          
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['src/content/extractor.js']
+          });
+          
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['src/content/index.js']
+          });
+
+          console.log('✅ Scripts inyectados, esperando inicialización...');
+          
+          // Esperar un momento para que se inicialicen
+          await this.sleep(1500);
+
+          // Verificar nuevamente con más intentos
+          pingResponse = null;
+          for (let i = 0; i < 3; i++) {
+            try {
+              pingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+              if (pingResponse && pingResponse.success) {
+                console.log('✅ Content script respondiendo correctamente');
+                break;
+              }
+            } catch (e) {
+              console.log(`Intento ${i + 1}/3 de verificación...`);
+              await this.sleep(500);
+            }
+          }
+          
+          if (!pingResponse || !pingResponse.success) {
+            throw new Error('No se pudo cargar la extensión en esta página. Recarga la página del SRI.');
+          }
+          
+        } catch (injectError) {
+          console.error('Error inyectando scripts:', injectError);
+          throw new Error('Error cargando la extensión. Recarga la página del SRI y vuelve a intentar.');
+        }
       }
 
       PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Iniciando...</span>');

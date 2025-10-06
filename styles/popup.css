@@ -35,14 +35,37 @@ body {
 .header {
   background: linear-gradient(135deg, #D61672 0%, #c91465 50%, #FFA901 100%);
   color: white;
-  padding: 16px 20px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 12px rgba(214, 22, 114, 0.25);
+  box-shadow: 0 4px 16px rgba(214, 22, 114, 0.3);
   flex-shrink: 0;
   position: relative;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: headerGlow 8s ease-in-out infinite;
+}
+
+@keyframes headerGlow {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-20px, -20px);
+    opacity: 0.8;
+  }
 }
 
 .extraction-info {
@@ -63,9 +86,11 @@ body {
 .logo-text h1 {
   font-family: 'Inter', sans-serif;
   font-weight: 800;
-  font-size: 22px;
+  font-size: 24px;
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
 }
 
 .tagline {
@@ -110,14 +135,29 @@ body {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border: 2px solid transparent;
   background-clip: padding-box;
-  border-radius: 12px;
-  padding: 16px 20px;
+  border-radius: 14px;
+  padding: 18px 24px;
   text-align: center;
-  width: 160px;
+  width: 170px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(214, 22, 114, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.stat-card:hover::after {
+  left: 100%;
 }
 
 .stat-card::before {
@@ -143,14 +183,25 @@ body {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 800;
   background: linear-gradient(135deg, #D61672 0%, #FFA901 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-family: 'JetBrains Mono', monospace;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 4px rgba(214, 22, 114, 0.1);
+  animation: countPulse 2s ease-in-out infinite;
+}
+
+@keyframes countPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
 }
 
 .stat-label {
@@ -175,7 +226,7 @@ body {
 
 /* ===== BOTONES MEJORADOS ===== */
 .btn {
-  padding: 11px 20px;
+  padding: 12px 22px;
   border: none;
   border-radius: 10px;
   font-size: 13px;
@@ -184,7 +235,9 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 12px;
 }
 
 .btn::before {
@@ -300,15 +353,30 @@ body {
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(214, 22, 114, 0.1);
-  border-top: 4px solid #D61672;
-  border-right: 4px solid #FFA901;
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(214, 22, 114, 0.1);
+  border-top: 5px solid #D61672;
+  border-right: 5px solid #FFA901;
   border-radius: 50%;
   animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-  margin: 0 auto 20px;
-  box-shadow: 0 4px 12px rgba(214, 22, 114, 0.2);
+  margin: 0 auto 24px;
+  box-shadow: 0 4px 16px rgba(214, 22, 114, 0.3), inset 0 0 10px rgba(214, 22, 114, 0.1);
+  position: relative;
+}
+
+.spinner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border: 3px solid transparent;
+  border-top: 3px solid #FFC303;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: spin 0.7s linear infinite reverse;
 }
 
 .loading p {
@@ -426,18 +494,45 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(214, 22, 114, 0.3);
+  box-shadow: 0 3px 12px rgba(214, 22, 114, 0.4);
+}
+
+.facturas-table thead::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
 }
 
 .facturas-table th {
-  padding: 12px 10px;
+  padding: 14px 12px;
   text-align: center;
   font-weight: 700;
   white-space: nowrap;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   font-size: 10px;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+
+.facturas-table th::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 3px;
+  height: 60%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%);
+  border-radius: 0 2px 2px 0;
+}
+
+.facturas-table th:first-child::before {
+  display: none;
 }
 
 .facturas-table th:last-child {
@@ -467,22 +562,43 @@ body {
 
 
 .facturas-table tbody tr {
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.facturas-table tbody tr::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, #D61672, #FFA901);
+  transition: width 0.3s ease;
 }
 
 .facturas-table tbody tr:hover {
   background-color: rgba(214, 22, 114, 0.06);
-  transform: scale(1.001);
-  box-shadow: 0 2px 8px rgba(214, 22, 114, 0.1);
+  transform: translateX(2px);
+  box-shadow: -2px 0 8px rgba(214, 22, 114, 0.15);
+}
+
+.facturas-table tbody tr:hover::before {
+  width: 4px;
 }
 
 .facturas-table tbody tr.selected {
   background: linear-gradient(90deg, rgba(214, 22, 114, 0.12) 0%, rgba(255, 169, 1, 0.08) 100%);
-  border-left: 3px solid #D61672;
+  border-left: 4px solid #D61672;
+}
+
+.facturas-table tbody tr.selected::before {
+  width: 4px;
 }
 
 .facturas-table tbody tr.selected:hover {
-  background: linear-gradient(90deg, rgba(214, 22, 114, 0.15) 0%, rgba(255, 169, 1, 0.1) 100%);
+  background: linear-gradient(90deg, rgba(214, 22, 114, 0.18) 0%, rgba(255, 169, 1, 0.12) 100%);
+  box-shadow: -2px 0 12px rgba(214, 22, 114, 0.2);
 }
 
 #master-checkbox {
@@ -507,11 +623,23 @@ input[type="checkbox"]:hover {
 .totals-row {
   font-weight: 700;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-top: 2px solid #D61672;
+  border-top: 3px solid #D61672;
+  position: relative;
+}
+
+.totals-row::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #D61672 0%, #FFA901 100%);
+  animation: shimmer 3s ease-in-out infinite;
 }
 
 .totals-row td {
-  padding: 12px 8px;
+  padding: 14px 10px;
   font-size: 12px;
 }
 
@@ -521,9 +649,13 @@ input[type="checkbox"]:hover {
 
 .total-amount {
   font-family: 'JetBrains Mono', monospace;
-  color: #D61672;
+  background: linear-gradient(135deg, #D61672 0%, #FFA901 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 15px;
+  text-shadow: 0 2px 4px rgba(214, 22, 114, 0.1);
 }
 
 /* ===== FOOTER MEJORADO ===== */
@@ -558,12 +690,35 @@ input[type="checkbox"]:hover {
 .version-number {
   background: linear-gradient(135deg, #D61672 0%, #FFA901 100%);
   color: white;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-weight: 700;
   font-size: 9px;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 6px rgba(214, 22, 114, 0.3);
+  letter-spacing: 0.8px;
+  box-shadow: 0 2px 8px rgba(214, 22, 114, 0.4);
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.version-number::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: versionShine 3s ease-in-out infinite;
+}
+
+@keyframes versionShine {
+  0% {
+    left: -100%;
+  }
+  50%, 100% {
+    left: 100%;
+  }
 }
 
 /* ===== ANIMACIONES MEJORADAS ===== */
@@ -630,19 +785,9 @@ input[type="checkbox"]:hover {
 
 button, input, select {
   transition-duration: 0.3s;
-
-/* ===== ESTILOS PARA ICONOS DE BOTONES ===== */
-.btn-icon {
-  display: inline-block;
-  margin-right: 6px;
-  font-size: 14px;
-  transition: transform 0.3s ease;
 }
 
-.btn:hover .btn-icon {
-  transform: scale(1.2) rotate(5deg);
-}
-
+/* ===== ESTILOS PARA TEXTO DE BOTONES ===== */
 .btn-text {
   position: relative;
   z-index: 1;
@@ -782,5 +927,4 @@ select:focus-visible {
 .no-data p strong {
   color: #D61672;
   font-weight: 700;
-}
 }

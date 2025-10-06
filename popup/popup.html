@@ -44,57 +44,52 @@
             </div>
         </div>
 
-        <!-- Action Controls - Centrados con Iconos -->
+        <!-- Action Controls - Centrados -->
         <div class="action-controls">
-            <button id="new-search" class="btn btn-secondary" title="🔍 Buscar documentos usando técnicas robustas en todas las páginas disponibles">
-                <span class="btn-icon">🔍</span>
+            <button id="new-search" class="btn btn-secondary" title="Buscar documentos usando tecnicas robustas en todas las paginas">
                 <span class="btn-text">Buscar</span>
             </button>
-            <button id="export-selected" class="btn btn-primary" disabled title="📊 Exportar documentos seleccionados a formato Excel (.xlsx)">
-                <span class="btn-icon">📊</span>
+            <button id="export-selected" class="btn btn-primary" disabled title="Exportar documentos seleccionados a Excel">
                 <span class="btn-text">Exportar Excel</span>
             </button>
             <div class="download-group">
-                <select id="download-format" class="btn-select" title="Seleccionar formato de descarga">
-                    <option value="xml">📄 XML</option>
-                    <option value="pdf">📑 PDF</option>
+                <select id="download-format" class="btn-select">
+                    <option value="xml">XML</option>
+                    <option value="pdf">PDF</option>
                 </select>
-                <button id="download-selected" class="btn btn-primary" disabled title="⬇️ Descargar archivos seleccionados en el formato elegido">
-                    <span class="btn-icon">⬇️</span>
+                <button id="download-selected" class="btn btn-primary" disabled title="Descargar archivos seleccionados">
                     <span class="btn-text">Descargar</span>
                 </button>
             </div>
-             <button id="verify-downloads" class="btn btn-accent" title="✅ Verificar qué documentos seleccionados ya están descargados en una carpeta local">
-                <span class="btn-icon">✅</span>
+             <button id="verify-downloads" class="btn btn-accent" title="Verificar qué documentos seleccionados ya están en una carpeta local">
                 <span class="btn-text">Verificar Descargas</span>
             </button>
-            <button id="select-missing" class="btn btn-accent" title="📋 Seleccionar automáticamente los documentos que no han sido verificados localmente">
-                <span class="btn-icon">📋</span>
+            <button id="select-missing" class="btn btn-accent" title="Seleccionar documentos que no han sido verificados localmente">
                 <span class="btn-text">Seleccionar Faltantes</span>
             </button>
         </div>
 
-        <!-- Loading State Mejorado -->
+        <!-- Loading State -->
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>⚡ Cargando comprobantes electrónicos...</p>
+            <p>Cargando comprobantes electronicos...</p>
             <div id="pagination-progress" class="pagination-progress" style="display: none;">
                 <div class="progress-bar">
                     <div id="progress-fill" class="progress-fill"></div>
                 </div>
                 <div class="progress-text">
-                    📄 Procesando página <span id="current-page">1</span> de <span id="total-pages">1</span>
+                    Procesando p&aacute;gina <span id="current-page">1</span> de <span id="total-pages">1</span>
                     <br>
-                    <small style="color: #6c757d; font-weight: 500;">🚀 Aplicando optimizaciones automáticas...</small>
+                    <small style="color: #6c757d;">Aplicando optimizaciones automaticas...</small>
                 </div>
             </div>
         </div>
 
-        <!-- No Data State Mejorado -->
+        <!-- No Data State -->
         <div id="no-data" class="no-data" style="display: none;">
-            <div class="empty-icon">📭</div>
+            <div class="empty-icon">📄</div>
             <h3>No se encontraron comprobantes</h3>
-            <p>Navega a una página del SRI con comprobantes electrónicos y utiliza el botón <strong>"🔍 Buscar"</strong> para extraer todos los documentos automáticamente.</p>
+            <p>Navega a una pagina del SRI con comprobantes electronicos y utiliza "Buscar" para extraer todos los documentos automaticamente.</p>
         </div>
 
         <!-- Table Container -->
@@ -104,20 +99,20 @@
                     <thead>
                         <tr>
                             <th class="checkbox-col">
-                                <input type="checkbox" id="master-checkbox" title="✅ Seleccionar/Deseleccionar todos los documentos">
+                                <input type="checkbox" id="master-checkbox" title="Seleccionar/Deseleccionar todos">
                             </th>
-                            <th class="counter-col">#</th>
-                            <th class="tipo-col">📋 Tipo</th>
-                            <th class="numero-col">🔢 Número</th>
-                            <th class="ruc-col">🏢 RUC</th>
-                            <th class="razon-col">🏪 Razón Social</th>
-                            <th class="fecha-col">📅 F. Emisión</th>
-                            <th class="fecha-auth-col">✅ F. Autorización</th>
-                            <th class="clave-acceso-col">🔑 Clave de Acceso</th>
-                            <th class="subtotal-col">💵 Subtotal</th>
-                            <th class="iva-col">📊 IVA</th>
-                            <th class="amount-col">💰 Total</th>
-                            <th class="verificado-col" title="✅ Verificado en carpeta local">✔️</th>
+                            <th class="counter-col">Nro</th>
+                            <th class="tipo-col">Tipo</th>
+                            <th class="numero-col">Numero</th>
+                            <th class="ruc-col">RUC</th>
+                            <th class="razon-col">Razon Social</th>
+                            <th class="fecha-col">F. Emision</th>
+                            <th class="fecha-auth-col">F. Autorizacion</th>
+                            <th class="clave-acceso-col">Clave de Acceso</th>
+                            <th class="subtotal-col">Subtotal</th>
+                            <th class="iva-col">IVA</th>
+                            <th class="amount-col">Total</th>
+                            <th class="verificado-col" title="Verificado en carpeta local">✔️</th>
                         </tr>
                     </thead>
                     <tbody id="facturas-tbody">
@@ -125,7 +120,7 @@
                     </tbody>
                     <tfoot id="facturas-totals" style="display: none;">
                         <tr class="totals-row">
-                            <td colspan="11" class="text-right"><strong>💰 TOTALES:</strong></td>
+                            <td colspan="11" class="text-right"><strong>TOTALES:</strong></td>
                             <td class="amount-col total-amount">$0.00</td>
                             <td></td>
                         </tr>
@@ -134,10 +129,10 @@
             </div>
         </div>
 
-        <!-- Footer Mejorado -->
+        <!-- Footer -->
         <footer class="footer">
             <div class="footer-brand">
-                <span class="company">⚡ Acontplus S.A.S</span>
+                <span class="company">Acontplus S.A.S</span>
                 <span class="version-number">v1.4.1 Final</span>
             </div>
         </footer>

@@ -120,14 +120,25 @@
                             <th scope="col" class="px-6 py-3">RUC</th>
                             <th scope="col" class="px-6 py-3">Razón Social</th>
                             <th scope="col" class="px-6 py-3">Fecha Emisión</th>
+                            <th scope="col" class="px-6 py-3 text-right">Subtotal</th>
+                            <th scope="col" class="px-6 py-3 text-right">IVA</th>
                             <th scope="col" class="px-6 py-3 text-right">Total ($)</th>
                             <th scope="col" class="px-6 py-3 text-center">Estado</th>
                         </tr>
                     </thead>
                     <tbody id="docs-table-body">
                        <!-- Las filas se insertarán aquí dinámicamente -->
-                       <tr class="text-center"><td colspan="8" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione 'Analizar'.</td></tr>
+                       <tr class="text-center"><td colspan="10" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione 'Analizar'.</td></tr>
                     </tbody>
+                    <tfoot id="facturas-totals" style="display: none;">
+                        <tr class="totals-row">
+                            <td colspan="6" class="text-right px-6 py-3 font-bold">TOTALES:</td>
+                            <td class="px-6 py-3 text-right font-bold" id="total-subtotal">$0.00</td>
+                            <td class="px-6 py-3 text-right font-bold" id="total-iva">$0.00</td>
+                            <td class="px-6 py-3 text-right font-bold" id="total-amount">$0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>

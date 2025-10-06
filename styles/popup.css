@@ -99,6 +99,17 @@ body {
     color: white !important;
 }
 
+/* Totals row styling */
+.totals-row {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-top: 3px solid #D61672;
+    font-weight: bold;
+}
+
+.totals-row td {
+    padding: 14px 10px;
+}
+
 /* Loading styles */
 .loading {
     padding: 80px 20px;

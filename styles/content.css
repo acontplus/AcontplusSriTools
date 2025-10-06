@@ -1,6 +1,65 @@
-/* Content Script Styles - Acontplus SRI Tools v1.2.8-Enhanced-Pagination */
+/* Content Script Styles - Acontplus SRI Tools v1.4.1-Final */
 /* Brand Identity: #D61672, #FFA901, #FFC303, #FFDF01 */
 /* Optimizado para interfaz mejorada con soporte de paginación automática */
+
+/* Contenedor para la tabla con scroll horizontal */
+.acontplus-table-container {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+/* Barra de scroll personalizada */
+.acontplus-table-container::-webkit-scrollbar {
+  height: 12px;
+  background-color: #f5f5f5;
+}
+
+.acontplus-table-container::-webkit-scrollbar-thumb {
+  background-color: #D61672;
+  border-radius: 6px;
+}
+
+.acontplus-table-container::-webkit-scrollbar-track {
+  background-color: #f5f5f5;
+  border-radius: 6px;
+}
+
+/* Mejoras para visualización de tabla completa */
+#frmPrincipal\:tablaCompRecibidos,
+#frmPrincipal\:tablaCompEmitidos {
+  width: 100% !important;
+  table-layout: auto !important;
+  margin-bottom: 0 !important;
+}
+
+/* Ajuste de columnas específicas */
+#frmPrincipal\:tablaCompRecibidos th,
+#frmPrincipal\:tablaCompEmitidos th {
+  padding: 8px 4px !important;
+  font-size: 0.85em !important;
+  white-space: nowrap !important;
+}
+
+#frmPrincipal\:tablaCompRecibidos_data td,
+#frmPrincipal\:tablaCompEmitidos_data td {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 0.85em !important;
+  padding: 6px 4px !important;
+  max-width: 250px !important;
+}
+
+/* Estilos para los indicadores de verificación */
+.verificacion-acontplus {
+  text-align: center !important;
+  font-size: 1.2em !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+}
 
 #acontplus-extractor-btn {
   position: fixed;

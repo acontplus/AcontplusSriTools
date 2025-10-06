@@ -46,7 +46,8 @@ class TableComponent {
     const tableHTML = this.manager.dataManager.facturas.map((factura, index) => {
       const contador = index + 1;
 
-      return `<tr class="${(this.manager.dataManager.selectedFacturas.has(factura.id) ? 'selected' : '')}"
+      return `
+      <tr class="${(this.manager.dataManager.selectedFacturas.has(factura.id) ? 'selected' : '')}"
             data-id="${factura.id}"
             data-row-index="${index}"
             style="animation: fadeInRow 0.3s ease-out ${index * 0.01}s both;">
@@ -65,7 +66,7 @@ class TableComponent {
           <td class="iva-col">$${(factura.iva || 0).toFixed(2)}</td>
           <td class="amount-col">$${(factura.importeTotal || 0).toFixed(2)}</td>
           <td class="verificado-col" data-verified-id="${factura.id}"></td>
-        </tr>`;
+      </tr>`;
     }).join('');
 
     PopupUI.safeSetHTML(this.tbodyEl, tableHTML);

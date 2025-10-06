@@ -28,7 +28,7 @@ class ExportComponent {
       'Numero': factura.numeroComprobante || '',
       'Fecha Emision': factura.fechaEmision || '',
       'Fecha Autorizacion': factura.fechaAutorizacion || '',
-      'Clave de Acceso': factura.claveAcceso ? `'${factura.claveAcceso}` : '',
+      'Clave de Acceso': factura.claveAcceso ? `${factura.claveAcceso}` : '',
       'Subtotal': factura.valorSinImpuestos || 0,
       'IVA': factura.iva || 0,
       'Total': factura.importeTotal || 0
@@ -60,8 +60,6 @@ class ExportComponent {
     const filename = 'Acontplus_SRI_' + tipoTexto.charAt(0).toUpperCase() + tipoTexto.slice(1) + '_' + fecha + '_' + hora + paginaInfo + '.xlsx';
 
     XLSX.writeFile(wb, filename);
-
-    console.log('Excel exportado: ' + filename);
   }
 }
 

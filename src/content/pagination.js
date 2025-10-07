@@ -111,7 +111,7 @@ class SRIPagination {
             await this.extractor.esperar(4000);
             await this.procesarPaginasRecursivamente();
           } else {
-            await this.extractor.updateProgress("Terminado... :-)");
+            // await this.extractor.updateProgress("Terminado... :-)");
           }
         }
       }

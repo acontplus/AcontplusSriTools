@@ -211,6 +211,10 @@ class FacturasManager {
     if (this.downloadBtn) {
         PopupUI.safeSetHTML(this.downloadBtn, `<span class="btn-text">Descargando ${current}/${total}...</span>`);
     }
+    const downloadedDocsEl = PopupUI.safeGetElement('downloaded-docs');
+    if (downloadedDocsEl) {
+        PopupUI.safeSetText(downloadedDocsEl, current.toString());
+    }
   }
 
   handleDownloadComplete(exitosos, fallidos, total) {

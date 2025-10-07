@@ -103,7 +103,7 @@
             <div class="mt-4 pt-3 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-600" role="region" aria-label="Información de ubicación de descarga">
                 <i class="fa-solid fa-folder-open text-gray-500" aria-hidden="true"></i>
                 <span class="font-semibold">Ubicación de guardado:</span>
-                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-md" aria-label="Carpeta predeterminada de descargas del navegador">Carpeta de Descargas del Navegador</span>
+                <input id="download-location" type="text" value="Carpeta de Descargas del Navegador" class="bg-gray-100 text-gray-800 px-2 py-1 rounded-md focus:ring-pink-500 focus:border-pink-500 flex-1" onclick="this.readOnly=false;" onblur="this.readOnly=true;">
             </div>
         </section>
 

@@ -44,6 +44,7 @@ class FacturasManager {
     try {
       this.tbodyEl = PopupUI.safeGetElement('docs-table-body');
       this.loadingEl = PopupUI.safeGetElement('loading');
+      this.tableContainerEl = PopupUI.safeGetElement('table-container');
       this.newSearchBtn = PopupUI.safeGetElement('start-process');
       this.exportBtn = PopupUI.safeGetElement('export-excel-btn');
       this.downloadBtn = PopupUI.safeGetElement('download-btn');

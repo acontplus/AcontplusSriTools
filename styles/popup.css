@@ -1,13 +1,17 @@
 /* Estilos personalizados y configuración de la marca */
 body {
     font-family: 'Bahnschrift', sans-serif;
-    background-color: #f8fafc; /* Color de fondo suave */
+    background-color: #f8fafc; /* Color de fondo suave - cumple con WCAG */
 }
 :root {
     --brand-pink: #D61672;
     --brand-orange: #FFA901;
     --brand-yellow-light: #FFC303;
     --brand-yellow-dark: #FFDF01;
+    --brand-pink-dark: #9C0F54; /* Versión más oscura para mejor contraste */
+    --text-light: #2d3748; /* Color de texto más oscuro para mejor contraste */
+    --text-gray: #4a5568; /* Color de texto secundario con mejor contraste */
+    --border-gray: #e2e8f0; /* Color de borde claro */
 }
 .brand-gradient {
     background: linear-gradient(90deg, var(--brand-pink), var(--brand-orange));
@@ -16,17 +20,18 @@ body {
     background-color: var(--brand-pink);
     color: white;
     transition: background-color 0.3s ease;
+    border: 1px solid var(--brand-pink-dark); /* Añadir borde para mejor visibilidad */
 }
 .btn-primary:hover {
     background-color: #b81261; /* Un tono más oscuro de rosa para el hover */
 }
 .btn-secondary {
-    background-color: #6c757d;
+    background-color: #4a5568; /* Mejor contraste que el color original */
     color: white;
     transition: background-color 0.3s ease;
 }
 .btn-secondary:hover {
-    background-color: #5a6268;
+    background-color: #2d3748;
 }
 .btn-excel {
     background-color: #1D6F42; /* Excel green */
@@ -38,6 +43,7 @@ body {
 }
 .card {
     background-color: white;
+    border: 1px solid var(--border-gray); /* Añadir borde para mejor definición */
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     padding: 1.5rem;
@@ -48,7 +54,8 @@ body {
 }
 /* Estilo para la tabla inspirado en la presentación */
 .table-header {
-    background: linear-gradient(90deg, #D61672, #FFA901);
+    background: linear-gradient(90deg, var(--brand-pink), var(--brand-orange));
+    color: white; /* Asegurar color de texto blanco para contraste */
 }
 .toast {
     position: fixed;
@@ -62,6 +69,7 @@ body {
     visibility: hidden;
     transition: opacity 0.3s, visibility 0.3s;
     z-index: 1000;
+    border: 1px solid rgba(0,0,0,0.2); /* Añadir borde para mejor visibilidad */
 }
 .toast.show {
     opacity: 1;
@@ -70,8 +78,10 @@ body {
 
 /* Button states based on disabled attribute */
 #download-btn:disabled {
-    background-color: #9ca3af !important;
-    color: white !important;
+    background-color: #cbd5e0 !important; /* Color mejorado para accesibilidad */
+    color: #64748b !important; /* Texto más oscuro para mejor contraste */
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 #download-btn:not(:disabled) {
@@ -80,8 +90,10 @@ body {
 }
 
 #export-excel-btn:disabled {
-    background-color: #9ca3af !important;
-    color: white !important;
+    background-color: #cbd5e0 !important; /* Color mejorado para accesibilidad */
+    color: #64748b !important; /* Texto más oscuro para mejor contraste */
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 #export-excel-btn:not(:disabled) {
@@ -90,19 +102,21 @@ body {
 }
 
 #verify-btn:disabled {
-    background-color: #9ca3af !important;
-    color: white !important;
+    background-color: #cbd5e0 !important; /* Color mejorado para accesibilidad */
+    color: #64748b !important; /* Texto más oscuro para mejor contraste */
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 #verify-btn:not(:disabled) {
-    background-color: #6c757d !important;
+    background-color: #4a5568 !important; /* Color mejorado para mejor contraste */
     color: white !important;
 }
 
 /* Totals row styling */
 .totals-row {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-top: 3px solid #D61672;
+    border-top: 3px solid var(--brand-pink);
     font-weight: bold;
 }
 
@@ -114,14 +128,15 @@ body {
 .loading {
     padding: 80px 20px;
     text-align: center;
+    color: var(--text-gray); /* Usar color con mejor contraste */
 }
 
 .spinner {
     width: 60px;
     height: 60px;
     border: 5px solid rgba(214, 22, 114, 0.1);
-    border-top: 5px solid #D61672;
-    border-right: 5px solid #FFA901;
+    border-top: 5px solid var(--brand-pink);
+    border-right: 5px solid var(--brand-orange);
     border-radius: 50%;
     animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
     margin: 0 auto 24px;
@@ -137,14 +152,14 @@ body {
     width: 30px;
     height: 30px;
     border: 3px solid transparent;
-    border-top: 3px solid #FFC303;
+    border-top: 3px solid var(--brand-yellow-light);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     animation: spin 0.7s linear infinite reverse;
 }
 
 .loading p {
-    color: #6c757d;
+    color: var(--text-gray); /* Usar color con mejor contraste */
     font-weight: 500;
     font-size: 14px;
 }
@@ -157,7 +172,7 @@ body {
 
 .progress-bar {
     height: 8px;
-    background: rgba(214, 22, 114, 0.1);
+    background: #e2e8f0; /* Fondo claro para mejor contraste */
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 12px;
@@ -166,7 +181,7 @@ body {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #D61672 0%, #FFA901 100%);
+    background: linear-gradient(90deg, var(--brand-pink), var(--brand-orange));
     border-radius: 10px;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(214, 22, 114, 0.4);
@@ -186,8 +201,32 @@ body {
 }
 
 .progress-text {
-    color: #6c757d;
+    color: var(--text-gray); /* Usar color con mejor contraste */
     font-size: 13px;
+    font-weight: 600;
+}
+
+/* Mejora de contraste para elementos específicos en la tabla */
+table {
+    color: var(--text-gray); /* Color de texto principal de la tabla con mejor contraste */
+}
+
+table th {
+    color: white; /* Texto blanco en encabezados con fondo degradado */
+}
+
+table td {
+    color: var(--text-gray); /* Color de texto de celdas con mejor contraste */
+}
+
+/* Mejora para la columna de totales */
+#total-sum {
+    color: var(--brand-pink) !important; /* Usar variable css para consistencia */
+    font-weight: 600;
+}
+
+#selected-docs {
+    color: var(--brand-pink) !important; /* Asegurar que el color de texto cumple con el contraste */
     font-weight: 600;
 }
 

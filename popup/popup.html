@@ -14,133 +14,176 @@
     <!-- SheetJS LOCAL - Solucion CSP -->
     <script src="../libs/xlsx.full.min.js"></script>
 </head>
-<body class="p-4 md:p-6 min-w-[600px]">
-
+<body class="p-4 md:p-6 min-w-[600px]" role="main">
     <div class="max-w-7xl mx-auto">
         <!-- 1. Cabecera con Logo y Título -->
-        <header class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-                <svg class="w-12 h-12 brand-logo" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <header class="flex items-center justify-between mb-6" role="banner">
+            <div class="flex items-center gap-3" aria-label="Información de la aplicación">
+                <svg class="w-12 h-12 brand-logo" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill-opacity="0.3"/>
                     <path d="M12 6C9.79 6 8 7.79 8 10C8 12.21 9.79 14 12 14C14.21 14 16 12.21 16 10C16 7.79 14.21 6 12 6ZM12 12C10.9 12 10 11.1 10 10C10 8.9 10.9 8 12 8C13.1 8 14 8.9 14 10C14 11.1 13.1 12 12 12Z"/>
                     <path d="M17 15H7C6.45 15 6 15.45 6 16C6 16.55 6.45 17 7 17H17C17.55 17 18 16.55 18 16C18 15.45 17.55 15 17 15Z"/>
                 </svg>
                 <div>
                     <h1 class="text-2xl font-bold brand-logo" style="font-family: 'Arial Rounded MT Bold', sans-serif;">ACONTPLUS</h1>
-                    <p class="text-sm text-gray-500">Facturar nunca fue tan fácil</p>
+                    <p class="text-sm text-gray-500" aria-label="Descripción de la aplicación">Facturar nunca fue tan fácil</p>
                 </div>
             </div>
-             <button id="start-process" class="btn-primary font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2">
-                <i class="fa-solid fa-play"></i>
-                Analizar Comprobantes
+            <button id="start-process" 
+                    class="btn-primary font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+                    aria-label="Iniciar análisis de comprobantes electrónicos del SRI">
+                <i class="fa-solid fa-play" aria-hidden="true"></i>
+                <span>Analizar Comprobantes</span>
             </button>
         </header>
 
         <!-- 2. Contadores y Estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="card">
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" aria-label="Estadísticas de documentos">
+            <div class="card" role="status" aria-live="polite" aria-label="Contador de documentos totales">
                 <p class="text-gray-500 text-sm">Total Documentos</p>
-                <p id="total-docs" class="text-3xl font-bold text-gray-800">0</p>
+                <p id="total-docs" class="text-3xl font-bold text-gray-800" aria-label="Total de documentos">0</p>
             </div>
-            <div class="card">
+            <div class="card" role="status" aria-live="polite" aria-label="Contador de documentos seleccionados">
                 <p class="text-gray-500 text-sm">Seleccionados</p>
-                <p id="selected-docs" class="text-3xl font-bold" style="color: var(--brand-pink);">0</p>
+                <p id="selected-docs" class="text-3xl font-bold" style="color: var(--brand-pink);" aria-label="Documentos seleccionados">0</p>
             </div>
-            <div class="card">
+            <div class="card" role="status" aria-live="polite" aria-label="Contador de documentos descargados">
                 <p class="text-gray-500 text-sm">Descargados</p>
-                <p id="downloaded-docs" class="text-3xl font-bold text-green-600">0</p>
+                <p id="downloaded-docs" class="text-3xl font-bold text-green-600" aria-label="Documentos descargados">0</p>
             </div>
-            <div class="card">
+            <div class="card" role="status" aria-live="polite" aria-label="Suma total de documentos">
                 <p class="text-gray-500 text-sm">Suma Total</p>
-                <p id="total-sum" class="text-2xl font-bold" style="color: var(--brand-pink);">$0.00</p>
+                <p id="total-sum" class="text-2xl font-bold" style="color: var(--brand-pink);" aria-label="Suma total de importes">$0.00</p>
             </div>
-        </div>
+        </section>
 
         <!-- 3. Panel de Acciones -->
-        <div class="bg-white p-4 rounded-lg shadow-md mb-6">
-            <div class="flex flex-wrap items-center justify-between gap-4">
+        <section class="bg-white p-4 rounded-lg shadow-md mb-6" aria-label="Panel de acciones">
+            <form class="flex flex-wrap items-center justify-between gap-4" role="form" aria-label="Formulario de acciones">
                 <!-- Grupo de Descarga Principal -->
-                <div class="flex items-center">
-                    <select id="doc-type" class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50">
+                <div class="flex items-center" role="group" aria-labelledby="download-group-label">
+                    <span id="download-group-label" class="sr-only">Opciones de descarga</span>
+                    <label for="doc-type" class="sr-only">Tipo de documento a descargar</label>
+                    <select id="doc-type" 
+                            class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
+                            aria-label="Seleccionar tipo de archivo para descargar">
                         <option value="xml">Descargar XML</option>
                         <option value="pdf">Descargar PDF</option>
                         <option value="both">Descargar XML y PDF</option>
                     </select>
-                    <button id="download-btn" disabled class="bg-gray-400 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1">
-                        <i class="fa-solid fa-download"></i>
+                    <button id="download-btn" 
+                            disabled 
+                            class="bg-gray-400 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1"
+                            aria-label="Iniciar descarga de documentos seleccionados">
+                        <i class="fa-solid fa-download" aria-hidden="true"></i>
                         <span>Descargar</span>
                     </button>
                 </div>
 
                 <!-- Grupo de Acciones Secundarias -->
-                <div class="flex items-center gap-3">
-                     <button id="export-excel-btn" disabled class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2">
-                        <i class="fa-solid fa-file-excel"></i>
+                <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
+                    <span id="secondary-actions-label" class="sr-only">Acciones secundarias</span>
+                    <button id="export-excel-btn" 
+                            disabled 
+                            class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2"
+                            aria-label="Exportar documentos seleccionados a Excel">
+                        <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
                         <span>Exportar</span>
                     </button>
-                    <button id="verify-btn" disabled class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2">
-                        <i class="fa-solid fa-check-double"></i>
-                        Verificar
+                    <button id="verify-btn" 
+                            disabled 
+                            class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2"
+                            aria-label="Verificar documentos descargados">
+                        <i class="fa-solid fa-check-double" aria-hidden="true"></i>
+                        <span>Verificar</span>
                     </button>
                 </div>
-            </div>
+            </form>
             <!-- Ubicación de Descarga -->
-            <div class="mt-4 pt-3 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-600">
-                <i class="fa-solid fa-folder-open text-gray-500"></i>
+            <div class="mt-4 pt-3 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-600" role="region" aria-label="Información de ubicación de descarga">
+                <i class="fa-solid fa-folder-open text-gray-500" aria-hidden="true"></i>
                 <span class="font-semibold">Ubicación de guardado:</span>
-                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-md">Carpeta de Descargas del Navegador</span>
+                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-md" aria-label="Carpeta predeterminada de descargas del navegador">Carpeta de Descargas del Navegador</span>
             </div>
-        </div>
+        </section>
 
         <!-- Loading State -->
-        <div id="loading" class="loading" style="display: none;">
-            <div class="spinner"></div>
-            <p>Cargando comprobantes electronicos...</p>
-            <div id="pagination-progress" class="pagination-progress" style="display: none;">
-                <div class="progress-bar">
+        <section id="loading" 
+                 class="loading" 
+                 style="display: none;" 
+                 aria-live="polite" 
+                 aria-label="Indicador de carga"
+                 role="status">
+            <div class="spinner" aria-hidden="true"></div>
+            <p aria-label="Mensaje de carga">Cargando comprobantes electronicos...</p>
+            <div id="pagination-progress" 
+                 class="pagination-progress" 
+                 style="display: none;" 
+                 aria-label="Progreso de paginación">
+                <div class="progress-bar" role="progressbar" 
+                     aria-valuenow="0" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100" 
+                     aria-label="Barra de progreso">
                     <div id="progress-fill" class="progress-fill"></div>
                 </div>
                 <div class="progress-text">
                     Procesando p&aacute;gina <span id="current-page">1</span> de <span id="total-pages">1</span>
                     <br>
-                    <small style="color: #6c757d;">Aplicando optimizaciones automaticas...</small>
+                    <small style="color: #6c757d;" aria-label="Mensaje de optimización">Aplicando optimizaciones automaticas...</small>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- 4. Tabla de Documentos -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <section class="bg-white rounded-lg shadow-md overflow-hidden" aria-label="Tabla de documentos electrónicos del SRI">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-600">
+                <table class="w-full text-sm text-left text-gray-600" 
+                       role="table" 
+                       aria-label="Documentos electrónicos del SRI" 
+                       aria-describedby="docs-table-body">
+                    <caption class="sr-only">Documentos electrónicos del Servicio de Rentas Internas</caption>
                     <thead class="text-xs text-white uppercase table-header">
-                        <tr>
+                        <tr role="row">
                             <th scope="col" class="p-4">
-                                <input type="checkbox" id="select-all" class="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500">
+                                <input type="checkbox" 
+                                       id="select-all" 
+                                       class="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500"
+                                       aria-label="Seleccionar/deseleccionar todos los documentos">
                             </th>
-                            <th scope="col" class="px-6 py-3">Nro</th>
-                            <th scope="col" class="px-6 py-3">Número Comprobante</th>
-                            <th scope="col" class="px-6 py-3">RUC</th>
-                            <th scope="col" class="px-6 py-3">Razón Social</th>
-                            <th scope="col" class="px-6 py-3">Fecha Emisión</th>
-                            <th scope="col" class="px-6 py-3 text-right">Total ($)</th>
-                            <th scope="col" class="px-6 py-3 text-center">Estado</th>
+                            <th scope="col" class="px-6 py-3" role="columnheader">Nro</th>
+                            <th scope="col" class="px-6 py-3" role="columnheader">Número Comprobante</th>
+                            <th scope="col" class="px-6 py-3" role="columnheader">RUC</th>
+                            <th scope="col" class="px-6 py-3" role="columnheader">Razón Social</th>
+                            <th scope="col" class="px-6 py-3" role="columnheader">Fecha Emisión</th>
+                            <th scope="col" class="px-6 py-3 text-right" role="columnheader">Total ($)</th>
+                            <th scope="col" class="px-6 py-3 text-center" role="columnheader">Estado</th>
                         </tr>
                     </thead>
-                    <tbody id="docs-table-body">
+                    <tbody id="docs-table-body" role="rowgroup">
                        <!-- Las filas se insertarán aquí dinámicamente -->
-                       <tr class="text-center"><td colspan="8" class="p-8 text-gray-500">Aún no se han analizado los comprobantes. Presione 'Analizar'.</td></tr>
+                       <tr class="text-center" role="row">
+                           <td colspan="8" class="p-8 text-gray-500" role="gridcell" aria-label="Mensaje indicando que aún no se han analizado comprobantes">
+                               Aún no se han analizado los comprobantes. Presione 'Analizar'.
+                           </td>
+                       </tr>
                     </tbody>
-                    <tfoot id="docs-table-footer" class="bg-gray-50 font-bold">
+                    <tfoot id="docs-table-footer" class="bg-gray-50 font-bold" role="rowgroup">
                         <!-- Totales se insertarán aquí -->
                     </tfoot>
                 </table>
             </div>
-        </div>
+        </section>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast bg-green-500 text-white">
-        <p id="toast-message"></p>
+    <div id="toast" 
+         class="toast bg-green-500 text-white" 
+         role="alert" 
+         aria-live="assertive" 
+         aria-atomic="true" 
+         style="display: none;">
+        <p id="toast-message" aria-label="Mensaje de notificación"></p>
     </div>
 
     <!-- Scripts modulares del popup -->

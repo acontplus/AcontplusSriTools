@@ -41,7 +41,6 @@ class SRIDownloader {
   }
 
   async descargarDocumentosSeleccionados(facturas, formato) {
-    console.log(`Iniciando descarga de ${facturas.length} documentos en formato ${formato}`);
     let descargados = 0;
     let fallidos = 0;
 
@@ -145,4 +144,3 @@ class SRIDownloader {
 
 // Exportar globalmente para compatibilidad con extensiones
 window.SRIDownloader = SRIDownloader;
-console.log('✅ SRIDownloader exportado globalmente');

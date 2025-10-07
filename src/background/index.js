@@ -32,7 +32,7 @@ class StateManager {
 
 // Servicio de monitoreo de performance
 class PerformanceMonitor {
-  constructor() { this.setupHeartbeat(); this.setupCleanup(); this.setupErrorHandling(); }
+  constructor() { this.setupHeartbeat(); this.setupErrorHandling(); }
 
   monitorearPerformance(evento, datos = {}) {
     const registro = { evento, timestamp: Date.now(), datos, version: '1.4.1-Final' };

@@ -23,11 +23,10 @@ class DataManager {
         }
 
         if (result.lastVerification && (Date.now() - result.lastVerification.timestamp < 10000)) {
-            this.handleVerificationComplete(result.lastVerification.foundIds, result.lastVerification.total);
-            chrome.storage.local.remove('lastVerification');
+          this.handleVerificationComplete(result.lastVerification.foundIds, result.lastVerification.total);
+          chrome.storage.local.remove('lastVerification');
         }
 
-        console.log('✅ Datos cargados del almacenamiento:', this.facturas.length, 'documentos');
       } else {
         this.manager.updateDisplay();
       }
@@ -35,7 +34,6 @@ class DataManager {
   }
 
   handleVerificationComplete(foundIds, foundPdfIds, total, selectedOnly) {
-    console.log('DEBUG: handleVerificationComplete called with foundIds:', foundIds, 'foundPdfIds:', foundPdfIds, 'total:', total, 'selectedOnly:', selectedOnly);
     const foundSet = new Set(foundIds);
     const pdfSet = new Set(foundPdfIds);
 
@@ -44,7 +42,6 @@ class DataManager {
         if (!selectedOnly || this.selectedFacturas.has(factura.id)) {
             factura.verificado = foundSet.has(factura.id);
             factura.tienePdf = pdfSet.has(factura.id);
-            console.log(`DEBUG: Updated factura ${factura.id} - verificado: ${factura.verificado}, tienePdf: ${factura.tienePdf}`);
         }
     });
 
@@ -156,17 +153,10 @@ class DataManager {
   }
 
   handleSearchComplete(progress) {
-    console.log('✅ Búsqueda completa finalizada:', progress);
 
     this.facturas = progress.allDocuments || [];
     this.manager.facturas = this.facturas; // SINCRONIZAR con manager principal
     this.paginationInfo = progress.paginationInfo || { current: progress.totalPages || 1, total: progress.totalPages || 1 };
-
-    console.log('📦 Datos sincronizados:', {
-      dataManagerFacturas: this.facturas.length,
-      managerFacturas: this.manager.facturas.length,
-      primerosDocumentos: this.facturas.slice(0, 2)
-    });
 
     // Resetear el botón de búsqueda
     if (this.manager.newSearchBtn) {
@@ -201,14 +191,12 @@ class DataManager {
         table: this.manager.tableContainerEl,
         'no-data': this.manager.noDataEl
       }, 'table');
-      console.log('📊 Mostrando ' + totalDocuments + ' documentos en tabla');
     } else {
       PopupUI.showState({
         loading: this.manager.loadingEl,
         table: this.manager.tableContainerEl,
         'no-data': this.manager.noDataEl
       }, 'no-data');
-      console.log('📭 No se encontraron documentos');
     }
 
     console.log('📈 Resumen final:', {

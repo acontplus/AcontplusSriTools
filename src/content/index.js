@@ -3,15 +3,12 @@
 
 // MARCAR QUE EL CONTENT SCRIPT ESTÁ CARGADO
 window.SRIExtractorLoaded = true;
-console.log('🔍 Content Script modular cargado correctamente - Acontplus SRI Tools v1.4.1-Final');
 
 // Los módulos se cargan automáticamente por el manifest.json
 // Inicializar el extractor y hacerlo globalmente accesible
-console.log('🔍 Verificando disponibilidad de SRIDocumentosExtractor:', typeof SRIDocumentosExtractor);
 if (typeof SRIDocumentosExtractor === 'undefined') {
   console.error('❌ SRIDocumentosExtractor no está definido. Verificar orden de carga de scripts.');
 } else {
-  console.log('✅ SRIDocumentosExtractor disponible, inicializando...');
   window.sriExtractorInstance = new SRIDocumentosExtractor();
 }
 
@@ -72,5 +69,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return true; // Mantener el canal de mensajes abierto para respuestas asíncronas
 });
-
-console.log('✅ Listener para UI inyectada está listo.');

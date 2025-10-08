@@ -50,7 +50,6 @@ class SRIDownloader {
     for (let i = 0; i < facturas.length; i++) {
       // Verificar cancelación al inicio de cada iteración
       if (this.downloadCancelled) {
-        console.log('🚫 Descarga cancelada, deteniendo proceso');
         break;
       }
 
@@ -98,9 +97,7 @@ class SRIDownloader {
   }
 
   cancelDownload() {
-    console.log('🚫 SRIDownloader: Cancelación de descarga recibida');
     this.downloadCancelled = true;
-    console.log('🚫 SRIDownloader: Flag downloadCancelled establecido a true');
   }
 
   async descargarUnicoDocumento(factura, formato, originalIndex, dirHandle) {

@@ -3,7 +3,6 @@
 
 class SRIDocumentosExtractor {
   constructor() {
-    console.log('🏗️ Construyendo SRIDocumentosExtractor...');
     this.documentos = [];
     this.allDocuments = [];
     this.tablaDetectada = null;
@@ -80,9 +79,7 @@ class SRIDocumentosExtractor {
           return true;
 
         case 'cancelDownload':
-          console.log('🚫 Extractor: Mensaje de cancelación recibido');
           if (this.downloader) {
-            console.log('🚫 Extractor: Llamando a downloader.cancelDownload()');
             this.downloader.cancelDownload();
           } else {
             console.log('❌ Extractor: downloader no está disponible');

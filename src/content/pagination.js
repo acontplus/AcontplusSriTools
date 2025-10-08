@@ -22,7 +22,6 @@ class SRIPagination {
 
       this.extractor.tipoComprobante = resultadoInicial.tipo;
       const tipoTexto = this.extractor.tipoComprobante === 'R' ? 'RECIBIDOS' : 'EMITIDOS';
-      console.log('✅ Tabla detectada: Documentos', tipoTexto);
 
       await this.ejecutarLogicaDescargaRobusta();
 

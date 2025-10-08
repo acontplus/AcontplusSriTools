@@ -187,13 +187,8 @@ class FacturasManager {
             });
         });
 
-        console.log('DEBUG: Total downloads found:', downloads.length);
-        console.log('DEBUG: Sample downloads:', downloads.slice(0, 5).map(d => ({ filename: d.filename, url: d.url })));
-
         // Crear un Set con los nombres de archivos descargados
         const downloadedFiles = new Set(downloads.map(d => d.filename.split(/[/\\]/).pop()));
-
-        console.log('DEBUG: Archivos descargados encontrados:', Array.from(downloadedFiles));
 
         const foundIds = [];
         const foundPdfIds = [];
@@ -203,17 +198,14 @@ class FacturasManager {
             const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
             const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
 
-            console.log(`DEBUG: Verificando factura ${factura.id} - numero: ${factura.numero}, expected XML: ${xmlFileName}, expected PDF: ${pdfFileName}`);
-
             const hasXml = downloadedFiles.has(xmlFileName);
             const hasPdf = downloadedFiles.has(pdfFileName);
 
             if (hasXml || hasPdf) {
                 foundIds.push(factura.id);
                 if (hasPdf) foundPdfIds.push(factura.id);
-                console.log(`DEBUG: Encontrado archivo para factura ${factura.id}`);
             } else {
-                console.log(`DEBUG: NO encontrado archivo para factura ${factura.id}`);
+              throw new Error(`No se encontraron archivos XML o PDF para la factura ${factura.id}`);
             }
         }
 
@@ -346,7 +338,7 @@ class FacturasManager {
       try {
         pingResponse = await this.sendMessageWithRetry(tab.id, { action: 'ping' }, 1);
       } catch (pingError) {
-        console.log('No se pudo hacer ping, content script no está cargado');
+        throw new Error('No se pudo hacer ping, content script no está cargado');
       }
 
       if (!pingResponse || !pingResponse.success) {
@@ -528,13 +520,11 @@ class FacturasManager {
   }
 
   cancelDownload() {
-    console.log('🚫 Cancelando descarga...');
     this.downloadCancelled = true;
     
     // Enviar mensaje de cancelación al content script
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
-        console.log('📤 Enviando mensaje de cancelación al content script');
         chrome.tabs.sendMessage(tabs[0].id, { action: 'cancelDownload' });
       }
     });

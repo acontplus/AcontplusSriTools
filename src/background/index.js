@@ -142,8 +142,6 @@ class MessageHandler {
                   finalFilename = `${sanitizedPath}/${message.payload.filename}`;
                 }
               }
-              
-              console.log(`Intentando descargar en: ${finalFilename}`);
 
               chrome.downloads.download({
                 url: message.payload.url,

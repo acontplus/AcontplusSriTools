@@ -51,4 +51,3 @@ class SRIUtils {
 
 // Exportar globalmente para compatibilidad con extensiones
 window.SRIUtils = SRIUtils;
-console.log('✅ SRIUtils exportado globalmente');

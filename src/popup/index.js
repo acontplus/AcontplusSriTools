@@ -318,6 +318,8 @@ class FacturasManager {
       this.newSearchBtn.disabled = true;
     }
 
+    // Ocultar tabla y mostrar loader
+    if (this.tableContainerEl) this.tableContainerEl.style.display = 'none';
     if (this.loadingEl) this.loadingEl.style.display = 'block';
 
     try {
@@ -432,7 +434,11 @@ class FacturasManager {
       }
 
       this.showNotification(errorMessage, 'error');
+      
+      // Restaurar vista de tabla cuando hay error
+      if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
       if (this.loadingEl) this.loadingEl.style.display = 'none';
+      
       if (this.newSearchBtn) {
         this.newSearchBtn.disabled = false;
       }

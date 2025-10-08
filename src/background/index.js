@@ -184,3 +184,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     console.log('🔗 Página del SRI detectada:', tab.url);
   }
 });
+
+// Listener para el clic en el icono de la extensión
+chrome.action.onClicked.addListener((tab) => {
+  // Envía un mensaje al content script en la pestaña activa para mostrar/ocultar la UI.
+  chrome.tabs.sendMessage(tab.id, { action: "toggleUI" }, (response) => {
+    if (chrome.runtime.lastError) {
+      // Este error ocurre si el content script no está inyectado en la página actual (lo cual es esperado en páginas no autorizadas).
+      // Se puede ignorar de forma segura.
+      console.log("El content script no responde en esta pestaña. Es normal en páginas fuera de sri.gob.ec.");
+    }
+  });
+});

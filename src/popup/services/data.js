@@ -193,9 +193,8 @@ class DataManager {
 
     if (this.manager.newSearchBtn) {
       this.manager.newSearchBtn.disabled = false;
-      PopupUI.safeSetHTML(this.manager.newSearchBtn, '<span class="btn-text">Buscar</span>');
     }
-
+  
     if (totalDocuments > 0) {
       PopupUI.showState({
         loading: this.manager.loadingEl,

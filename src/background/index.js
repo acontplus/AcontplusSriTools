@@ -114,6 +114,13 @@ class MessageHandler {
         case 'procesoCompletado': sendResponse(await this.procesoCompletado(message)); break;
         case 'resetearEstado': sendResponse(await this.resetearEstado()); break;
         case 'obtenerEstadisticas': sendResponse(await this.getEstadisticas()); break;
+        case 'closePanel':
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab) {
+            chrome.tabs.sendMessage(tab.id, { action: "toggleUI" });
+          }
+          sendResponse({ success: true });
+          break;
         default: console.warn('⚠️ Acción no reconocida:', message.action); sendResponse({ success: false, error: 'Acción no reconocida' });
       }
     } catch (error) { console.error('❌ Error procesando mensaje:', error); sendResponse({ success: false, error: error.message }); }

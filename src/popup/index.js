@@ -62,6 +62,15 @@ class FacturasManager {
   }
 
   setupEventListeners() {
+    const closeBtn = document.getElementById('close-panel-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Envía un mensaje al background script para que se encargue de cerrar el panel
+        chrome.runtime.sendMessage({ action: 'closePanel' });
+      });
+    }
+
     if (this.newSearchBtn) this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
     if (this.exportBtn) this.exportBtn.addEventListener('click', (e) => { e.preventDefault(); this.exportComponent.exportSelected(); });
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });

@@ -43,10 +43,17 @@ class SRIDownloader {
   async descargarDocumentosSeleccionados(facturas, formato) {
     let descargados = 0;
     let fallidos = 0;
+    this.downloadCancelled = false; // Inicializar flag
 
     const dirHandle = null;
 
     for (let i = 0; i < facturas.length; i++) {
+      // Verificar cancelación al inicio de cada iteración
+      if (this.downloadCancelled) {
+        console.log('🚫 Descarga cancelada, deteniendo proceso');
+        break;
+      }
+
       this.extractor.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.extractor.view_state;
       const factura = facturas[i];
 
@@ -88,6 +95,12 @@ class SRIDownloader {
       fallidos: fallidos,
       total: facturas.length
     });
+  }
+
+  cancelDownload() {
+    console.log('🚫 SRIDownloader: Cancelación de descarga recibida');
+    this.downloadCancelled = true;
+    console.log('🚫 SRIDownloader: Flag downloadCancelled establecido a true');
   }
 
   async descargarUnicoDocumento(factura, formato, originalIndex, dirHandle) {

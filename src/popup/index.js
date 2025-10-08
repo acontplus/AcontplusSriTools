@@ -16,6 +16,7 @@ class FacturasManager {
     this.newSearchBtn = null;
     this.exportBtn = null;
     this.downloadBtn = null;
+    this.cancelBtn = null;
     this.verifyBtn = null;
     this.selectMissingBtn = null;
     this.progressFillEl = null;
@@ -50,6 +51,7 @@ class FacturasManager {
       this.newSearchBtn = PopupUI.safeGetElement('start-process');
       this.exportBtn = PopupUI.safeGetElement('export-excel-btn');
       this.downloadBtn = PopupUI.safeGetElement('download-btn');
+      this.cancelBtn = PopupUI.safeGetElement('cancel-download-btn');
       this.verifyBtn = PopupUI.safeGetElement('verify-btn');
       this.paginationProgressEl = PopupUI.safeGetElement('pagination-progress');
       this.currentPageEl = PopupUI.safeGetElement('current-page');
@@ -85,6 +87,7 @@ class FacturasManager {
     if (this.newSearchBtn) this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
     if (this.exportBtn) this.exportBtn.addEventListener('click', (e) => { e.preventDefault(); this.exportComponent.exportSelected(); });
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
+    if (this.cancelBtn) this.cancelBtn.addEventListener('click', (e) => { e.preventDefault(); this.cancelDownload(); });
     if (this.verifyBtn) this.verifyBtn.addEventListener('click', (e) => { e.preventDefault(); this.verifyDownloads(true); });
 
     if (this.tbodyEl) {
@@ -231,6 +234,11 @@ class FacturasManager {
     if (this.downloadBtn) {
         PopupUI.safeSetHTML(this.downloadBtn, `<span class="btn-text">Descargando ${current}/${total}...</span>`);
     }
+    // Solo mostrar botón cancelar si no se ha cancelado
+    if (this.cancelBtn && !this.downloadCancelled) {
+        this.cancelBtn.style.display = 'flex';
+    }
+    
     const downloadedDocsEl = PopupUI.safeGetElement('downloaded-docs');
     if (downloadedDocsEl) {
         PopupUI.safeSetText(downloadedDocsEl, current.toString());
@@ -267,9 +275,10 @@ class FacturasManager {
     const formato = document.getElementById('doc-type').value;
     const facturasParaDescargar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
 
-    this.downloadBtn.disabled = true;
+    // Mostrar botón de cancelar y deshabilitar exportar
+    this.showCancelButton();
+    this.downloadCancelled = false;
     this.exportBtn.disabled = true;
-    PopupUI.safeSetHTML(this.downloadBtn, '<span class="btn-text">Iniciando...</span>');
 
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -515,6 +524,49 @@ class FacturasManager {
         progressBar.appendChild(progressFill);
         this.progressFillEl = progressFill;
       }
+    }
+  }
+
+  cancelDownload() {
+    console.log('🚫 Cancelando descarga...');
+    this.downloadCancelled = true;
+    
+    // Enviar mensaje de cancelación al content script
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        console.log('📤 Enviando mensaje de cancelación al content script');
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'cancelDownload' });
+      }
+    });
+    
+    this.showNotification('Descarga cancelada por el usuario', 'warning');
+    this.hideCancelButton();
+    this.exportBtn.disabled = false;
+  }
+
+  showCancelButton() {
+    if (this.cancelBtn) {
+      this.cancelBtn.style.display = 'flex';
+    }
+    if (this.downloadBtn) {
+      this.downloadBtn.disabled = true;
+      this.downloadBtn.innerHTML = `
+        <i class="fa-solid fa-download" aria-hidden="true"></i>
+        <span>Descargando...</span>
+      `;
+    }
+  }
+
+  hideCancelButton() {
+    if (this.cancelBtn) {
+      this.cancelBtn.style.display = 'none';
+    }
+    if (this.downloadBtn) {
+      this.downloadBtn.disabled = false;
+      this.downloadBtn.innerHTML = `
+        <i class="fa-solid fa-download" aria-hidden="true"></i>
+        <span>Descargar</span>
+      `;
     }
   }
 }

@@ -79,6 +79,17 @@ class SRIDocumentosExtractor {
           });
           return true;
 
+        case 'cancelDownload':
+          console.log('🚫 Extractor: Mensaje de cancelación recibido');
+          if (this.downloader) {
+            console.log('🚫 Extractor: Llamando a downloader.cancelDownload()');
+            this.downloader.cancelDownload();
+          } else {
+            console.log('❌ Extractor: downloader no está disponible');
+          }
+          sendResponse({ success: true, message: 'Descarga cancelada' });
+          return true;
+
         default:
           sendResponse({ success: false, error: 'Acción no reconocida' });
           return true;

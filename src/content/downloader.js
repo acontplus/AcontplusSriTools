@@ -124,15 +124,20 @@ class SRIDownloader {
 
       const blob = await response.blob();
 
-      const downloadLink = document.createElement('a');
-      downloadLink.href = window.URL.createObjectURL(blob);
-      downloadLink.download = nameFile;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      setTimeout(() => {
-        window.URL.revokeObjectURL(downloadLink.href);
-        document.body.removeChild(downloadLink);
-      }, 100);
+      // Convertir el blob a data URL para enviarlo al background script
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = function() {
+        const base64data = reader.result;
+        // Enviar al background script para que use la API chrome.downloads
+        chrome.runtime.sendMessage({
+          action: 'downloadFile',
+          payload: {
+            url: base64data,
+            filename: nameFile
+          }
+        });
+      }
 
       return true;
     } catch (error) {

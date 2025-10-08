@@ -22,6 +22,8 @@ class FacturasManager {
     this.paginationProgressEl = null;
     this.currentPageEl = null;
     this.totalPagesEl = null;
+    this.downloadLocationInput = null;
+    this.savePathBtn = null;
 
     // Inicializar componentes
     this.dataManager = new DataManager(this);
@@ -33,11 +35,11 @@ class FacturasManager {
   }
 
   async init() {
-
     await this.initializeDOM();
     PopupUI.initializeBrandIdentity(this.version);
     this.setupEventListeners();
     this.dataManager.loadStoredData();
+    this.loadDownloadPath(); // Cargar la ruta de descarga guardada
   }
 
   async initializeDOM() {
@@ -52,6 +54,8 @@ class FacturasManager {
       this.paginationProgressEl = PopupUI.safeGetElement('pagination-progress');
       this.currentPageEl = PopupUI.safeGetElement('current-page');
       this.totalPagesEl = PopupUI.safeGetElement('total-pages');
+      this.downloadLocationInput = PopupUI.safeGetElement('download-location');
+      this.savePathBtn = PopupUI.safeGetElement('save-download-path');
 
       this.tableComponent.initialize(this.tbodyEl);
       this.createMissingProgressElements();
@@ -69,6 +73,13 @@ class FacturasManager {
         // Envía un mensaje al background script para que se encargue de cerrar el panel
         chrome.runtime.sendMessage({ action: 'closePanel' });
       });
+    }
+
+    if (this.savePathBtn) {
+        this.savePathBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.saveDownloadPath();
+        });
     }
 
     if (this.newSearchBtn) this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
@@ -101,6 +112,30 @@ class FacturasManager {
             }
         }
     });
+  }
+
+  async loadDownloadPath() {
+    try {
+        const result = await chrome.storage.local.get('downloadPath');
+        if (result.downloadPath && this.downloadLocationInput) {
+            this.downloadLocationInput.value = result.downloadPath;
+        }
+    } catch (error) {
+        console.error('Error cargando la ruta de descarga:', error);
+    }
+  }
+
+  async saveDownloadPath() {
+    if (!this.downloadLocationInput) return;
+
+    const newPath = this.downloadLocationInput.value.trim();
+    try {
+        await chrome.storage.local.set({ downloadPath: newPath });
+        this.showNotification('Ruta de descarga guardada.', 'success');
+    } catch (error) {
+        console.error('Error guardando la ruta de descarga:', error);
+        this.showNotification('No se pudo guardar la ruta.', 'error');
+    }
   }
 
   // Delegar métodos a componentes

@@ -121,6 +121,51 @@ class MessageHandler {
           }
           sendResponse({ success: true });
           break;
+        case 'downloadFile':
+          (async () => {
+            try {
+              const { downloadPath } = await chrome.storage.local.get('downloadPath');
+              let finalFilename = message.payload.filename;
+
+              if (downloadPath && downloadPath.trim() !== '') {
+                // Sanitizar la ruta para asegurar que es una ruta relativa válida
+                let sanitizedPath = downloadPath.trim()
+                  .replace(/\\/g, '/') // Usar barras normales
+                  .split('/')
+                  .filter(part => part !== '..' && part !== '.') // Prevenir path traversal
+                  .join('/');
+
+                // Quitar barras iniciales y otros caracteres inválidos
+                sanitizedPath = sanitizedPath.replace(/^\/+/, '').replace(/[^a-zA-Z0-9_\-\/]/g, '');
+
+                if (sanitizedPath) {
+                  finalFilename = `${sanitizedPath}/${message.payload.filename}`;
+                }
+              }
+              
+              console.log(`Intentando descargar en: ${finalFilename}`);
+
+              chrome.downloads.download({
+                url: message.payload.url,
+                filename: finalFilename,
+                saveAs: false
+              }, (downloadId) => {
+                if (chrome.runtime.lastError) {
+                  console.error(`Error en la descarga a "${finalFilename}":`, chrome.runtime.lastError.message);
+                } else {
+                  console.log(`Descarga iniciada con ID: ${downloadId} en "${finalFilename}"`);
+                }
+              });
+            } catch (error) {
+              console.error('Error al procesar la descarga, usando ruta por defecto:', error);
+              chrome.downloads.download({
+                url: message.payload.url,
+                filename: message.payload.filename
+              });
+            }
+          })();
+          sendResponse({ success: true });
+          break;
         default: console.warn('⚠️ Acción no reconocida:', message.action); sendResponse({ success: false, error: 'Acción no reconocida' });
       }
     } catch (error) { console.error('❌ Error procesando mensaje:', error); sendResponse({ success: false, error: error.message }); }

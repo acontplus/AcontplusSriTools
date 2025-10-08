@@ -63,9 +63,9 @@ class FacturasManager {
 
   setupEventListeners() {
     if (this.newSearchBtn) this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
-    if (this.exportBtn) this.exportBtn.addEventListener('click', () => this.exportComponent.exportSelected());
-    if (this.downloadBtn) this.downloadBtn.addEventListener('click', () => this.descargarSeleccionados());
-    if (this.verifyBtn) this.verifyBtn.addEventListener('click', () => this.verifyDownloads());
+    if (this.exportBtn) this.exportBtn.addEventListener('click', (e) => { e.preventDefault(); this.exportComponent.exportSelected(); });
+    if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
+    if (this.verifyBtn) this.verifyBtn.addEventListener('click', (e) => { e.preventDefault(); this.verifyDownloads(true); });
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -118,92 +118,68 @@ class FacturasManager {
   }
 
   // Resto de métodos delegados o implementados directamente
-  async verifyDownloads() {
-    if (this.dataManager.facturas.length === 0) {
-        this.showNotification('No hay documentos para verificar. Primero busca documentos.', 'warning');
+  async verifyDownloads(selectedOnly = false) {
+    const facturasToCheck = selectedOnly ? this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id)) : this.dataManager.facturas;
+
+    if (facturasToCheck.length === 0) {
+        this.showNotification('No hay documentos para verificar.', 'warning');
         return;
     }
 
     try {
-        this.showNotification('Selecciona la carpeta donde están los archivos descargados...', 'info');
-        
-        // Crear input file para seleccionar carpeta completa
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.multiple = true;
-        input.accept = '.xml,.pdf';
-        
-        // Compatible con Chrome, Edge, Safari (macOS y Windows)
-        input.webkitdirectory = true;
-        input.directory = true; // Fallback para navegadores antiguos
-        
-        const files = await new Promise((resolve, reject) => {
-            input.onchange = (e) => {
-                const selectedFiles = Array.from(e.target.files);
-                if (selectedFiles.length > 0) {
-                    resolve(selectedFiles);
+        this.showNotification('Verificando descargas en carpeta de Downloads...', 'info');
+
+        // Obtener todas las descargas completadas usando chrome.downloads API
+        const downloads = await new Promise((resolve, reject) => {
+            chrome.downloads.search({ state: 'complete' }, (results) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
                 } else {
-                    reject(new Error('No se seleccionaron archivos'));
+                    resolve(results);
                 }
-            };
-            
-            // Manejar cancelación en diferentes navegadores
-            input.oncancel = () => reject(new Error('Selección cancelada'));
-            
-            // Timeout para detectar cancelación en navegadores que no soportan oncancel
-            const timeoutId = setTimeout(() => {
-                if (!input.files || input.files.length === 0) {
-                    reject(new Error('Selección cancelada'));
-                }
-            }, 100);
-            
-            input.addEventListener('change', () => clearTimeout(timeoutId), { once: true });
-            
-            input.click();
+            });
         });
 
-        this.showNotification(`Verificando ${files.length} archivos...`, 'info');
-        
-        // Crear un Set con los nombres de archivos encontrados (sin ruta)
-        const fileNames = new Set(files.map(f => {
-            // Extraer solo el nombre del archivo, sin la ruta
-            // Compatible con rutas de Windows (backslash) y Unix (slash)
-            const parts = f.name.split(/[/\\]/);
-            return parts[parts.length - 1];
-        }));
-        
+        console.log('DEBUG: Total downloads found:', downloads.length);
+        console.log('DEBUG: Sample downloads:', downloads.slice(0, 5).map(d => ({ filename: d.filename, url: d.url })));
+
+        // Crear un Set con los nombres de archivos descargados
+        const downloadedFiles = new Set(downloads.map(d => d.filename.split(/[/\\]/).pop()));
+
+        console.log('DEBUG: Archivos descargados encontrados:', Array.from(downloadedFiles));
+
         const foundIds = [];
-        let verificados = 0;
-        
-        // Verificar cada factura
-        for (const factura of this.dataManager.facturas) {
-            if (!factura.claveAcceso) continue;
-            
-            const xmlFileName = `${factura.claveAcceso}.xml`;
-            const pdfFileName = `${factura.claveAcceso}.pdf`;
-            
-            // Verificar si existe XML o PDF
-            if (fileNames.has(xmlFileName) || fileNames.has(pdfFileName)) {
+        const foundPdfIds = [];
+
+        // Verificar cada factura seleccionada
+        for (const factura of facturasToCheck) {
+            const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
+            const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
+
+            console.log(`DEBUG: Verificando factura ${factura.id} - numero: ${factura.numero}, expected XML: ${xmlFileName}, expected PDF: ${pdfFileName}`);
+
+            const hasXml = downloadedFiles.has(xmlFileName);
+            const hasPdf = downloadedFiles.has(pdfFileName);
+
+            if (hasXml || hasPdf) {
                 foundIds.push(factura.id);
-                verificados++;
+                if (hasPdf) foundPdfIds.push(factura.id);
+                console.log(`DEBUG: Encontrado archivo para factura ${factura.id}`);
+            } else {
+                console.log(`DEBUG: NO encontrado archivo para factura ${factura.id}`);
             }
         }
 
         // Actualizar la UI con los resultados
-        this.dataManager.handleVerificationComplete(foundIds, this.dataManager.facturas.length);
-        
-        const noEncontrados = this.dataManager.facturas.length - verificados;
-        const mensaje = `✅ Verificación completada:\n${verificados} encontrados, ${noEncontrados} faltantes`;
-        
-        this.showNotification(mensaje, verificados > 0 ? 'success' : 'warning');
+        this.dataManager.handleVerificationComplete(foundIds, foundPdfIds, facturasToCheck.length, selectedOnly);
 
+        // const noEncontrados = facturasToCheck.length - foundIds.length;
+        // const mensaje = `✅ Verificación completada:\n${foundIds.length} encontrados, ${noEncontrados} faltantes`;
+
+        // this.showNotification(mensaje, foundIds.length > 0 ? 'success' : 'warning');
     } catch(error) {
-        if (error.message === 'Selección cancelada' || error.message === 'No se seleccionaron archivos') {
-            this.showNotification('Verificación cancelada', 'info');
-        } else {
-            console.error("Error al iniciar la verificación:", error);
-            this.showNotification(`Error: ${error.message}`, 'error');
-        }
+        console.error("Error al verificar descargas:", error);
+        this.showNotification(`Error: ${error.message}`, 'error');
     }
   }
 
@@ -231,6 +207,11 @@ class FacturasManager {
         type = fallidos === total ? 'error' : 'warning';
     }
     this.showNotification(message, type);
+
+    // Ejecutar verificación automática después de la descarga
+    if (exitosos > 0) {
+        setTimeout(() => this.verifyDownloads(true), 1000); // Esperar un segundo para que las descargas se completen
+    }
   }
 
   async descargarSeleccionados() {

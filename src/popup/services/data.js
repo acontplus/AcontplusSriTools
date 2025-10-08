@@ -34,16 +34,24 @@ class DataManager {
     });
   }
 
-  handleVerificationComplete(foundIds, total) {
+  handleVerificationComplete(foundIds, foundPdfIds, total, selectedOnly) {
+    console.log('DEBUG: handleVerificationComplete called with foundIds:', foundIds, 'foundPdfIds:', foundPdfIds, 'total:', total, 'selectedOnly:', selectedOnly);
     const foundSet = new Set(foundIds);
+    const pdfSet = new Set(foundPdfIds);
+
+    // Actualizar la propiedad verificado en los objetos factura
     this.facturas.forEach(factura => {
-        const verificadoCell = document.querySelector(`td[data-verified-id="${factura.id}"]`);
-        if(verificadoCell) {
-            verificadoCell.innerHTML = foundSet.has(factura.id) ? '✔️' : '';
+        if (!selectedOnly || this.selectedFacturas.has(factura.id)) {
+            factura.verificado = foundSet.has(factura.id);
+            factura.tienePdf = pdfSet.has(factura.id);
+            console.log(`DEBUG: Updated factura ${factura.id} - verificado: ${factura.verificado}, tienePdf: ${factura.tienePdf}`);
         }
     });
 
-    this.manager.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
+    // Re-renderizar la tabla para mostrar los cambios
+    this.manager.renderTable();
+
+    // this.manager.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
   }
 
   updateSelectionCount() {

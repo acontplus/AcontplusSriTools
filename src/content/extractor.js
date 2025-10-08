@@ -52,11 +52,14 @@ class SRIDocumentosExtractor {
 
         case 'buscarTodasLasPaginasSRIeload':
         case 'buscarTodasLasPaginasRobusta':
-          this.pagination.procesarTodasLasPaginasRobusta(message.config || {}).then(result => {
-            sendResponse(result);
-          }).catch(error => {
-            sendResponse({ success: false, error: error.message });
-          });
+          (async () => {
+            try {
+              const result = await this.pagination.procesarTodasLasPaginasRobusta(message.config || {});
+              sendResponse(result);
+            } catch (error) {
+              sendResponse({ success: false, error: error.message });
+            }
+          })();
           return true;
 
         case 'getPaginationInfo':

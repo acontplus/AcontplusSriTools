@@ -168,6 +168,11 @@ class DataManager {
       primerosDocumentos: this.facturas.slice(0, 2)
     });
 
+    // Resetear el botón de búsqueda
+    if (this.manager.newSearchBtn) {
+      this.manager.newSearchBtn.disabled = false;
+    }
+
     this.manager.updateDisplay();
     this.selectedFacturas.clear();
     this.updateSelectionCount();

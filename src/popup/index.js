@@ -316,7 +316,6 @@ class FacturasManager {
   async startNewSearchRobusta() {
     if (this.newSearchBtn) {
       this.newSearchBtn.disabled = true;
-      PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Conectando...</span>');
     }
 
     if (this.loadingEl) this.loadingEl.style.display = 'block';
@@ -340,7 +339,6 @@ class FacturasManager {
       }
 
       if (!pingResponse || !pingResponse.success) {
-        PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Cargando módulos...</span>');
         
         // Inyectar los scripts en orden
         try {
@@ -402,8 +400,6 @@ class FacturasManager {
         }
       }
 
-      PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Iniciando...</span>');
-
       const response = await this.sendMessageWithRetry(tab.id, {
         action: 'buscarTodasLasPaginasRobusta',
         config: {
@@ -415,14 +411,12 @@ class FacturasManager {
 
       if (response && response.success) {
         this.showNotification('🔍 Búsqueda iniciada en todas las páginas disponibles', 'info');
-        PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Procesando...</span>');
 
         if (response.paginationInfo) {
           this.paginationInfo = response.paginationInfo;
         }
-
       } else {
-        throw new Error(response ? response.error : 'No se pudo iniciar la búsqueda');
+        throw new Error(response.error || 'Error desconocido iniciando búsqueda');
       }
 
     } catch (error) {
@@ -441,7 +435,6 @@ class FacturasManager {
       if (this.loadingEl) this.loadingEl.style.display = 'none';
       if (this.newSearchBtn) {
         this.newSearchBtn.disabled = false;
-        PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">Analizar Comprobantes</span>');
       }
     }
   }
@@ -501,10 +494,6 @@ class FacturasManager {
       if (totalCountEl) {
         PopupUI.safeSetText(totalCountEl, progress.documentosEncontrados.toString());
       }
-    }
-
-    if (this.newSearchBtn && progress.mensaje) {
-      PopupUI.safeSetHTML(this.newSearchBtn, '<span class="btn-text">' + progress.mensaje + '</span>');
     }
 
     const porcentaje = progress.porcentaje || Math.round((progress.currentPage / progress.totalPages) * 100);

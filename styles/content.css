@@ -2,6 +2,14 @@
 /* Brand Identity: #D61672, #FFA901, #FFC303, #FFDF01 */
 /* Optimizado para interfaz mejorada con soporte de paginación automática */
 
+/* Ampliar el contenedor principal para más espacio */
+.container, .container-fluid, main, #app, #page-content-wrapper, .ui-layout-center {
+    max-width: 95% !important;
+    width: 95% !important;
+    margin: 0 auto !important;
+}
+
+
 /* Contenedor para la tabla con scroll horizontal */
 .acontplus-table-container {
   width: 100%;

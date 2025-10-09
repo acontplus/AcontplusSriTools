@@ -103,6 +103,7 @@ class FacturasManager {
         if (message.action === 'updateDownloadProgress') this.updateDownloadButtonProgress(message.current, message.total);
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         else if (message.action === 'verificationError') this.showNotification(`Error de verificación: ${message.error}`, 'error');
+        else if (message.action === 'hideCancelButton') this.hideCancelButton();
     });
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -252,9 +253,18 @@ class FacturasManager {
     }
     this.showNotification(message, type);
 
+    // Ocultar botón cancelar al finalizar
+    this.hideCancelButton();
+
     // Ejecutar verificación automática después de la descarga
     if (exitosos > 0) {
         setTimeout(() => this.verifyDownloads(true), 1000); // Esperar un segundo para que las descargas se completen
+    }
+  }
+
+  hideCancelButton() {
+    if (this.cancelBtn) {
+        this.cancelBtn.style.display = 'none';
     }
   }
 

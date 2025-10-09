@@ -121,6 +121,11 @@ class MessageHandler {
           }
           sendResponse({ success: true });
           break;
+        case 'hideCancel':
+          // Reenviar mensaje al popup para ocultar botón cancelar
+          chrome.runtime.sendMessage({ action: 'hideCancelButton' });
+          sendResponse({ success: true });
+          break;
         case 'downloadFile':
           (async () => {
             try {

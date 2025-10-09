@@ -6,6 +6,15 @@ class SRIDownloader {
     this.extractor = extractor;
   }
 
+  // Verificar si el contexto de la extensión sigue válido
+  isExtensionContextValid() {
+    try {
+      return chrome.runtime?.id !== undefined;
+    } catch {
+      return false;
+    }
+  }
+
   async verificarDescargasEnPagina(facturas) {
     try {
       if (!window.showDirectoryPicker) {
@@ -43,12 +52,11 @@ class SRIDownloader {
   async descargarDocumentosSeleccionados(facturas, formato) {
     let descargados = 0;
     let fallidos = 0;
-    this.downloadCancelled = false; // Inicializar flag
+    this.downloadCancelled = false;
 
     const dirHandle = null;
 
     for (let i = 0; i < facturas.length; i++) {
-      // Verificar cancelación al inicio de cada iteración
       if (this.downloadCancelled) {
         break;
       }
@@ -56,7 +64,18 @@ class SRIDownloader {
       this.extractor.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.extractor.view_state;
       const factura = facturas[i];
 
-      chrome.runtime.sendMessage({ action: 'updateDownloadProgress', current: i + 1, total: facturas.length });
+      try {
+        if (!this.isExtensionContextValid()) {
+          console.warn('Contexto de extensión invalidado');
+          break;
+        }
+        chrome.runtime.sendMessage({ action: 'updateDownloadProgress', current: i + 1, total: facturas.length });
+      } catch (error) {
+        if (error.message.includes('Extension context invalidated')) {
+          console.warn('Extensión recargada durante descarga');
+          break;
+        }
+      }
 
       try {
         const originalIndex = factura.rowIndex;
@@ -94,6 +113,9 @@ class SRIDownloader {
       fallidos: fallidos,
       total: facturas.length
     });
+
+    // Ocultar botón cancelar al finalizar
+    chrome.runtime.sendMessage({ action: 'hideCancel' });
   }
 
   cancelDownload() {
@@ -101,6 +123,11 @@ class SRIDownloader {
   }
 
   async descargarUnicoDocumento(factura, formato, originalIndex, dirHandle) {
+    // Verificar cancelación al inicio
+    if (this.downloadCancelled) {
+      return false;
+    }
+
     const url_links = window.location.href;
     const name_files = `${factura.numero.replace(/ /g, '_')}.${formato}`;
 
@@ -121,6 +148,11 @@ class SRIDownloader {
 
   async fetchParaDescarga(urlSRI, frmBody, frmFile, nameFile, dirHandle) {
     try {
+      // Verificar cancelación antes del fetch
+      if (this.downloadCancelled) {
+        return false;
+      }
+
       const response = await fetch(urlSRI, {
         headers: {
           "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",

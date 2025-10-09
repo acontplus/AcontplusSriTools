@@ -7,7 +7,8 @@
     "activeTab",
     "storage",
     "scripting",
-    "downloads"
+    "downloads",
+    "downloads.open"
   ],
   "host_permissions": [
     "*://*.sri.gob.ec/*",

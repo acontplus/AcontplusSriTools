@@ -88,11 +88,19 @@ class FacturasManager {
     if (this.exportBtn) this.exportBtn.addEventListener('click', (e) => { e.preventDefault(); this.exportComponent.exportSelected(); });
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
     if (this.cancelBtn) this.cancelBtn.addEventListener('click', (e) => { e.preventDefault(); this.cancelDownload(); });
-    if (this.verifyBtn) this.verifyBtn.addEventListener('click', (e) => { e.preventDefault(); this.verifyDownloads(true); });
+    if (this.verifyBtn) this.verifyBtn.addEventListener('click', (e) => { e.preventDefault(); this.verifyDownloadsManual(true); });
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox') this.dataManager.handleRowSelection(e.target);
+      });
+
+      // Event listener for PDF icon clicks
+      this.tbodyEl.addEventListener('click', (e) => {
+        if (e.target.classList.contains('pdf-icon')) {
+          const facturaId = e.target.dataset.facturaId;
+          this.openPdfFile(facturaId);
+        }
       });
     }
 
@@ -205,6 +213,18 @@ class FacturasManager {
             if (hasXml || hasPdf) {
                 foundIds.push(factura.id);
                 if (hasPdf) foundPdfIds.push(factura.id);
+    
+                // Store download IDs for opening later (for backward compatibility)
+                const fileData = {};
+                if (hasXml) {
+                    const xmlDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === xmlFileName);
+                    if (xmlDownload) fileData.xml = { downloadId: xmlDownload.id };
+                }
+                if (hasPdf) {
+                    const pdfDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === pdfFileName);
+                    if (pdfDownload) fileData.pdf = { downloadId: pdfDownload.id };
+                }
+                this.dataManager.fileInfo.set(factura.id, fileData);
             } else {
               throw new Error(`No se encontraron archivos XML o PDF para la factura ${factura.id}`);
             }
@@ -569,6 +589,310 @@ class FacturasManager {
       `;
     }
   }
+
+  // Nueva funcionalidad: Verificación manual con acceso directo a carpeta
+  async verifyDownloadsManual(selectedOnly = false) {
+    const facturasToCheck = selectedOnly ? this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id)) : this.dataManager.facturas;
+
+    if (facturasToCheck.length === 0) {
+        this.showNotification('No hay documentos para verificar.', 'warning');
+        return;
+    }
+
+    try {
+        // Verificar si la API File System Access está disponible
+        if (window.showDirectoryPicker) {
+            // Método moderno: acceso directo a carpeta
+            await this.verifyWithFileSystemAccess(facturasToCheck, selectedOnly);
+        } else {
+            // Fallback: usar chrome.downloads API (método original)
+            console.log('File System Access API no disponible, usando método alternativo con chrome.downloads');
+            await this.verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly);
+        }
+
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            this.showNotification('Verificación cancelada por el usuario.', 'info');
+        } else {
+            console.error("Error al verificar descargas:", error);
+            this.showNotification(`Error: ${error.message}`, 'error');
+        }
+    }
+  }
+
+  // Método moderno con File System Access API
+  async verifyWithFileSystemAccess(facturasToCheck, selectedOnly) {
+    this.showNotification('Selecciona la carpeta de Descargas para verificar archivos...', 'info');
+
+    // Solicitar acceso directo a la carpeta de descargas
+    const dirHandle = await window.showDirectoryPicker({
+        mode: 'read',
+        startIn: 'downloads' // Sugerir carpeta de descargas
+    });
+
+    console.log('Acceso concedido a la carpeta:', dirHandle.name);
+
+    // Escanear archivos en la carpeta seleccionada (incluyendo subcarpetas)
+    const downloadedFiles = new Map(); // filename -> {size, hash}
+
+    await this.scanDirectoryRecursively(dirHandle, downloadedFiles, '');
+
+    console.log(`Total archivos escaneados: ${downloadedFiles.size}`);
+
+    const foundIds = [];
+    const foundPdfIds = [];
+    const missingFiles = [];
+
+    // Verificar cada factura
+    for (const factura of facturasToCheck) {
+        const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
+        const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
+
+        const xmlInfo = downloadedFiles.get(xmlFileName);
+        const pdfInfo = downloadedFiles.get(pdfFileName);
+
+        let hasValidXml = false;
+        let hasValidPdf = false;
+
+        if (xmlInfo) {
+            // Verificar integridad básica: tamaño > 0
+            hasValidXml = xmlInfo.size > 0;
+            if (!hasValidXml) {
+                console.warn(`Archivo XML corrupto o vacío: ${xmlFileName}`);
+            }
+        }
+
+        if (pdfInfo) {
+            hasValidPdf = pdfInfo.size > 0;
+            if (!hasValidPdf) {
+                console.warn(`Archivo PDF corrupto o vacío: ${pdfFileName}`);
+            }
+        }
+
+        if (hasValidXml || hasValidPdf) {
+            foundIds.push(factura.id);
+            if (hasValidPdf) foundPdfIds.push(factura.id);
+
+            // Store file information for opening later
+            const fileData = {};
+            if (hasValidXml && xmlInfo) {
+                const xmlDownload = await this.findDownloadByFilename(xmlFileName);
+                fileData.xml = { downloadId: xmlDownload?.id, path: xmlInfo.fullPath };
+            }
+            if (hasValidPdf && pdfInfo) {
+                const pdfDownload = await this.findDownloadByFilename(pdfFileName);
+                fileData.pdf = { downloadId: pdfDownload?.id, path: pdfInfo.fullPath };
+            }
+            this.dataManager.fileInfo.set(factura.id, fileData);
+
+            console.log(`Factura ${factura.id}: encontrada (${hasValidXml ? 'XML' : ''}${hasValidXml && hasValidPdf ? '+' : ''}${hasValidPdf ? 'PDF' : ''})`);
+        } else {
+            missingFiles.push(factura.numero);
+            console.log(`Factura ${factura.id}: no encontrada o corrupta`);
+        }
+    }
+
+    // Actualizar la UI con los resultados
+    this.dataManager.handleVerificationComplete(foundIds, foundPdfIds, facturasToCheck.length, selectedOnly);
+
+    const encontrados = foundIds.length;
+    const total = facturasToCheck.length;
+    const faltantes = total - encontrados;
+
+    let mensaje = `✅ Verificación completada: ${encontrados} de ${total} archivos verificados.`;
+    if (faltantes > 0) {
+        mensaje += ` ${faltantes} faltantes o corruptos.`;
+    }
+
+    this.showNotification(mensaje, encontrados > 0 ? 'success' : 'warning');
+
+    if (missingFiles.length > 0) {
+        console.log('Archivos faltantes:', missingFiles);
+    }
+  }
+
+  // Método alternativo usando chrome.downloads API
+  async verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly) {
+    this.showNotification('Verificando descargas usando método alternativo...', 'info');
+
+    // Obtener todas las descargas completadas usando chrome.downloads API
+    const downloads = await new Promise((resolve, reject) => {
+        chrome.downloads.search({ state: 'complete' }, (results) => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+            } else {
+                resolve(results);
+            }
+        });
+    });
+
+    // Crear un Set con los nombres de archivos descargados
+    const downloadedFiles = new Set(downloads.map(d => d.filename.split(/[/\\]/).pop()));
+
+    const foundIds = [];
+    const foundPdfIds = [];
+
+    // Verificar cada factura seleccionada
+    for (const factura of facturasToCheck) {
+        const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
+        const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
+
+        const hasXml = downloadedFiles.has(xmlFileName);
+        const hasPdf = downloadedFiles.has(pdfFileName);
+
+        if (hasXml || hasPdf) {
+            foundIds.push(factura.id);
+            if (hasPdf) foundPdfIds.push(factura.id);
+
+            // Store download IDs for opening later
+            const fileData = {};
+            if (hasXml) {
+                const xmlDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === xmlFileName);
+                if (xmlDownload) fileData.xml = { downloadId: xmlDownload.id };
+            }
+            if (hasPdf) {
+                const pdfDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === pdfFileName);
+                if (pdfDownload) fileData.pdf = { downloadId: pdfDownload.id };
+            }
+            this.dataManager.fileInfo.set(factura.id, fileData);
+        } else {
+            console.log(`Factura ${factura.id}: no encontrada`);
+        }
+    }
+
+    // Actualizar la UI con los resultados
+    this.dataManager.handleVerificationComplete(foundIds, foundPdfIds, facturasToCheck.length, selectedOnly);
+
+    const encontrados = foundIds.length;
+    const total = facturasToCheck.length;
+    const faltantes = total - encontrados;
+
+    let mensaje = `✅ Verificación completada (método alternativo): ${encontrados} de ${total} archivos encontrados.`;
+    if (faltantes > 0) {
+        mensaje += ` ${faltantes} faltantes.`;
+    }
+
+    this.showNotification(mensaje, encontrados > 0 ? 'success' : 'warning');
+  }
+
+  // Método auxiliar para escanear directorio recursivamente
+  async scanDirectoryRecursively(dirHandle, fileMap, path = '') {
+    try {
+        for await (const [name, handle] of dirHandle.entries()) {
+            const fullPath = path ? `${path}/${name}` : name;
+
+            if (handle.kind === 'file') {
+                try {
+                    const file = await handle.getFile();
+                    const size = file.size;
+                    const hash = await this.computeFileHash(file);
+                    fileMap.set(name, { size, hash, fullPath }); // Usar solo nombre para búsqueda, pero guardar path completo
+                    console.log(`Archivo encontrado: ${fullPath}, tamaño: ${size} bytes, hash: ${hash ? hash.substring(0, 16) + '...' : 'N/A'}`);
+                } catch (fileError) {
+                    console.warn(`Error al procesar archivo ${fullPath}:`, fileError);
+                }
+            } else if (handle.kind === 'directory') {
+                // Escanear subcarpetas recursivamente
+                console.log(`Escaneando subcarpeta: ${fullPath}`);
+                await this.scanDirectoryRecursively(handle, fileMap, fullPath);
+            }
+        }
+    } catch (error) {
+        console.warn(`Error escaneando directorio ${path}:`, error);
+    }
+  }
+
+  // Método auxiliar para encontrar descarga por nombre de archivo
+  async findDownloadByFilename(filename) {
+    try {
+        const downloads = await new Promise((resolve, reject) => {
+            chrome.downloads.search({ filenameRegex: filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$' }, (results) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+        return downloads.find(d => d.filename.split(/[/\\]/).pop() === filename);
+    } catch (error) {
+        console.warn('Error buscando descarga:', error);
+        return null;
+    }
+  }
+
+  // Método auxiliar para calcular hash SHA-256 de un archivo
+  async computeFileHash(file) {
+    try {
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (error) {
+        console.warn('Error calculando hash:', error);
+        return null;
+    }
+  }
+
+  // Método para abrir archivo PDF
+  async openPdfFile(facturaId) {
+    try {
+        console.log('Intentando abrir PDF para factura:', facturaId);
+        console.log('fileInfo disponible:', this.dataManager.fileInfo);
+        const fileInfo = this.dataManager.fileInfo.get(facturaId);
+        console.log('fileInfo para esta factura:', fileInfo);
+        if (!fileInfo || !fileInfo.pdf) {
+            this.showNotification('Información del archivo PDF no encontrada.', 'error');
+            return;
+        }
+
+        if (fileInfo.pdf.downloadId) {
+            // Usar chrome.downloads API (preferido)
+            console.log('Abriendo PDF con downloadId:', fileInfo.pdf.downloadId);
+            chrome.downloads.open(fileInfo.pdf.downloadId, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error abriendo PDF con downloadId:', fileInfo.pdf.downloadId, chrome.runtime.lastError);
+                    // Intentar con path como fallback
+                    if (fileInfo.pdf.path) {
+                        console.log('Intentando fallback con path:', fileInfo.pdf.path);
+                        const fileUrl = `file://${fileInfo.pdf.path}`;
+                        chrome.tabs.create({ url: fileUrl }, (tab) => {
+                            if (chrome.runtime.lastError) {
+                                console.error('Error abriendo PDF con path:', chrome.runtime.lastError);
+                                this.showNotification(`Error al abrir el PDF: ${chrome.runtime.lastError.message}`, 'error');
+                            } else {
+                                console.log('PDF abierto con path en nueva pestaña:', tab.id);
+                                this.showNotification('PDF abierto exitosamente.', 'success');
+                            }
+                        });
+                    } else {
+                        this.showNotification(`Error al abrir el PDF: ${chrome.runtime.lastError.message}`, 'error');
+                    }
+                } else {
+                    console.log('PDF abierto exitosamente con downloadId');
+                    this.showNotification('PDF abierto exitosamente.', 'success');
+                }
+            });
+        } else if (fileInfo.pdf.path) {
+            // Fallback: intentar abrir con file:// URL
+            console.log('Abriendo PDF con path:', fileInfo.pdf.path);
+            const fileUrl = `file://${fileInfo.pdf.path}`;
+            chrome.tabs.create({ url: fileUrl }, (tab) => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error abriendo PDF:', chrome.runtime.lastError);
+                    this.showNotification('Error al abrir el PDF. Verifica los permisos de archivo.', 'error');
+                } else {
+                    console.log('PDF abierto en nueva pestaña:', tab.id);
+                }
+            });
+        } else {
+            this.showNotification('No se puede determinar cómo abrir el PDF.', 'error');
+        }
+    } catch (error) {
+        console.error('Error abriendo PDF:', error);
+        this.showNotification('Error al abrir el PDF.', 'error');
+    }
+  }
 }
 
 // Estilos adicionales para animaciones
@@ -591,6 +915,17 @@ const additionalCSS =
 
   '.progress-fill {' +
     'transition: width 0.5s ease-in-out;' +
+  '}' +
+
+  '.pdf-icon {' +
+    'display: inline-block;' +
+    'transition: all 0.2s ease;' +
+  '}' +
+
+  '.pdf-icon:hover {' +
+    'background-color: #f3f4f6;' +
+    'border-radius: 4px;' +
+    'transform: scale(1.1);' +
   '}';
 
 const style = document.createElement('style');

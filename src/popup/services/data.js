@@ -7,6 +7,7 @@ class DataManager {
     this.facturas = [];
     this.selectedFacturas = new Set();
     this.paginationInfo = { current: 1, total: 1 };
+    this.fileInfo = new Map(); // id -> { xml: {path, downloadId}, pdf: {path, downloadId} }
   }
 
   loadStoredData() {

@@ -78,6 +78,17 @@ class SRIDocumentosExtractor {
           });
           return true;
 
+        case 'checkSession':
+          (async () => {
+            try {
+              const sessionStatus = this.checkSessionStatus();
+              sendResponse(sessionStatus);
+            } catch (error) {
+              sendResponse({ success: false, error: error.message });
+            }
+          })();
+          return true;
+
         case 'cancelDownload':
           if (this.downloader) {
             this.downloader.cancelDownload();
@@ -193,6 +204,101 @@ class SRIDocumentosExtractor {
         }
       });
     } catch (error) { console.warn('No se pudo actualizar progreso:', error); }
+  }
+
+  // Método para verificar el estado de la sesión en SRI
+  checkSessionStatus() {
+    try {
+      // Verificar si hay mensajes de sesión expirada
+      const sessionExpiredSelectors = [
+        '.ui-messages-error', // Mensajes de error generales
+        '[id*="session"]', // Elementos con "session" en el ID
+        '.alert-danger', // Alertas de peligro
+        '.error-message' // Mensajes de error
+      ];
+
+      for (const selector of sessionExpiredSelectors) {
+        const elements = document.querySelectorAll(selector);
+        for (const element of elements) {
+          const text = element.textContent.toLowerCase();
+          if (text.includes('sesión') && (text.includes('expir') || text.includes('caduc') || text.includes('finaliz'))) {
+            return {
+              success: false,
+              sessionActive: false,
+              message: 'Sesión expirada detectada',
+              details: element.textContent.trim()
+            };
+          }
+        }
+      }
+
+      // Verificar elementos que indican sesión activa
+      const sessionActiveSelectors = [
+        '#frmPrincipal\\:tablaCompRecibidos_data', // Tabla de comprobantes recibidos
+        '#frmPrincipal\\:tablaCompEmitidos_data', // Tabla de comprobantes emitidos
+        '.ui-menu', // Menú de navegación
+        '[id*="usuario"]', // Información de usuario
+        '.user-info', // Información del usuario
+        'a[href*="logout"]', // Enlace de logout
+        'a[href*="cerrar"]' // Enlace de cerrar sesión
+      ];
+
+      let activeIndicators = 0;
+      for (const selector of sessionActiveSelectors) {
+        if (document.querySelector(selector)) {
+          activeIndicators++;
+        }
+      }
+
+      // Verificar si estamos en una página de login
+      const loginSelectors = [
+        'input[type="password"]', // Campo de contraseña
+        '#loginForm', // Formulario de login
+        '[id*="login"]', // Elementos con login
+        '.login-form' // Formulario de login
+      ];
+
+      let loginIndicators = 0;
+      for (const selector of loginSelectors) {
+        if (document.querySelector(selector)) {
+          loginIndicators++;
+        }
+      }
+
+      // Determinar estado de sesión
+      if (loginIndicators > 0 && activeIndicators === 0) {
+        return {
+          success: true,
+          sessionActive: false,
+          message: 'Usuario no ha iniciado sesión',
+          details: 'Página de login detectada'
+        };
+      } else if (activeIndicators > 0) {
+        return {
+          success: true,
+          sessionActive: true,
+          message: 'Sesión activa detectada',
+          details: `${activeIndicators} indicadores de sesión activa encontrados`
+        };
+      } else {
+        // Estado indeterminado - asumir inactiva por precaución
+        return {
+          success: true,
+          sessionActive: false,
+          message: 'Estado de sesión indeterminado',
+          details: 'No se encontraron indicadores claros de sesión'
+        };
+      }
+
+    } catch (error) {
+      console.error('Error verificando estado de sesión:', error);
+      return {
+        success: false,
+        sessionActive: false,
+        message: 'Error al verificar sesión',
+        error: error.message
+      };
+    }
   }
 
   // Delegar métodos de descarga al módulo correspondiente

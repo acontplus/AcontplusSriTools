@@ -363,6 +363,26 @@ class FacturasManager {
       if (!this.isDomainValid(tab.url)) {
         throw new Error('Navega a una página del SRI (*.sri.gob.ec)');
       }
+
+      // Verificar estado de sesión antes de proceder
+      console.log('Verificando estado de sesión en SRI...');
+      const sessionCheck = await this.sendMessageWithRetry(tab.id, { action: 'checkSession' }, 2);
+
+      if (!sessionCheck.success) {
+        throw new Error('Error al verificar sesión: ' + sessionCheck.error);
+      }
+
+      if (!sessionCheck.sessionActive) {
+        // Restaurar UI y mostrar mensaje de sesión expirada
+        if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
+        if (this.loadingEl) this.loadingEl.style.display = 'none';
+        if (this.newSearchBtn) this.newSearchBtn.disabled = false;
+
+        this.showNotification('❌ Su sesión en el SRI ha finalizado. Por favor, recargue la página e inicie sesión nuevamente.', 'error');
+        return; // Salir sin continuar
+      }
+
+      console.log('✅ Sesión activa confirmada:', sessionCheck.message);
       // Verificar si el content script está cargado, si no, inyectarlo
       let pingResponse = null;
       try {

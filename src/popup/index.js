@@ -600,12 +600,22 @@ class FacturasManager {
     }
 
     try {
-        // Verificar si la API File System Access está disponible
+        // Verificar si la API File System Access está disponible y funciona
         if (window.showDirectoryPicker) {
-            // Método moderno: acceso directo a carpeta
-            await this.verifyWithFileSystemAccess(facturasToCheck, selectedOnly);
+            try {
+                // Intentar usar File System Access
+                await this.verifyWithFileSystemAccess(facturasToCheck, selectedOnly);
+            } catch (fsError) {
+                // Si falla por subframes o permisos, usar fallback
+                if (fsError.message.includes('Cross origin sub frames') || fsError.message.includes('sub frames')) {
+                    console.log('File System Access no funciona en subframes, usando chrome.downloads API');
+                    await this.verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly);
+                } else {
+                    throw fsError; // Re-lanzar otros errores
+                }
+            }
         } else {
-            // Fallback: usar chrome.downloads API (método original)
+            // Fallback: usar chrome.downloads API
             console.log('File System Access API no disponible, usando método alternativo con chrome.downloads');
             await this.verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly);
         }

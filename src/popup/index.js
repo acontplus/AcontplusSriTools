@@ -884,14 +884,11 @@ class FacturasManager {
                     console.error('Error abriendo PDF con downloadId:', fileInfo.pdf.downloadId, chrome.runtime.lastError);
                     // Intentar con path como fallback
                     if (fileInfo.pdf.path) {
-                        console.log('Intentando fallback con path:', fileInfo.pdf.path);
                         const fileUrl = `file://${fileInfo.pdf.path}`;
                         chrome.tabs.create({ url: fileUrl }, (tab) => {
                             if (chrome.runtime.lastError) {
-                                console.error('Error abriendo PDF con path:', chrome.runtime.lastError);
                                 this.showNotification(`Error al abrir el PDF: ${chrome.runtime.lastError.message}`, 'error');
                             } else {
-                                console.log('PDF abierto con path en nueva pestaña:', tab.id);
                                 this.showNotification('PDF abierto exitosamente.', 'success');
                             }
                         });
@@ -899,13 +896,11 @@ class FacturasManager {
                         this.showNotification(`Error al abrir el PDF: ${chrome.runtime.lastError.message}`, 'error');
                     }
                 } else {
-                    console.log('PDF abierto exitosamente con downloadId');
                     this.showNotification('PDF abierto exitosamente.', 'success');
                 }
             });
         } else if (fileInfo.pdf.path) {
             // Fallback: intentar abrir con file:// URL
-            console.log('Abriendo PDF con path:', fileInfo.pdf.path);
             const fileUrl = `file://${fileInfo.pdf.path}`;
             chrome.tabs.create({ url: fileUrl }, (tab) => {
                 if (chrome.runtime.lastError) {

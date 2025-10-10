@@ -319,6 +319,26 @@ class FacturasManager {
           throw new Error('La extensión no está cargada. Recarga la página del SRI y busca documentos primero.');
         }
 
+        // Verificar estado de sesión antes de descargar
+        console.log('Verificando estado de sesión antes de descargar...');
+        const sessionCheck = await this.sendMessageWithRetry(tab.id, { action: 'checkSession' }, 2);
+
+        if (!sessionCheck.success) {
+          throw new Error('Error al verificar sesión antes de descarga: ' + sessionCheck.error);
+        }
+
+        if (!sessionCheck.sessionActive) {
+          // Restaurar UI y mostrar mensaje de sesión expirada
+          this.hideCancelButton();
+          this.exportBtn.disabled = false;
+          this.downloadBtn.disabled = false;
+
+          this.showNotification('❌ Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
+          return; // Salir sin continuar
+        }
+
+        console.log('✅ Sesión activa confirmada antes de descarga:', sessionCheck.message);
+
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: (facturas, formato) => {
@@ -378,7 +398,7 @@ class FacturasManager {
         if (this.loadingEl) this.loadingEl.style.display = 'none';
         if (this.newSearchBtn) this.newSearchBtn.disabled = false;
 
-        this.showNotification('❌ Su sesión en el SRI ha finalizado. Por favor, recargue la página e inicie sesión nuevamente.', 'error');
+        this.showNotification('❌ Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
         return; // Salir sin continuar
       }
 
@@ -497,13 +517,11 @@ class FacturasManager {
   }
 
   isDomainValid(url) {
-    const validDomains = [
-      'sri.gob.ec',
-      'comprobantes-electronicos-internet',
-      'srienlinea.sri.gob.ec'
-    ];
+    // URL específica requerida para la funcionalidad
+    const requiredUrl = 'https://srienlinea.sri.gob.ec/comprobantes-electronicos-internet/pages/consultas/recibidos/comprobantesRecibidos.jsf';
 
-    return validDomains.some(domain => url.includes(domain));
+    // Verificar si la URL contiene la ruta específica
+    return url.includes(requiredUrl) || url.includes('srienlinea.sri.gob.ec');
   }
 
   async sendMessageWithRetry(tabId, message, maxRetries) {

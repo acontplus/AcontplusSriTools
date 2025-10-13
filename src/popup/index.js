@@ -196,6 +196,17 @@ class FacturasManager {
             });
         });
 
+        // Verificar si realmente hay descargas en el historial
+        if (downloads.length === 0) {
+            // No hay descargas en historial - limpiar estado guardado
+            localStorage.removeItem('sri_export_hash');
+            localStorage.removeItem('sri_export_date');
+            chrome.storage.local.remove(['lastExportHash', 'lastExportDate']);
+            
+            this.showNotification('❌ No se encontraron descargas previas en el historial', 'warning');
+            return;
+        }
+
         // Crear un Set con los nombres de archivos descargados
         const downloadedFiles = new Set(downloads.map(d => d.filename.split(/[/\\]/).pop()));
 
@@ -225,20 +236,25 @@ class FacturasManager {
                     if (pdfDownload) fileData.pdf = { downloadId: pdfDownload.id };
                 }
                 this.dataManager.fileInfo.set(factura.id, fileData);
-            } else {
-              throw new Error(`No se encontraron archivos XML o PDF para la factura ${factura.id}`);
             }
+        }
+
+        // Si no se encontraron archivos, limpiar estado guardado
+        if (foundIds.length === 0) {
+            localStorage.removeItem('sri_export_hash');
+            localStorage.removeItem('sri_export_date');
+            chrome.storage.local.remove(['lastExportHash', 'lastExportDate']);
         }
 
         // Actualizar la UI con los resultados
         this.dataManager.handleVerificationComplete(foundIds, foundPdfIds, facturasToCheck.length, selectedOnly);
 
-        // const noEncontrados = facturasToCheck.length - foundIds.length;
-        // const mensaje = `✅ Verificación completada:\n${foundIds.length} encontrados, ${noEncontrados} faltantes`;
-
-        // this.showNotification(mensaje, foundIds.length > 0 ? 'success' : 'warning');
     } catch(error) {
         console.error("Error al verificar descargas:", error);
+        // Limpiar estado en caso de error
+        localStorage.removeItem('sri_export_hash');
+        localStorage.removeItem('sri_export_date');
+        chrome.storage.local.remove(['lastExportHash', 'lastExportDate']);
         this.showNotification(`Error: ${error.message}`, 'error');
     }
   }
@@ -774,6 +790,17 @@ class FacturasManager {
         });
     });
 
+    // Verificar si realmente hay descargas en el historial
+    if (downloads.length === 0) {
+        // No hay descargas en historial - limpiar estado guardado
+        localStorage.removeItem('sri_export_hash');
+        localStorage.removeItem('sri_export_date');
+        chrome.storage.local.remove(['lastExportHash', 'lastExportDate']);
+        
+        this.showNotification('❌ No se encontraron descargas previas en el historial', 'warning');
+        return;
+    }
+
     // Crear un Set con los nombres de archivos descargados
     const downloadedFiles = new Set(downloads.map(d => d.filename.split(/[/\\]/).pop()));
 
@@ -806,6 +833,13 @@ class FacturasManager {
         } else {
             console.log(`Factura ${factura.id}: no encontrada`);
         }
+    }
+
+    // Si no se encontraron archivos, limpiar estado guardado
+    if (foundIds.length === 0) {
+        localStorage.removeItem('sri_export_hash');
+        localStorage.removeItem('sri_export_date');
+        chrome.storage.local.remove(['lastExportHash', 'lastExportDate']);
     }
 
     // Actualizar la UI con los resultados

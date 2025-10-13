@@ -434,7 +434,7 @@ class FacturasManager {
           // Inyectar CSS primero
           await chrome.scripting.insertCSS({
             target: { tabId: tab.id },
-            files: ['styles/content.css']
+            files: ['assets/css/content.css']
           }).catch(e => console.log('CSS ya inyectado o no necesario'));
 
           // Inyectar scripts en orden de dependencias

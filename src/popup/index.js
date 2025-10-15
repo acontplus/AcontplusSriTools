@@ -18,6 +18,9 @@ class FacturasManager {
     this.downloadBtn = null;
     this.cancelBtn = null;
     this.verifyBtn = null;
+
+    // Inicializar DownloadCounter
+    this.initDownloadCounter();
     this.selectMissingBtn = null;
     this.progressFillEl = null;
     this.paginationProgressEl = null;
@@ -41,6 +44,29 @@ class FacturasManager {
     this.setupEventListeners();
     this.dataManager.loadStoredData();
     this.loadDownloadPath(); // Cargar la ruta de descarga guardada
+  }
+
+  initDownloadCounter() {
+    try {
+      // Verificar si DownloadCounter está disponible
+      if (typeof DownloadCounter !== 'undefined') {
+        if (!window.downloadCounter) {
+          console.log('🔧 Inicializando DownloadCounter en popup')
+          window.downloadCounter = new DownloadCounter();
+        }
+      } else {
+        console.error('❌ DownloadCounter no está definido - verificar orden de carga de scripts')
+        // Intentar cargar después de un delay
+        setTimeout(() => {
+          if (typeof DownloadCounter !== 'undefined' && !window.downloadCounter) {
+            console.log('🔧 DownloadCounter disponible después del delay - inicializando')
+            window.downloadCounter = new DownloadCounter();
+          }
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('❌ Error inicializando DownloadCounter:', error)
+    }
   }
 
   async initializeDOM() {
@@ -291,13 +317,23 @@ class FacturasManager {
 
     // Incrementar contador de descargas y verificar si mostrar modal de feedback
     if (exitosos > 0 && window.downloadCounter) {
+        console.log('🚀 Llamando downloadCounter.incrementDownload()...')
         window.downloadCounter.incrementDownload().then(modalShown => {
             if (modalShown) {
                 console.log('🎯 Modal de feedback mostrado automáticamente');
+            } else {
+                console.log('📊 Modal no mostrado - aún no se alcanza el trigger');
             }
         }).catch(error => {
-            console.error('Error con contador de descargas:', error);
+            console.error('❌ Error con contador de descargas:', error);
         });
+    } else {
+        if (exitosos === 0) {
+            console.log('⚠️ No se incrementa contador - no hubo descargas exitosas')
+        }
+        if (!window.downloadCounter) {
+            console.error('❌ window.downloadCounter no está disponible')
+        }
     }
 
     // Ocultar botón cancelar al finalizar

@@ -8,9 +8,14 @@ class DownloadCounter {
 
     async incrementDownload() {
         try {
+            console.log('🔍 DownloadCounter: incrementDownload() llamado')
+            
             // Verificar si ya envió feedback
             const feedbackSent = await this.hasSentFeedback()
+            console.log('📝 Feedback ya enviado:', feedbackSent)
+            
             if (feedbackSent) {
+                console.log('⏭️ No mostrar modal - feedback ya enviado')
                 return false // No mostrar modal si ya envió feedback
             }
 
@@ -21,17 +26,20 @@ class DownloadCounter {
             // Guardar nuevo contador
             await this.setDownloadCount(newCount)
 
-            console.log(`📊 Descarga #${newCount} registrada`)
+            console.log(`📊 Descarga #${newCount} registrada (trigger en ${this.TRIGGER_COUNT})`)
 
             // Verificar si debe mostrar modal
             if (newCount >= this.TRIGGER_COUNT) {
+                console.log('🎯 Mostrando modal - se alcanzó el trigger count')
                 this.showFeedbackModal()
                 return true
+            } else {
+                console.log(`⏳ Faltan ${this.TRIGGER_COUNT - newCount} descargas para mostrar modal`)
             }
 
             return false
         } catch (error) {
-            console.error('Error incrementando contador de descargas:', error)
+            console.error('❌ Error incrementando contador de descargas:', error)
             return false
         }
     }
@@ -68,23 +76,38 @@ class DownloadCounter {
     }
 
     showFeedbackModal() {
-        console.log('🎯 Mostrando modal de feedback automáticamente (4ta descarga)')
+        console.log('🎯 showFeedbackModal() ejecutado')
         
-        // Crear modal si no existe
-        if (!window.feedbackModal) {
-            window.feedbackModal = new FeedbackModal()
-        }
-        
-        // Mostrar modal con mensaje especial
-        window.feedbackModal.show()
-        
-        // Agregar mensaje contextual
-        setTimeout(() => {
-            const modalContent = document.querySelector('.modal-header h3')
-            if (modalContent) {
-                modalContent.textContent = '¡Ayúdanos a mejorar! - 4ta descarga completada'
+        try {
+            // Verificar si FeedbackModal está disponible
+            if (typeof FeedbackModal === 'undefined') {
+                console.error('❌ FeedbackModal no está definido')
+                return
             }
-        }, 100)
+            
+            // Crear modal si no existe
+            if (!window.feedbackModal) {
+                console.log('🆕 Creando nueva instancia de FeedbackModal')
+                window.feedbackModal = new FeedbackModal()
+            }
+            
+            console.log('📱 Mostrando modal de feedback')
+            window.feedbackModal.show()
+            
+            // Agregar mensaje contextual
+            setTimeout(() => {
+                const modalContent = document.querySelector('.modal-header h3')
+                if (modalContent) {
+                    modalContent.textContent = '¡Ayúdanos a mejorar! - 4ta descarga completada'
+                    console.log('✏️ Título del modal actualizado')
+                } else {
+                    console.warn('⚠️ No se encontró el título del modal para actualizar')
+                }
+            }, 100)
+            
+        } catch (error) {
+            console.error('❌ Error mostrando modal de feedback:', error)
+        }
     }
 
     async resetCounter() {
@@ -97,6 +120,19 @@ class DownloadCounter {
         const count = await this.getDownloadCount()
         const feedbackSent = await this.hasSentFeedback()
         return { count, feedbackSent, triggerCount: this.TRIGGER_COUNT }
+    }
+
+    // Método para testing - forzar mostrar modal
+    async forceShowModal() {
+        console.log('🧪 TESTING: Forzando mostrar modal')
+        this.showFeedbackModal()
+    }
+
+    // Método para testing - simular 4 descargas
+    async simulateFourDownloads() {
+        console.log('🧪 TESTING: Simulando 4 descargas')
+        await this.setDownloadCount(4)
+        return await this.incrementDownload()
     }
 }
 

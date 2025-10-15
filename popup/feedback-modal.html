@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="feedback-modal.css">
+</head>
+<body>
+    <div id="feedbackModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Enviar Feedback - Acontplus SRI Extractor</h3>
+                <span class="close">&times;</span>
+            </div>
+            
+            <form id="feedbackForm" class="modal-body">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fullName">Nombre Completo *</label>
+                    <input type="text" id="fullName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="telefono">Teléfono</label>
+                    <input type="tel" id="telefono" placeholder="+593991234567">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruc">RUC</label>
+                    <input type="text" id="ruc" placeholder="0990012345001">
+                </div>
+                
+                <div class="form-group">
+                    <label for="comentarios">Comentarios *</label>
+                    <textarea id="comentarios" rows="4" required placeholder="Describe tu experiencia, problemas encontrados o sugerencias..."></textarea>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-submit">Enviar Feedback</button>
+                </div>
+            </form>
+            
+            <div id="loadingState" class="loading" style="display: none;">
+                <p>Enviando feedback...</p>
+            </div>
+            
+            <div id="successState" class="success" style="display: none;">
+                <p>✅ Feedback enviado correctamente</p>
+                <button class="btn-close">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

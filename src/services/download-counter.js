@@ -8,16 +8,11 @@ class DownloadCounter {
 
     async incrementDownload() {
         try {
-            console.log('🔍 DownloadCounter: incrementDownload() llamado')
-            
             // Verificar si ya envió feedback
             const feedbackSent = await this.hasSentFeedback()
             console.log('📝 Feedback ya enviado:', feedbackSent)
-            
-            if (feedbackSent) {
-                console.log('⏭️ No mostrar modal - feedback ya enviado')
-                return false // No mostrar modal si ya envió feedback
-            }
+
+            if (feedbackSent) return false
 
             // Obtener contador actual
             const currentCount = await this.getDownloadCount()
@@ -76,35 +71,30 @@ class DownloadCounter {
     }
 
     showFeedbackModal() {
-        console.log('🎯 showFeedbackModal() ejecutado')
-        
+
         try {
             // Verificar si FeedbackModal está disponible
             if (typeof FeedbackModal === 'undefined') {
                 console.error('❌ FeedbackModal no está definido')
                 return
             }
-            
+
             // Crear modal si no existe
             if (!window.feedbackModal) {
-                console.log('🆕 Creando nueva instancia de FeedbackModal')
                 window.feedbackModal = new FeedbackModal()
             }
-            
-            console.log('📱 Mostrando modal de feedback')
+
             window.feedbackModal.show()
-            
             // Agregar mensaje contextual
             setTimeout(() => {
                 const modalContent = document.querySelector('.modal-header h3')
                 if (modalContent) {
                     modalContent.textContent = '¡Ayúdanos a mejorar! - 4ta descarga completada'
-                    console.log('✏️ Título del modal actualizado')
                 } else {
                     console.warn('⚠️ No se encontró el título del modal para actualizar')
                 }
             }, 100)
-            
+
         } catch (error) {
             console.error('❌ Error mostrando modal de feedback:', error)
         }
@@ -113,7 +103,6 @@ class DownloadCounter {
     async resetCounter() {
         // Método para desarrollo/testing
         await chrome.storage.local.remove([this.STORAGE_KEY, this.FEEDBACK_SENT_KEY])
-        console.log('🔄 Contador de descargas reiniciado')
     }
 
     async getStats() {

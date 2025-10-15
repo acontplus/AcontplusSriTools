@@ -289,6 +289,17 @@ class FacturasManager {
     }
     this.showNotification(message, type);
 
+    // Incrementar contador de descargas y verificar si mostrar modal de feedback
+    if (exitosos > 0 && window.downloadCounter) {
+        window.downloadCounter.incrementDownload().then(modalShown => {
+            if (modalShown) {
+                console.log('🎯 Modal de feedback mostrado automáticamente');
+            }
+        }).catch(error => {
+            console.error('Error con contador de descargas:', error);
+        });
+    }
+
     // Ocultar botón cancelar al finalizar
     this.hideCancelButton();
 

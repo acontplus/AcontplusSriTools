@@ -49,7 +49,6 @@ class FeedbackModal {
                         </div>
                         
                         <div class="modal-footer">
-                            <button type="button" class="btn-cancel">Cancelar</button>
                             <button type="submit" class="btn-submit">Enviar Feedback</button>
                         </div>
                     </form>
@@ -72,27 +71,35 @@ class FeedbackModal {
     }
 
     bindEvents() {
-        // Cerrar modal
+        // Solo permitir cerrar si el feedback fue enviado exitosamente
         const closeBtn = this.modal.querySelector('.close')
-        const cancelBtn = this.modal.querySelector('.btn-cancel')
         
-        closeBtn.addEventListener('click', () => this.hide())
-        cancelBtn.addEventListener('click', () => this.hide())
+        closeBtn.addEventListener('click', () => this.attemptClose())
         
-        // Cerrar al hacer click fuera del modal
+        // Prevenir cerrar al hacer click fuera del modal
         this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.hide()
+            if (e.target === this.modal) {
+                this.showCloseWarning()
+            }
         })
 
         // Submit del formulario
         this.form.addEventListener('submit', (e) => this.handleSubmit(e))
         
-        // Botón cerrar en estado de éxito
+        // Botón cerrar en estado de éxito (este sí permite cerrar)
         this.modal.addEventListener('click', (e) => {
             if (e.target.classList.contains('btn-close')) {
                 this.hide()
             }
         })
+    }
+
+    attemptClose() {
+        this.showCloseWarning()
+    }
+
+    showCloseWarning() {
+        alert('⚠️ Para continuar usando la extensión, necesitamos tu feedback. Por favor completa el formulario.')
     }
 
     show() {
@@ -148,6 +155,11 @@ class FeedbackModal {
             // Mostrar éxito
             document.getElementById('loadingState').style.display = 'none'
             document.getElementById('successState').style.display = 'block'
+            
+            // Marcar feedback como enviado
+            if (window.downloadCounter) {
+                await window.downloadCounter.markFeedbackSent()
+            }
             
             console.log('Feedback enviado correctamente, ID:', data)
 

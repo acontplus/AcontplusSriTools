@@ -1,24 +1,59 @@
--- Asegúrate de tener gen_random_uuid
+-- 0) Extensión para UUIDs aleatorios
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- (Asumo que ya existen las tablas app_users y feedback_responses tal como las definiste.)
--- Si no, usa las definiciones que ya acordamos antes.
+-- 1) Tabla de usuarios (app_users)
+CREATE TABLE IF NOT EXISTS app_users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  auth_uid uuid REFERENCES auth.users(id) ON DELETE SET NULL, -- opcional, si más adelante usas Supabase Auth
+  email text NOT NULL,
+  email_lower text GENERATED ALWAYS AS (lower(email)) STORED,
+  full_name text NOT NULL,
+  telefono text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
--- 1) Función RPC que hace upsert user (si email) y luego inserta feedback — atómica.
+-- Índices y unicidad
+CREATE UNIQUE INDEX IF NOT EXISTS ux_app_users_email_lower ON app_users (email_lower);
+CREATE INDEX IF NOT EXISTS idx_app_users_created_at ON app_users (created_at DESC);
+
+-- 2) Tabla de feedback (respuestas)
+CREATE TABLE IF NOT EXISTS feedback_responses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  user_id uuid REFERENCES app_users(id) ON DELETE SET NULL,
+
+  comentarios text NOT NULL,
+  extension_instance_id text NOT NULL,
+  extension_version text NOT NULL,
+  detected_types text[] NOT NULL,
+  scan_timestamp timestamptz,
+  metadata jsonb DEFAULT '{}'::jsonb,
+
+  handled boolean DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback_responses (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback_responses (user_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_extension_instance ON feedback_responses (extension_instance_id);
+
+-- 3) Función RPC atómica para insertar usuario + feedback
 CREATE OR REPLACE FUNCTION insert_feedback_with_user(
-  p_email text,
-  p_full_name text DEFAULT NULL,
-  p_telefono text DEFAULT NULL,
-  p_ruc text DEFAULT NULL,
   p_comentarios text,
   p_extension_instance_id text,
   p_extension_version text,
   p_detected_types text[],
   p_scan_timestamp timestamptz DEFAULT NULL,
+  p_email text DEFAULT NULL,
+  p_full_name text DEFAULT NULL,
+  p_telefono text DEFAULT NULL,
+  p_ruc text DEFAULT NULL,
   p_metadata jsonb DEFAULT '{}'::jsonb
 ) RETURNS uuid
 LANGUAGE plpgsql
-SECURITY DEFINER   -- important: run with owner privileges so anon can call safely
+SECURITY DEFINER
 AS $$
 DECLARE
   v_user_id uuid := NULL;
@@ -26,7 +61,7 @@ DECLARE
   v_full_name_norm text;
   v_feedback_id uuid := gen_random_uuid();
 BEGIN
-  -- Normalize and validate minimal inputs
+  -- Normalizar email
   IF p_email IS NOT NULL THEN
     v_email_norm := lower(btrim(p_email));
     IF v_email_norm = '' THEN
@@ -36,7 +71,7 @@ BEGIN
 
   v_full_name_norm := COALESCE(NULLIF(btrim(COALESCE(p_full_name, '')),''), 'Sin nombre');
 
-  -- 1) Upsert user only if email provided
+  -- Crear/actualizar usuario si tiene email
   IF v_email_norm IS NOT NULL THEN
     INSERT INTO app_users (email, full_name, telefono, metadata, created_at, updated_at)
     VALUES (v_email_norm, v_full_name_norm, p_telefono, COALESCE(p_metadata, '{}'::jsonb), now(), now())
@@ -49,7 +84,7 @@ BEGIN
     RETURNING id INTO v_user_id;
   END IF;
 
-  -- 2) Insert feedback linking to v_user_id (nullable)
+  -- Insertar feedback
   INSERT INTO feedback_responses (
     id,
     user_id,
@@ -68,22 +103,15 @@ BEGIN
     p_extension_version,
     p_detected_types,
     p_scan_timestamp,
-    -- guardamos el ruc y otros campos en metadata por trazabilidad
     COALESCE(p_metadata, '{}'::jsonb) || jsonb_build_object('ruc', p_ruc, 'insertion_via_rpc', true),
     now()
   );
 
-  -- 3) Devolver id del feedback
   RETURN v_feedback_id;
 END;
 $$;
 
--- 2) GRANT execute a anon (para que la extensión pueda llamar la función vía RPC)
+-- 4) Permisos (para que la extensión pueda usar la función)
 GRANT EXECUTE ON FUNCTION insert_feedback_with_user(
-  text, text, text, text, text, text, text, text[], timestamptz, jsonb
+  text, text, text, text[], timestamptz, text, text, text, text, jsonb
 ) TO anon;
-
--- 3) Seguridad extra: revocar depende de tu modelo. Asegúrate que la función no haga algo más potente.
--- 4) Índices recomendados (si no existen)
-CREATE INDEX IF NOT EXISTS idx_feedback_extension_instance ON feedback_responses (extension_instance_id);
-CREATE INDEX IF NOT EXISTS idx_app_users_email_lower ON app_users (email_lower);

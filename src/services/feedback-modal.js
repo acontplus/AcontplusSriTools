@@ -1,4 +1,4 @@
-import { supabase } from './supabase-config.js'
+// Feedback Modal - Sin imports, usando Supabase global
 
 class FeedbackModal {
     constructor() {
@@ -126,6 +126,12 @@ class FeedbackModal {
         document.getElementById('loadingState').style.display = 'block'
 
         try {
+            // Inicializar Supabase
+            const supabase = await window.initSupabase()
+            if (!supabase) {
+                throw new Error('No se pudo inicializar Supabase')
+            }
+
             // Recopilar datos del formulario
             const formData = new FormData(this.form)
             const payload = {
@@ -136,7 +142,7 @@ class FeedbackModal {
                 p_comentarios: document.getElementById('comentarios').value,
                 p_extension_instance_id: this.generateInstanceId(),
                 p_extension_version: chrome.runtime.getManifest().version,
-                p_detected_types: this.getDetectedTypes(),
+                p_detected_types: await this.getDetectedTypes(),
                 p_scan_timestamp: new Date().toISOString(),
                 p_metadata: {
                     user_agent: navigator.userAgent,

@@ -1,0 +1,23 @@
+{
+  "name": "acontplussritools",
+  "version": "1.0.0",
+  "description": "Una extensión de Google Chrome desarrollada para **Acontplus S.A.S.** que analiza automáticamente las páginas del sistema de comprobantes electrónicos del SRI de Ecuador y extrae la información de documentos electrónicos sin necesidad de filtros manuales.",
+  "main": "content.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IgnacioMan1998/AcontplusSriTools.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IgnacioMan1998/AcontplusSriTools/issues"
+  },
+  "homepage": "https://github.com/IgnacioMan1998/AcontplusSriTools#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.75.0"
+  }
+}

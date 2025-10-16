@@ -57,6 +57,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; font-src 'self'; style-src 'self' 'unsafe-inline'; connect-src https://dxtiskspbikjpyrpeast.supabase.co https://*.supabase.co wss://*.supabase.co;"
+    "extension_pages": "script-src 'self'; object-src 'self'; font-src 'self'; style-src 'self' 'unsafe-inline'; frame-src https://www.youtube.com; connect-src https://dxtiskspbikjpyrpeast.supabase.co https://*.supabase.co wss://*.supabase.co https://www.youtube.com https://*.googlevideo.com;"
   }
 }

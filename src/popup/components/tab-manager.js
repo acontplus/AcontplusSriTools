@@ -1,3 +1,4 @@
+// --- LÓGICA PARA LAS PESTAÑAS ---
 document.addEventListener("DOMContentLoaded", function () {
   const tabs = document.querySelectorAll(".tab-button");
   const tabPanels = document.querySelectorAll(".tab-panel");
@@ -16,4 +17,16 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById(targetTabId).classList.add("active");
     });
   });
+
+  // Event listener para el botón de demo
+  const demoBtn = document.getElementById("demo-btn");
+  if (demoBtn) {
+    demoBtn.addEventListener("click", function () {
+      // Abrir en una nueva ventana externa
+      chrome.tabs.create({
+        url: "https://www.acontplus.com/demo/",
+        active: true,
+      });
+    });
+  }
 });

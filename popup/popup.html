@@ -229,30 +229,171 @@
                 </section>
             </div>
             <div id="ayuda" class="tab-panel">
-                <h2>¿Cómo usar el Extractor de Comprobantes?</h2>
-                <div class="video-placeholder">▶ Video Tutorial de YouTube</div>
-                <div class="faq-section">
-                    <h3>Preguntas Frecuentes</h3>
-                    <div class="faq-item">
-                        <strong>¿Dónde se guardan mis archivos?</strong>
-                        <p>Los archivos se guardan en la carpeta de "Descargas" de tu navegador o en la que hayas configurado previamente.</p>
+                <div class="text-center mb-6 mt-6">
+                    <h2 class="text-3xl font-bold text-blue-600 mb-4">🎥 Tutorial Completo - Cómo Usar ACONTPLUS SRI Tools</h2>
+                    <p class="text-lg text-gray-700">Aprende paso a paso cómo extraer y gestionar tus comprobantes electrónicos del SRI</p>
+                </div>
+
+                <!-- Video Tutorial -->
+                <div class="video-container mb-8">
+                    <div class="relative w-full max-w-4xl mx-auto bg-black rounded-lg overflow-hidden shadow-lg">
+                        <iframe width="100%" height="400"
+                            src="https://www.youtube.com/embed/lmW4UVCwknY?si=Cq3TLOCsV4qiEr6g"
+                            title="Tutorial Completo - ACONTPLUS SRI Tools"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen
+                            class="w-full">
+                        </iframe>
                     </div>
-                    <div class="faq-item">
-                        <strong>¿Puedo exportar a Excel?</strong>
-                        <p>¡Sí! Usa el botón "Exportar a CSV". Se generará un archivo que puedes abrir con Excel y que contiene la lista de los comprobantes seleccionados.</p>
+                    <p class="text-center text-sm text-gray-500 mt-3">Video tutorial completo de uso de la extensión</p>
+                </div>
+
+                <!-- Guía Rápida -->
+                <div class="quick-guide mb-8">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fa-solid fa-bolt text-yellow-500 mr-3"></i>
+                        Guía Rápida de Uso
+                    </h3>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="guide-step">
+                            <div class="step-number bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">1</div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Navega al SRI</h4>
+                            <p class="text-gray-600 text-base">Ve al portal del SRI y accede a la sección de comprobantes electrónicos.</p>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="step-number bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">2</div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Haz clic en "Analizar"</h4>
+                            <p class="text-gray-600 text-base">La extensión detectará automáticamente todos los documentos disponibles.</p>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="step-number bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">3</div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Selecciona Documentos</h4>
+                            <p class="text-gray-600 text-base">Marca los comprobantes que deseas descargar o exportar.</p>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="step-number bg-pink-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">4</div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Descarga o Exporta</h4>
+                            <p class="text-gray-600 text-base">Elige entre XML, PDF o exportación a CSV para Excel.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preguntas Frecuentes Expandido -->
+                <div class="faq-section">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-6 mt-6 flex items-center">
+                        <i class="fa-solid fa-question-circle text-blue-500 mr-3"></i>
+                        Preguntas Frecuentes
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div class="faq-item bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
+                            <strong class="block text-gray-800 mb-2 flex items-center">
+                                <i class="fa-solid fa-folder-open text-blue-500 mr-2"></i>
+                                ¿Dónde se guardan mis archivos?
+                            </strong>
+                            <p class="text-gray-600 ml-6 text-base">Los archivos se guardan en la carpeta de "Descargas" de tu navegador. Puedes configurar una ubicación personalizada en los ajustes.</p>
+                        </div>
+
+                        <div class="faq-item bg-gray-50 p-4 rounded-lg border-l-4 border-green-500">
+                            <strong class="block text-gray-800 mb-2 flex items-center">
+                                <i class="fa-solid fa-file-excel text-green-500 mr-2"></i>
+                                ¿Puedo exportar a Excel?
+                            </strong>
+                            <p class="text-gray-600 ml-6 text-base">¡Sí! Usa el botón "Exportar CSV". Se generará un archivo compatible con Excel que contiene todos los datos de los comprobantes seleccionados.</p>
+                        </div>
+
+                        <div class="faq-item bg-gray-50 p-4 rounded-lg border-l-4 border-purple-500">
+                            <strong class="block text-gray-800 mb-2 flex items-center">
+                                <i class="fa-solid fa-shield-alt text-purple-500 mr-2"></i>
+                                ¿Es seguro usar la extensión?
+                            </strong>
+                            <p class="text-gray-600 ml-6 text-base">Totalmente seguro. Solo funciona en páginas oficiales del SRI y no almacena ni transmite datos personales. Todo el procesamiento es local.</p>
+                        </div>
+
+                        <div class="faq-item bg-gray-50 p-4 rounded-lg border-l-4 border-orange-500">
+                            <strong class="block text-gray-800 mb-2 flex items-center">
+                                <i class="fa-solid fa-clock text-orange-500 mr-2"></i>
+                                ¿Cuánto tiempo toma el análisis?
+                            </strong>
+                            <p class="text-gray-600 ml-6 text-base">El análisis automático es muy rápido (segundos). La descarga depende del número de documentos y velocidad de conexión.</p>
+                        </div>
                     </div>
                 </div>
             </div>
             <div id="conocenos" class="tab-panel">
-                <h2>Potencia tu Contabilidad con el Sistema Completo</h2>
-                <p>La extensión que estás usando es solo una pequeña parte de todo lo que <strong>ACONTPLUS</strong> puede hacer por tu negocio. Olvídate de los procesos manuales y cumple con el SRI sin estrés.</p>
-                <ul class="benefits-list">
-                    <li>Facturación Electrónica Ilimitada</li>
-                    <li>Automatización Inteligente y Conciliación Bancaria</li>
-                    <li>Reportes Gerenciales al Instante</li>
-                    <li>Siempre al día con el SRI (Anexos ATS, Talón Resumen)</li>
-                </ul>
-                <a href="#" class="cta-button">SOLICITAR UNA DEMOSTRACIÓN GRATUITA</a>
+                <div class="text-center mb-6 mt-6">
+                    <h2 class="text-3xl font-bold text-blue-600 mb-4">🚀 Potencia tu Contabilidad con ACONTPLUS</h2>
+                    <p class="text-lg text-gray-700 leading-relaxed">Descubre cómo Acontplus simplifica la gestión contable, cumple con la normativa ecuatoriana y te permite facturar electrónicamente sin complicaciones.</p>
+                    <div class="bg-gradient-to-r from-pink-100 to-blue-100 p-4 rounded-lg mt-4">
+                        <p class="text-pink-700 font-semibold">🎁 Accede a tu demo gratuita por 1 mes</p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6 mb-8">
+                    <div class="benefits-section">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-check-circle text-green-500 mr-2"></i>
+                            Beneficios Principales
+                        </h3>
+                        <ul class="benefits-list space-y-3">
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-star text-yellow-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Acceso inmediato tras registro</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-headset text-blue-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Soporte técnico personalizado</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-clock text-green-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Prueba gratuita por 1 mes</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-file-invoice-dollar text-pink-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Facturación electrónica validada y automática</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="benefits-section">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-chart-line text-blue-500 mr-2"></i>
+                            Características Avanzadas
+                        </h3>
+                        <ul class="benefits-list space-y-3">
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-boxes text-purple-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Inventario y reportes en tiempo real</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-shield-alt text-green-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Cumplimiento tributario garantizado</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-sync text-blue-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Actualizaciones constantes</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-layer-group text-orange-500 mr-3 mt-1 flex-shrink-0"></i>
+                                <span>Planes flexibles para cada etapa de tu negocio</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button id="demo-btn" class="cta-button inline-block text-center font-bold text-xl py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fa-solid fa-rocket mr-2"></i>
+                        SOLICITAR DEMO GRATUITA
+                    </button>
+                    <p class="text-sm text-gray-500 mt-3">Sin compromiso • Configuración en minutos • Soporte incluido</p>
+                </div>
             </div>
         </div>
     </div>

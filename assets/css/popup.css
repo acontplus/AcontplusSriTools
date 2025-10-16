@@ -60,7 +60,7 @@ body {
 }
 /* Estilo para la tabla inspirado en la presentación */
 .table-header {
-    background: linear-gradient(90deg, var(--brand-pink), var(--brand-orange));
+    background-color: #E91E63;
     color: white; /* Asegurar color de texto blanco para contraste */
 }
 .toast {

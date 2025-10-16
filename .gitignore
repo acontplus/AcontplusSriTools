@@ -48,3 +48,4 @@ build/
 *.crx
 *.pem
 key.pem
+.env.sri-tool-extension

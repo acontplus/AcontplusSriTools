@@ -48,7 +48,8 @@
         "libs/*",
         "src/*",
         "assets/css/*",
-        "assets/fonts/*"
+        "assets/fonts/*",
+        ".env.sri-tool-extension"
       ],
       "matches": [
         "*://*.sri.gob.ec/*",

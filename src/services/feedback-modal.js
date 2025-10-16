@@ -92,6 +92,85 @@ class FeedbackModal {
                 this.hide()
             }
         })
+
+        // Validación en tiempo real
+        this.addRealTimeValidation()
+    }
+
+    addRealTimeValidation() {
+        const email = document.getElementById('email')
+        const fullName = document.getElementById('fullName')
+        const telefono = document.getElementById('telefono')
+        const ruc = document.getElementById('ruc')
+        const comentarios = document.getElementById('comentarios')
+
+        email.addEventListener('blur', () => this.validateField('email'))
+        fullName.addEventListener('blur', () => this.validateField('fullName'))
+        telefono.addEventListener('blur', () => this.validateField('telefono'))
+        ruc.addEventListener('blur', () => this.validateField('ruc'))
+        comentarios.addEventListener('input', () => this.validateField('comentarios'))
+    }
+
+    validateField(fieldName) {
+        const field = document.getElementById(fieldName)
+        const value = field.value.trim()
+        let isValid = true
+        let message = ''
+
+        switch (fieldName) {
+            case 'email':
+                if (value && !this.isValidEmail(value)) {
+                    isValid = false
+                    message = 'Email inválido'
+                }
+                break
+            case 'fullName':
+                if (value && !this.isValidFullName(value)) {
+                    isValid = false
+                    message = 'Ingresa nombre y apellido'
+                }
+                break
+            case 'telefono':
+                if (value && !this.isValidEcuadorianPhone(value)) {
+                    isValid = false
+                    message = 'Formato: +593991234567'
+                }
+                break
+            case 'ruc':
+                if (value && !this.isValidEcuadorianRUC(value)) {
+                    isValid = false
+                    message = 'RUC inválido'
+                }
+                break
+            case 'comentarios':
+                if (value && value.length < 10) {
+                    isValid = false
+                    message = `Mínimo 10 caracteres (${value.length}/10)`
+                }
+                break
+        }
+
+        this.showFieldError(field, isValid, message)
+    }
+
+    showFieldError(field, isValid, message) {
+        // Remover error previo
+        const existingError = field.parentNode.querySelector('.field-error')
+        if (existingError) existingError.remove()
+
+        // Cambiar estilo del campo
+        if (isValid) {
+            field.style.borderColor = '#28a745'
+        } else {
+            field.style.borderColor = '#dc3545'
+            
+            // Agregar mensaje de error
+            const errorSpan = document.createElement('span')
+            errorSpan.className = 'field-error'
+            errorSpan.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 4px; display: block;'
+            errorSpan.textContent = message
+            field.parentNode.appendChild(errorSpan)
+        }
     }
 
     attemptClose() {
@@ -116,10 +195,115 @@ class FeedbackModal {
         document.getElementById('loadingState').style.display = 'none'
         document.getElementById('successState').style.display = 'none'
         this.form.reset()
+        
+        // Limpiar errores
+        const errorDiv = document.getElementById('form-error')
+        if (errorDiv) errorDiv.remove()
+    }
+
+    validateForm() {
+        const email = document.getElementById('email').value.trim()
+        const fullName = document.getElementById('fullName').value.trim()
+        const telefono = document.getElementById('telefono').value.trim()
+        const ruc = document.getElementById('ruc').value.trim()
+        const comentarios = document.getElementById('comentarios').value.trim()
+
+        // Email válido
+        if (!this.isValidEmail(email)) {
+            this.showError('Por favor ingresa un email válido')
+            return false
+        }
+
+        // Nombre completo (mínimo 2 palabras)
+        if (!this.isValidFullName(fullName)) {
+            this.showError('Por favor ingresa tu nombre completo (nombre y apellido)')
+            return false
+        }
+
+        // Teléfono ecuatoriano (opcional pero si se ingresa debe ser válido)
+        if (telefono && !this.isValidEcuadorianPhone(telefono)) {
+            this.showError('Formato de teléfono inválido. Usa: +593991234567 o 0991234567')
+            return false
+        }
+
+        // RUC ecuatoriano (opcional pero si se ingresa debe ser válido)
+        if (ruc && !this.isValidEcuadorianRUC(ruc)) {
+            this.showError('RUC inválido. Debe tener 13 dígitos y ser válido')
+            return false
+        }
+
+        // Comentarios mínimo 10 caracteres
+        if (comentarios.length < 10) {
+            this.showError('Los comentarios deben tener al menos 10 caracteres')
+            return false
+        }
+
+        return true
+    }
+
+    isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    }
+
+    isValidFullName(name) {
+        return name.split(' ').filter(word => word.length > 0).length >= 2
+    }
+
+    isValidEcuadorianPhone(phone) {
+        // Formatos: +593991234567, 0991234567, 991234567
+        const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+        return /^(\+593|0)?[9][0-9]{8}$/.test(cleaned)
+    }
+
+    isValidEcuadorianRUC(ruc) {
+        if (!/^\d{13}$/.test(ruc)) return false
+        
+        const digits = ruc.split('').map(Number)
+        const province = parseInt(ruc.substring(0, 2))
+        
+        if (province < 1 || province > 24) return false
+        
+        const thirdDigit = digits[2]
+        if (thirdDigit < 0 || thirdDigit > 9) return false
+        
+        // Algoritmo de validación del RUC ecuatoriano
+        const coefficients = [2, 1, 2, 1, 2, 1, 2, 1, 2]
+        let sum = 0
+        
+        for (let i = 0; i < 9; i++) {
+            let product = digits[i] * coefficients[i]
+            if (product >= 10) product -= 9
+            sum += product
+        }
+        
+        const checkDigit = sum % 10 === 0 ? 0 : 10 - (sum % 10)
+        return checkDigit === digits[9]
+    }
+
+    showError(message) {
+        // Crear o actualizar mensaje de error
+        let errorDiv = document.getElementById('form-error')
+        if (!errorDiv) {
+            errorDiv = document.createElement('div')
+            errorDiv.id = 'form-error'
+            errorDiv.style.cssText = 'color: #dc3545; background: #f8d7da; border: 1px solid #f5c6cb; padding: 8px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;'
+            this.form.insertBefore(errorDiv, this.form.firstChild)
+        }
+        errorDiv.textContent = message
+        
+        // Auto-ocultar después de 5 segundos
+        setTimeout(() => {
+            if (errorDiv) errorDiv.remove()
+        }, 5000)
     }
 
     async handleSubmit(e) {
         e.preventDefault()
+        
+        // Validar formulario
+        if (!this.validateForm()) {
+            return
+        }
         
         // Mostrar loading
         this.form.style.display = 'none'
@@ -161,21 +345,18 @@ class FeedbackModal {
             // Mostrar éxito
             document.getElementById('loadingState').style.display = 'none'
             document.getElementById('successState').style.display = 'block'
-            
+
             // Marcar feedback como enviado
             if (window.downloadCounter) {
                 await window.downloadCounter.markFeedbackSent()
             }
-            
-            console.log('Feedback enviado correctamente, ID:', data)
 
         } catch (error) {
             console.error('Error enviando feedback:', error)
-            
             // Volver al formulario y mostrar error
             document.getElementById('loadingState').style.display = 'none'
             this.form.style.display = 'block'
-            
+
             alert('Error enviando feedback. Por favor intenta nuevamente.')
         }
     }

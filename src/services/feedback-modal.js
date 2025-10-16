@@ -39,9 +39,9 @@ class FeedbackModal {
                         </div>
                         
                         <div class="form-group">
-                            <label for="ruc">RUC</label>
-                            <input type="text" id="ruc" placeholder="0990012345001">
-                        </div>
+                             <label for="ruc">RUC *</label>
+                             <input type="text" id="ruc" required placeholder="0990012345001">
+                         </div>
                         
                         <div class="form-group">
                             <label for="comentarios">Comentarios *</label>
@@ -208,13 +208,13 @@ class FeedbackModal {
         const ruc = document.getElementById('ruc').value.trim()
         const comentarios = document.getElementById('comentarios').value.trim()
 
-        // Email válido
+        // Email válido (obligatorio)
         if (!this.isValidEmail(email)) {
             this.showError('Por favor ingresa un email válido')
             return false
         }
 
-        // Nombre completo (mínimo 2 palabras)
+        // Nombre completo (obligatorio, mínimo 2 palabras)
         if (!this.isValidFullName(fullName)) {
             this.showError('Por favor ingresa tu nombre completo (nombre y apellido)')
             return false
@@ -226,13 +226,13 @@ class FeedbackModal {
             return false
         }
 
-        // RUC ecuatoriano (opcional pero si se ingresa debe ser válido)
-        if (ruc && !this.isValidEcuadorianRUC(ruc)) {
+        // RUC ecuatoriano (obligatorio)
+        if (!this.isValidEcuadorianRUC(ruc)) {
             this.showError('RUC inválido. Debe tener 13 dígitos y ser válido')
             return false
         }
 
-        // Comentarios mínimo 10 caracteres
+        // Comentarios mínimo 10 caracteres (obligatorio)
         if (comentarios.length < 10) {
             this.showError('Los comentarios deben tener al menos 10 caracteres')
             return false

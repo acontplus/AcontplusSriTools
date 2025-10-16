@@ -58,7 +58,7 @@ class FeedbackModal {
                     </div>
                     
                     <div id="successState" class="success" style="display: none;">
-                        <p>✅ Feedback enviado correctamente</p>
+                        <p> Feedback enviado correctamente</p>
                         <button class="btn-close">Cerrar</button>
                     </div>
                 </div>

@@ -63,6 +63,10 @@ body {
     background-color: #E91E63;
     color: white; /* Asegurar color de texto blanco para contraste */
 }
+
+.table-header th {
+    color: black !important; /* Forzar color blanco en los headers de tabla */
+}
 .toast {
     position: fixed;
     bottom: 20px;

@@ -4,12 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del Servicio de Rentas Internas (SRI) de Ecuador. Facilita la descarga de XML y PDF de facturas electrónicas.">
-    <meta name="keywords" content="SRI, Ecuador, comprobantes electrónicos, facturas electrónicas, XML, PDF, ACONTPLUS, descarga automática, gestión tributaria">
+    <meta name="description"
+        content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del Servicio de Rentas Internas (SRI) de Ecuador. Facilita la descarga de XML y PDF de facturas electrónicas.">
+    <meta name="keywords"
+        content="SRI, Ecuador, comprobantes electrónicos, facturas electrónicas, XML, PDF, ACONTPLUS, descarga automática, gestión tributaria">
     <meta name="author" content="ACONTPLUS">
     <meta name="robots" content="noindex, nofollow">
     <meta property="og:title" content="ACONTPLUS SRI Tools - Extracción de Comprobantes Electrónicos">
-    <meta property="og:description" content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del SRI de Ecuador.">
+    <meta property="og:description"
+        content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del SRI de Ecuador.">
     <meta property="og:type" content="website">
     <title>Acontplus SRI Tools v1.4.1 - Final</title>
     <link rel="stylesheet" href="../assets/css/popup.css">
@@ -66,10 +69,11 @@
         </nav>
 
         <div id="main">
-
-                <!-- 2. Contadores y Estadísticas -->
-                <section class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 mt-4" aria-label="Estadísticas de documentos">
-                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite" aria-label="Contador de documentos totales">
+            <div id="principal" class="tab-panel active">
+                <section class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 mt-4"
+                    aria-label="Estadísticas de documentos">
+                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
+                        aria-label="Contador de documentos totales">
                         <p class="text-gray-500 text-xs">Total Documentos</p>
                         <p id="total-docs" class="text-2xl font-bold text-gray-800" aria-label="Total de documentos">0
                         </p>
@@ -80,13 +84,15 @@
                         <p id="selected-docs" class="text-2xl font-bold" style="color: var(--brand-pink);"
                             aria-label="Documentos seleccionados">0</p>
                     </div>
-                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite" aria-label="Contador de documentos descargados">
+                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
+                        aria-label="Contador de documentos descargados">
                         <p class="text-gray-500 text-xs">Descargados</p>
                         <p id="downloaded-docs" class="text-2xl font-bold text-green-600"
                             aria-label="Documentos descargados">0
                         </p>
                     </div>
-                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite" aria-label="Suma total de documentos">
+                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
+                        aria-label="Suma total de documentos">
                         <p class="text-gray-500 text-xs">Suma Total</p>
                         <p id="total-sum" class="text-xl font-bold" style="color: var(--brand-pink);"
                             aria-label="Suma total de importes">$0.00</p>
@@ -96,10 +102,8 @@
                 <!-- 3. Panel de Acciones -->
                 <section class="bg-white p-4 rounded-lg shadow-md mb-6" aria-label="Panel de acciones">
                     <form class="flex flex-wrap items-center justify-between gap-4" role="form"
-                       aria-label="Formulario de acciones">
-                       <!-- Grupo de Descarga Principal -->
-
-                       <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
+                        aria-label="Formulario de acciones">
+                        <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
                             <button id="start-process"
                                 class="btn-primary text-white font-bold py-2 px-5 rounded-lg transition-all duration-300 flex items-center gap-2 -ml-1"
                                 aria-label="Iniciar análisis de comprobantes electrónicos del SRI">
@@ -128,7 +132,7 @@
                                 aria-label="Cancelar descarga en progreso">
                                 <i class="fa-solid fa-stop" aria-hidden="true"></i>
                             </button>
-                       </div>
+                        </div>
 
                         <!-- Grupo de Acciones Secundarias -->
                         <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
@@ -153,14 +157,16 @@
                                     <i class="fa-solid fa-cog" aria-hidden="true"></i>
                                     <span>Configurar Ruta</span>
                                 </button>
-                                <div id="download-settings-popover" class="absolute top-full right-0 mt-2 w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 z-50 hidden opacity-0 scale-95 translate-y-2 transition-all duration-300 ease-out" role="region"
-                                    aria-label="Configuración de ubicación de descarga">
+                                <div id="download-settings-popover"
+                                    class="absolute top-full right-0 mt-2 w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 z-50 hidden opacity-0 scale-95 translate-y-2 transition-all duration-300 ease-out"
+                                    role="region" aria-label="Configuración de ubicación de descarga">
                                     <div class="flex items-center justify-between mb-4">
                                         <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                                             <i class="fa-solid fa-folder-open text-pink-500" aria-hidden="true"></i>
                                             Ubicación de guardado:
                                         </h3>
-                                        <button id="close-download-settings" class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100">
+                                        <button id="close-download-settings"
+                                            class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100">
                                             <i class="fa-solid fa-times text-sm" aria-hidden="true"></i>
                                         </button>
                                     </div>
@@ -244,8 +250,11 @@
 
             <div id="ayuda" class="tab-panel">
                 <div class="text-center mb-6 mt-6">
-                    <h2 class="text-3xl font-bold text-blue-600 mb-4">🎥 Tutorial Completo - Cómo Usar ACONTPLUS SRI Tools</h2>
-                    <p class="text-lg text-gray-700">Aprende paso a paso cómo extraer y gestionar tus comprobantes electrónicos del SRI</p>
+                    <h2 class="text-3xl font-bold text-blue-600 mb-4">🎥 Tutorial Completo - Cómo Usar ACONTPLUS SRI
+                        Tools
+                    </h2>
+                    <p class="text-lg text-gray-700">Aprende paso a paso cómo extraer y gestionar tus comprobantes
+                        electrónicos del SRI</p>
                 </div>
 
                 <!-- Video Tutorial -->
@@ -253,12 +262,9 @@
                     <div class="relative w-full max-w-4xl mx-auto bg-black rounded-lg overflow-hidden shadow-lg">
                         <iframe width="100%" height="400"
                             src="https://www.youtube.com/embed/lmW4UVCwknY?si=Cq3TLOCsV4qiEr6g"
-                            title="Tutorial Completo - ACONTPLUS SRI Tools"
-                            frameborder="0"
+                            title="Tutorial Completo - ACONTPLUS SRI Tools" frameborder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            referrerpolicy="strict-origin-when-cross-origin"
-                            allowfullscreen
-                            class="w-full">
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen class="w-full">
                         </iframe>
                     </div>
                     <p class="text-center text-sm text-gray-500 mt-3">Video tutorial completo de uso de la extensión</p>
@@ -273,25 +279,38 @@
 
                     <div class="grid md:grid-cols-2 gap-6">
                         <div class="guide-step">
-                            <div class="step-number bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">1</div>
+                            <div
+                                class="step-number bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">
+                                1</div>
                             <h4 class="font-semibold text-gray-800 mb-2">Navega al SRI</h4>
-                            <p class="text-gray-600 text-base">Ve al portal del SRI y accede a la sección de comprobantes electrónicos.</p>
+                            <p class="text-gray-600 text-base">Ve al portal del SRI y accede a la sección de
+                                comprobantes
+                                electrónicos.</p>
                         </div>
 
                         <div class="guide-step">
-                            <div class="step-number bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">2</div>
+                            <div
+                                class="step-number bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">
+                                2</div>
                             <h4 class="font-semibold text-gray-800 mb-2">Haz clic en "Analizar"</h4>
-                            <p class="text-gray-600 text-base">La extensión detectará automáticamente todos los documentos disponibles.</p>
+                            <p class="text-gray-600 text-base">La extensión detectará automáticamente todos los
+                                documentos
+                                disponibles.</p>
                         </div>
 
                         <div class="guide-step">
-                            <div class="step-number bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">3</div>
+                            <div
+                                class="step-number bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">
+                                3</div>
                             <h4 class="font-semibold text-gray-800 mb-2">Selecciona Documentos</h4>
-                            <p class="text-gray-600 text-base">Marca los comprobantes que deseas descargar o exportar.</p>
+                            <p class="text-gray-600 text-base">Marca los comprobantes que deseas descargar o exportar.
+                            </p>
                         </div>
 
                         <div class="guide-step">
-                            <div class="step-number bg-pink-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">4</div>
+                            <div
+                                class="step-number bg-pink-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mb-3">
+                                4</div>
                             <h4 class="font-semibold text-gray-800 mb-2">Descarga o Exporta</h4>
                             <p class="text-gray-600 text-base">Elige entre XML, PDF o exportación a CSV para Excel.</p>
                         </div>
@@ -311,7 +330,9 @@
                                 <i class="fa-solid fa-folder-open text-blue-500 mr-2"></i>
                                 ¿Dónde se guardan mis archivos?
                             </strong>
-                            <p class="text-gray-600 ml-6 text-base">Los archivos se guardan en la carpeta de "Descargas" de tu navegador. Puedes configurar una ubicación personalizada en los ajustes.</p>
+                            <p class="text-gray-600 ml-6 text-base">Los archivos se guardan en la carpeta de "Descargas"
+                                de
+                                tu navegador. Puedes configurar una ubicación personalizada en los ajustes.</p>
                         </div>
 
                         <div class="faq-item bg-gray-50 p-4 rounded-lg border-l-4 border-green-500">
@@ -319,7 +340,9 @@
                                 <i class="fa-solid fa-file-excel text-green-500 mr-2"></i>
                                 ¿Puedo exportar a Excel?
                             </strong>
-                            <p class="text-gray-600 ml-6 text-base">¡Sí! Usa el botón "Exportar CSV". Se generará un archivo compatible con Excel que contiene todos los datos de los comprobantes seleccionados.</p>
+                            <p class="text-gray-600 ml-6 text-base">¡Sí! Usa el botón "Exportar CSV". Se generará un
+                                archivo
+                                compatible con Excel que contiene todos los datos de los comprobantes seleccionados.</p>
                         </div>
 
                         <div class="faq-item bg-gray-50 p-4 rounded-lg border-l-4 border-purple-500">
@@ -327,7 +350,9 @@
                                 <i class="fa-solid fa-shield-alt text-purple-500 mr-2"></i>
                                 ¿Es seguro usar la extensión?
                             </strong>
-                            <p class="text-gray-600 ml-6 text-base">Totalmente seguro. Solo funciona en páginas oficiales del SRI y no almacena ni transmite datos personales. Todo el procesamiento es local.</p>
+                            <p class="text-gray-600 ml-6 text-base">Totalmente seguro. Solo funciona en páginas
+                                oficiales
+                                del SRI y no almacena ni transmite datos personales. Todo el procesamiento es local.</p>
                         </div>
 
                         <div class="faq-item bg-gray-50 p-4 rounded-lg border-l-4 border-orange-500">
@@ -335,15 +360,20 @@
                                 <i class="fa-solid fa-clock text-orange-500 mr-2"></i>
                                 ¿Cuánto tiempo toma el análisis?
                             </strong>
-                            <p class="text-gray-600 ml-6 text-base">El análisis automático es muy rápido (segundos). La descarga depende del número de documentos y velocidad de conexión.</p>
+                            <p class="text-gray-600 ml-6 text-base">El análisis automático es muy rápido (segundos). La
+                                descarga depende del número de documentos y velocidad de conexión.</p>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div id="conocenos" class="tab-panel">
                 <div class="text-center mb-6 mt-6">
                     <h2 class="text-3xl font-bold text-blue-600 mb-4">🚀 Potencia tu Contabilidad con ACONTPLUS</h2>
-                    <p class="text-lg text-gray-700 leading-relaxed">Descubre cómo Acontplus simplifica la gestión contable, cumple con la normativa ecuatoriana y te permite facturar electrónicamente sin complicaciones.</p>
+                    <p class="text-lg text-gray-700 leading-relaxed">Descubre cómo Acontplus simplifica la gestión
+                        contable,
+                        cumple con la normativa ecuatoriana y te permite facturar electrónicamente sin complicaciones.
+                    </p>
                     <div class="bg-gradient-to-r from-pink-100 to-blue-100 p-4 rounded-lg mt-4">
                         <p class="text-pink-700 font-semibold">🎁 Accede a tu demo gratuita por 1 mes</p>
                     </div>
@@ -402,11 +432,13 @@
                 </div>
 
                 <div class="text-center">
-                    <button id="demo-btn" class="cta-button inline-block text-center font-bold text-xl py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <button id="demo-btn"
+                        class="cta-button inline-block text-center font-bold text-xl py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fa-solid fa-rocket mr-2"></i>
                         SOLICITAR DEMO GRATUITA
                     </button>
-                    <p class="text-sm text-gray-500 mt-3">Sin compromiso • Configuración en minutos • Soporte incluido</p>
+                    <p class="text-sm text-gray-500 mt-3">Sin compromiso • Configuración en minutos • Soporte incluido
+                    </p>
                 </div>
             </div>
         </div>

@@ -110,6 +110,60 @@ class FacturasManager {
         });
     }
 
+    // Event listener for download settings popover toggle with CSS animations
+    const toggleDownloadSettingsBtn = document.getElementById('toggle-download-settings');
+    const downloadSettingsPopover = document.getElementById('download-settings-popover');
+    const closeDownloadSettingsBtn = document.getElementById('close-download-settings');
+
+    if (toggleDownloadSettingsBtn && downloadSettingsPopover) {
+        const showPopover = () => {
+            downloadSettingsPopover.classList.remove('hidden');
+            // Trigger animation by forcing reflow
+            downloadSettingsPopover.offsetHeight;
+            downloadSettingsPopover.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
+        };
+
+        const hidePopover = () => {
+            downloadSettingsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+            setTimeout(() => {
+                downloadSettingsPopover.classList.add('hidden');
+            }, 300);
+        };
+
+        toggleDownloadSettingsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (downloadSettingsPopover.classList.contains('hidden')) {
+                showPopover();
+            } else {
+                hidePopover();
+            }
+        });
+
+        // Close popover when clicking close button
+        if (closeDownloadSettingsBtn) {
+            closeDownloadSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                hidePopover();
+            });
+        }
+
+        // Close popover when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!toggleDownloadSettingsBtn.contains(e.target) && !downloadSettingsPopover.contains(e.target)) {
+                if (!downloadSettingsPopover.classList.contains('hidden')) {
+                    hidePopover();
+                }
+            }
+        });
+
+        // Close popover on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !downloadSettingsPopover.classList.contains('hidden')) {
+                hidePopover();
+            }
+        });
+    }
+
     if (this.newSearchBtn) this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
     if (this.exportBtn) this.exportBtn.addEventListener('click', (e) => { e.preventDefault(); this.exportComponent.exportSelected(); });
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
@@ -396,7 +450,7 @@ class FacturasManager {
           this.exportBtn.disabled = false;
           this.downloadBtn.disabled = false;
 
-          this.showNotification('❌ Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
+          this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
           return; // Salir sin continuar
         }
 
@@ -461,7 +515,7 @@ class FacturasManager {
         if (this.loadingEl) this.loadingEl.style.display = 'none';
         if (this.newSearchBtn) this.newSearchBtn.disabled = false;
 
-        this.showNotification('❌ Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
+        this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
         return; // Salir sin continuar
       }
 
@@ -475,7 +529,7 @@ class FacturasManager {
       }
 
       if (!pingResponse || !pingResponse.success) {
-        
+
         // Inyectar los scripts en orden
         try {
           // Inyectar CSS primero

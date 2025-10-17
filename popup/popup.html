@@ -27,14 +27,14 @@
 <body class="p-4 md:p-6 min-w-[600px]" role="main">
     <div class="max-w-7xl mx-auto">
         <!-- 1. Cabecera con Logo y Título -->
-        <header class="flex items-center justify-between mb-6" role="banner">
-            <div class="flex items-center gap-3" aria-label="Información de la aplicación">
-                <img src="../icons/logo_app.png" alt="Acontplus Logo" class="w-12 h-12 brand-logo object-contain"
+        <header class="flex items-center justify-between mb-4" role="banner">
+            <div class="flex items-center gap-2" aria-label="Información de la aplicación">
+                <img src="../icons/logo_app.png" alt="Acontplus Logo" class="w-10 h-10 brand-logo object-contain"
                     aria-hidden="true">
                 <div>
-                    <h1 class="text-2xl font-bold brand-logo" style="font-family: 'Arial Rounded MT Bold', sans-serif;">
+                    <h1 class="text-xl font-bold brand-logo" style="font-family: 'Arial Rounded MT Bold', sans-serif;">
                         ACONTPLUS</h1>
-                    <p class="text-sm text-gray-500" aria-label="Descripción de la aplicación">Facturar nunca fue tan
+                    <p class="text-xs text-gray-500" aria-label="Descripción de la aplicación">Facturar nunca fue tan
                         fácil</p>
                 </div>
             </div>
@@ -82,29 +82,37 @@
                 </div>
 
                 <!-- 2. Contadores y Estadísticas -->
-                <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" aria-label="Estadísticas de documentos">
-                    <div class="card" role="status" aria-live="polite" aria-label="Contador de documentos totales">
-                        <p class="text-gray-500 text-sm">Total Documentos</p>
-                        <p id="total-docs" class="text-3xl font-bold text-gray-800" aria-label="Total de documentos">0
+                <section class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 mt-3" aria-label="Estadísticas de documentos">
+                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite" aria-label="Contador de documentos totales">
+                        <p class="text-gray-500 text-xs">Total Documentos</p>
+                        <p id="total-docs" class="text-2xl font-bold text-gray-800" aria-label="Total de documentos">0
                         </p>
                     </div>
-                    <div class="card" role="status" aria-live="polite"
+                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
                         aria-label="Contador de documentos seleccionados">
-                        <p class="text-gray-500 text-sm">Seleccionados</p>
-                        <p id="selected-docs" class="text-3xl font-bold" style="color: var(--brand-pink);"
+                        <p class="text-gray-500 text-xs">Seleccionados</p>
+                        <p id="selected-docs" class="text-2xl font-bold" style="color: var(--brand-pink);"
                             aria-label="Documentos seleccionados">0</p>
                     </div>
-                    <div class="card" role="status" aria-live="polite" aria-label="Contador de documentos descargados">
-                        <p class="text-gray-500 text-sm">Descargados</p>
-                        <p id="downloaded-docs" class="text-3xl font-bold text-green-600"
+                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite" aria-label="Contador de documentos descargados">
+                        <p class="text-gray-500 text-xs">Descargados</p>
+                        <p id="downloaded-docs" class="text-2xl font-bold text-green-600"
                             aria-label="Documentos descargados">0
                         </p>
                     </div>
-                    <div class="card" role="status" aria-live="polite" aria-label="Suma total de documentos">
-                        <p class="text-gray-500 text-sm">Suma Total</p>
-                        <p id="total-sum" class="text-2xl font-bold" style="color: var(--brand-pink);"
+                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite" aria-label="Suma total de documentos">
+                        <p class="text-gray-500 text-xs">Suma Total</p>
+                        <p id="total-sum" class="text-xl font-bold" style="color: var(--brand-pink);"
                             aria-label="Suma total de importes">$0.00</p>
                     </div>
+                    <!-- <div class="card" style="padding: 0.5rem; background: linear-gradient(135deg, var(--brand-pink), #ff6b9d); border: 3px solid #ffffff; border-radius: 12px;" role="button" aria-live="polite" aria-label="Botón de análisis de comprobantes">
+                        <button id="start-process"
+                            class="w-full h-full bg-transparent border-none text-white font-bold text-sm py-1 px-2 flex flex-col items-center justify-center gap-1 hover:opacity-90 transition-all duration-300"
+                            aria-label="Iniciar análisis de comprobantes electrónicos del SRI">
+                            <i class="fa-solid fa-play text-base" aria-hidden="true"></i>
+                            <span>Analizar</span>
+                        </button>
+                    </div> -->
                 </section>
 
                 <!-- 3. Panel de Acciones -->
@@ -151,29 +159,40 @@
                                 <i class="fa-solid fa-check-double" aria-hidden="true"></i>
                                 <span>Verificar</span>
                             </button>
+                            <div class="relative">
+                                <button id="toggle-download-settings"
+                                    class="bg-blue-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2"
+                                    aria-label="Configurar ubicación de descarga">
+                                    <i class="fa-solid fa-cog" aria-hidden="true"></i>
+                                    <span>Configurar Ruta</span>
+                                </button>
+                                <div id="download-settings-popover" class="absolute top-full right-0 mt-2 w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 z-50 hidden opacity-0 scale-95 translate-y-2 transition-all duration-300 ease-out" role="region"
+                                    aria-label="Configuración de ubicación de descarga">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                            <i class="fa-solid fa-folder-open text-pink-500" aria-hidden="true"></i>
+                                            Ubicación de guardado:
+                                        </h3>
+                                        <button id="close-download-settings" class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100">
+                                            <i class="fa-solid fa-times text-sm" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex flex-1">
+                                            <input id="download-location" type="text"
+                                                placeholder="Si está vacío, se usará la carpeta de Descargas predeterminada"
+                                                class="bg-gray-100 text-gray-800 text-sm px-3 py-2 rounded-l-md border border-r-0 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 flex-1 outline-none transition-all duration-200">
+                                            <button id="save-download-path"
+                                                class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white text-sm font-medium px-4 py-2 rounded-r-md border border-pink-500 transition-all duration-200 flex items-center gap-2 hover:shadow-lg transform hover:scale-105">
+                                                <i class="fa-solid fa-save text-xs" aria-hidden="true"></i>
+                                                Guardar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
-                    <!-- Ubicación de Descarga -->
-                    <div class="mt-4 pt-3 border-t border-gray-200 text-sm text-gray-600" role="region"
-                        aria-label="Configuración de ubicación de descarga">
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-folder-open text-gray-500" aria-hidden="true"></i>
-                                <label for="download-location" class="font-semibold whitespace-nowrap">Ubicación de
-                                    guardado:</label>
-                            </div>
-                            <div class="flex flex-1">
-                                <input id="download-location" type="text"
-                                    placeholder="Si está vacío, se usará la carpeta de Descargas predeterminada"
-                                    class="bg-gray-100 text-gray-800 text-sm px-2 py-1 rounded-l-md border border-r-0 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 flex-1 outline-none">
-                                <button id="save-download-path"
-                                    class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-r-md border border-blue-500 transition-all duration-200 flex items-center gap-1">
-                                    <i class="fa-solid fa-save text-xs" aria-hidden="true"></i>
-                                    Guardar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                 </section>
 
                 <!-- Loading State -->

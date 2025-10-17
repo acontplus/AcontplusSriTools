@@ -318,7 +318,7 @@ table td {
 }
 .tab-button {
     flex-grow: 1;
-    padding: 15px;
+    padding: 10px;
     text-align: center;
     font-size: 14px;
     font-weight: 500;

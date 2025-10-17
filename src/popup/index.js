@@ -360,6 +360,7 @@ class FacturasManager {
         PopupUI.safeSetHTML(this.downloadBtn, '<span class="btn-text">Descargar</span>');
     }
     this.exportBtn.disabled = this.dataManager.selectedFacturas.size === 0;
+    this.verifyBtn.disabled = this.dataManager.selectedFacturas.size === 0;
 
     let message = `Descarga finalizada. ${exitosos} de ${total} archivos descargados.`;
     let type = 'success';
@@ -414,10 +415,11 @@ class FacturasManager {
     const formato = document.getElementById('doc-type').value;
     const facturasParaDescargar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
 
-    // Mostrar botón de cancelar y deshabilitar exportar
+    // Mostrar botón de cancelar y deshabilitar exportar y verificar
     this.showCancelButton();
     this.downloadCancelled = false;
     this.exportBtn.disabled = true;
+    this.verifyBtn.disabled = true;
 
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -448,6 +450,7 @@ class FacturasManager {
           // Restaurar UI y mostrar mensaje de sesión expirada
           this.hideCancelButton();
           this.exportBtn.disabled = false;
+          this.verifyBtn.disabled = false;
           this.downloadBtn.disabled = false;
 
           this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
@@ -717,6 +720,7 @@ class FacturasManager {
     this.showNotification('Descarga cancelada por el usuario', 'warning');
     this.hideCancelButton();
     this.exportBtn.disabled = false;
+    this.verifyBtn.disabled = false;
   }
 
   showCancelButton() {

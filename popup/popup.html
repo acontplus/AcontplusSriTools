@@ -98,33 +98,36 @@
                     <form class="flex flex-wrap items-center justify-between gap-4" role="form"
                        aria-label="Formulario de acciones">
                        <!-- Grupo de Descarga Principal -->
-                        <button id="start-process"
-                           class="btn-primary text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2"
-                           aria-label="Iniciar análisis de comprobantes electrónicos del SRI">
-                           <i class="fa-solid fa-search" aria-hidden="true"></i>
-                       </button>
 
-                       <div class="flex items-center" role="group" aria-labelledby="download-group-label">
-                           <span id="download-group-label" class="sr-only">Opciones de descarga</span>
-                           <label for="doc-type" class="sr-only">Tipo de documento a descargar</label>
-                           <select id="doc-type"
-                               class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
-                               aria-label="Seleccionar tipo de archivo para descargar">
-                               <option value="xml">Descargar XML</option>
-                               <option value="pdf">Descargar PDF</option>
-                               <option value="both">Descargar XML y PDF</option>
-                           </select>
-                           <button id="download-btn" disabled
-                               class="bg-gray-400 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1"
-                               aria-label="Iniciar descarga de documentos seleccionados">
-                               <i class="fa-solid fa-download" aria-hidden="true"></i>
-                               <span>Descargar</span>
-                           </button>
-                           <button id="cancel-download-btn" style="display: none;"
-                               class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2 ml-2"
-                               aria-label="Cancelar descarga en progreso">
-                               <i class="fa-solid fa-stop" aria-hidden="true"></i>
-                           </button>
+                       <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
+                            <button id="start-process"
+                                class="btn-primary text-white font-bold py-2 px-5 rounded-lg transition-all duration-300 flex items-center gap-2 -ml-1"
+                                aria-label="Iniciar análisis de comprobantes electrónicos del SRI">
+                                <i class="fa-solid fa-search" aria-hidden="true"></i>
+                            </button>
+                            <div class="flex items-center" role="group" aria-labelledby="download-group-label">
+                                <span id="download-group-label" class="sr-only">Opciones de descarga</span>
+                                <label for="doc-type" class="sr-only">Tipo de documento a descargar</label>
+                                <select id="doc-type"
+                                    class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
+                                    aria-label="Seleccionar tipo de archivo para descargar">
+                                    <option value="xml">Descargar XML</option>
+                                    <option value="pdf">Descargar PDF</option>
+                                    <option value="both">Descargar XML y PDF</option>
+                                </select>
+                                <button id="download-btn" disabled
+                                    class="bg-gray-400 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1"
+                                    aria-label="Iniciar descarga de documentos seleccionados">
+                                    <i class="fa-solid fa-download" aria-hidden="true"></i>
+                                    <span>Descargar</span>
+                                </button>
+                            </div>
+
+                            <button id="cancel-download-btn" style="display: none;"
+                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-all duration-300 flex items-center gap-2 ml-1"
+                                aria-label="Cancelar descarga en progreso">
+                                <i class="fa-solid fa-stop" aria-hidden="true"></i>
+                            </button>
                        </div>
 
                         <!-- Grupo de Acciones Secundarias -->

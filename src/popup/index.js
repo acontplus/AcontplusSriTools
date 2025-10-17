@@ -121,6 +121,10 @@ class FacturasManager {
             // Trigger animation by forcing reflow
             downloadSettingsPopover.offsetHeight;
             downloadSettingsPopover.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
+            // Load current download path into the input
+            if (this.downloadLocationInput) {
+                this.loadDownloadPath();
+            }
         };
 
         const hidePopover = () => {

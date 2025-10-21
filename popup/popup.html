@@ -111,10 +111,28 @@
                 </section>
 
                 <!-- 3. Panel de Acciones -->
-                <div class="flex flex-wrap items-center justify-between gap-4" aria-label="Formulario de acciones">
-                    <div class="flex items-center w-full justify-start space-x-3"></div>
-                    <div class="flex items-center w-full justify-end space-x-3">
-
+                <div class="flex items-center justify-between gap-4 flex-wrap" aria-label="Formulario de acciones">
+                    <div class="flex items-center justify-start space-x-3">
+                        <!-- Search input - hidden by default, shown when data exists -->
+                        <div id="search-container" class="relative max-w-md" style="display: none; width: 300px">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i data-lucide="search" class="h-4 w-4 text-gray-400"></i>
+                            </div>
+                            <input
+                                type="text"
+                                id="search-input"
+                                placeholder="Buscar.."
+                                class=" pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm"
+                            />
+                        </div>
+                        <!-- Cancel download button - only shown during downloads -->
+                        <button id="cancel-download-btn" style="display: none;"
+                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
+                            aria-label="Cancelar descarga en progreso">
+                            <i class="fa-solid fa-stop" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-end space-x-3">
                         <!-- Botón de Analizar (Menos prominente) -->
                         <button id="start-process"
                             class="flex items-center px-4 py-2 rounded-lg text-white font-semibold text-xs transition duration-150 shadow-md bg-gray-400 justify-center"

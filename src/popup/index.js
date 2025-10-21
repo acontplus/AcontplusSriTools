@@ -206,6 +206,14 @@ class FacturasManager {
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
     if (this.cancelBtn) this.cancelBtn.addEventListener('click', (e) => { e.preventDefault(); this.cancelDownload(); });
 
+    // Search functionality
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+        });
+    }
+
     // Event listeners for options popover buttons
     const exportExcelBtn = document.querySelector('[data-action="export_excel"]');
     const configRutaBtn = document.querySelector('[data-action="config_ruta"]');
@@ -346,6 +354,7 @@ class FacturasManager {
     this.updateCounts();
     this.renderTable();
     this.updatePopoverButtonStates();
+    this.updateSearchVisibility();
 
     if (this.dataManager.facturas.length > 0) {
       console.log('✅ Mostrando tabla con', this.dataManager.facturas.length, 'documentos');
@@ -353,9 +362,47 @@ class FacturasManager {
     }
   }
 
+  updateSearchVisibility() {
+    const searchContainer = document.getElementById('search-container');
+    if (searchContainer) {
+      // Show search only when there are documents
+      searchContainer.style.display = this.dataManager.facturas.length > 0 ? 'block' : 'none';
+    }
+  }
+
   updatePopoverButtonStates() {
     const hasSelections = this.dataManager.selectedFacturas.size > 0;
     PopupUI.updateSelectionDependentButtons(hasSelections);
+  }
+
+  handleSearch(searchTerm) {
+    if (!this.tbodyEl) return;
+
+    const rows = this.tbodyEl.querySelectorAll('tr[data-id]');
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    if (!searchTerm.trim()) {
+      // Show all rows if search is empty
+      rows.forEach(row => {
+        row.style.display = '';
+      });
+      return;
+    }
+
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      let matchFound = false;
+
+      // Search in relevant columns (Nro Comprobante, RUC, Razón Social)
+      for (let i = 2; i <= 4; i++) { // Columns 3, 4, 5 (0-indexed: 2, 3, 4)
+        if (cells[i] && cells[i].textContent.toLowerCase().includes(searchLower)) {
+          matchFound = true;
+          break;
+        }
+      }
+
+      row.style.display = matchFound ? '' : 'none';
+    });
   }
 
   // Resto de métodos delegados o implementados directamente

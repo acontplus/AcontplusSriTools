@@ -61,12 +61,9 @@ class DataManager {
     if (this.manager.downloadBtn) {
       this.manager.downloadBtn.disabled = !hasSelection;
     }
-    if (this.manager.exportBtn) {
-      this.manager.exportBtn.disabled = !hasSelection;
-    }
-    if (this.manager.verifyBtn) {
-      this.manager.verifyBtn.disabled = !hasSelection;
-    }
+
+    // Update popover button states
+    this.manager.updatePopoverButtonStates();
 
     // Cambiar estilos de los botones
     const updateButton = (btn, enabledClass, hasSelection) => {
@@ -81,9 +78,6 @@ class DataManager {
     };
 
     updateButton(this.manager.downloadBtn, 'btn-primary', hasSelection);
-    updateButton(this.manager.exportBtn, 'btn-excel', hasSelection);
-    updateButton(this.manager.verifyBtn, 'btn-secondary', hasSelection);
-
 
     const masterCheckbox = document.getElementById('select-all');
     if (masterCheckbox) {

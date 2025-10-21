@@ -38,6 +38,7 @@ class FacturasManager {
     this.setupEventListeners();
     this.dataManager.loadStoredData();
     this.loadDownloadPath(); // Cargar la ruta de descarga guardada
+    this.updatePopoverButtonStates(); // Initialize button states
   }
 
   initDownloadCounter() {
@@ -213,14 +214,16 @@ class FacturasManager {
     if (exportExcelBtn) {
         exportExcelBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            this.exportComponent.exportSelected();
-            // Hide popover after action
-            const optionsPopover = document.getElementById('options-popover');
-            if (optionsPopover) {
-                optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
-                setTimeout(() => {
-                    optionsPopover.classList.add('hidden');
-                }, 300);
+            if (this.dataManager.selectedFacturas.size > 0) {
+                this.exportComponent.exportSelected();
+                // Hide popover after action
+                const optionsPopover = document.getElementById('options-popover');
+                if (optionsPopover) {
+                    optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+                    setTimeout(() => {
+                        optionsPopover.classList.add('hidden');
+                    }, 300);
+                }
             }
         });
     }
@@ -252,14 +255,16 @@ class FacturasManager {
     if (verificarDescargasBtn) {
         verificarDescargasBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            this.verifyDownloadsManual(true);
-            // Hide popover after action
-            const optionsPopover = document.getElementById('options-popover');
-            if (optionsPopover) {
-                optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
-                setTimeout(() => {
-                    optionsPopover.classList.add('hidden');
-                }, 300);
+            if (this.dataManager.selectedFacturas.size > 0) {
+                this.verifyDownloadsManual(true);
+                // Hide popover after action
+                const optionsPopover = document.getElementById('options-popover');
+                if (optionsPopover) {
+                    optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+                    setTimeout(() => {
+                        optionsPopover.classList.add('hidden');
+                    }, 300);
+                }
             }
         });
     }
@@ -340,11 +345,17 @@ class FacturasManager {
   updateDisplay() {
     this.updateCounts();
     this.renderTable();
+    this.updatePopoverButtonStates();
 
     if (this.dataManager.facturas.length > 0) {
       console.log('✅ Mostrando tabla con', this.dataManager.facturas.length, 'documentos');
       this.tableComponent.applyTheme();
     }
+  }
+
+  updatePopoverButtonStates() {
+    const hasSelections = this.dataManager.selectedFacturas.size > 0;
+    PopupUI.updateSelectionDependentButtons(hasSelections);
   }
 
   // Resto de métodos delegados o implementados directamente
@@ -435,7 +446,7 @@ class FacturasManager {
 
   updateDownloadButtonProgress(current, total) {
     if (this.downloadBtn) {
-        PopupUI.safeSetHTML(this.downloadBtn, `<span class="btn-text">Descargando ${current}/${total}...</span>`);
+        PopupUI.safeSetHTML(this.downloadBtn, `<span class="btn-text">${current}/${total}...</span>`);
     }
     // Solo mostrar botón cancelar si no se ha cancelado
     if (this.cancelBtn && !this.downloadCancelled) {
@@ -453,7 +464,9 @@ class FacturasManager {
         this.downloadBtn.disabled = false;
         PopupUI.safeSetHTML(this.downloadBtn, '<span class="btn-text">Descargar</span>');
     }
-    // Note: exportBtn and verifyBtn are now handled through the options popover
+
+    // Re-enable buttons after download completion
+    PopupUI.enableButtonsAfterOperation(true);
 
     let message = `Descarga finalizada. ${exitosos} de ${total} archivos descargados.`;
     let type = 'success';
@@ -508,6 +521,9 @@ class FacturasManager {
     const formato = document.getElementById('doc-type').value;
     const facturasParaDescargar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
 
+    // Disable buttons during download operation
+    PopupUI.disableButtonsForOperation();
+
     // Mostrar botón de cancelar
     this.showCancelButton();
     this.downloadCancelled = false;
@@ -540,7 +556,8 @@ class FacturasManager {
         if (!sessionCheck.sessionActive) {
           // Restaurar UI y mostrar mensaje de sesión expirada
           this.hideCancelButton();
-          this.downloadBtn.disabled = false;
+          // Re-enable buttons after session error
+          PopupUI.enableButtonsAfterOperation(true);
 
           this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
           return; // Salir sin continuar
@@ -569,14 +586,15 @@ class FacturasManager {
     } catch (error) {
         console.error('Error al iniciar la descarga:', error);
         this.showNotification(`Error: ${error.message}`, 'error');
+        // Re-enable buttons after download error
+        PopupUI.enableButtonsAfterOperation(true);
         this.handleDownloadComplete(0, facturasParaDescargar.length, facturasParaDescargar.length);
     }
   }
 
   async startNewSearchRobusta() {
-    if (this.scanDocumentBtn) {
-      this.scanDocumentBtn.disabled = true;
-    }
+    // Disable buttons during scan operation
+    PopupUI.disableButtonsForOperation();
 
     // Ocultar tabla y mostrar loader
     if (this.tableContainerEl) this.tableContainerEl.style.display = 'none';
@@ -605,7 +623,8 @@ class FacturasManager {
         // Restaurar UI y mostrar mensaje de sesión expirada
         if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
         if (this.loadingEl) this.loadingEl.style.display = 'none';
-        if (this.scanDocumentBtn) this.scanDocumentBtn.disabled = false;
+        // Re-enable buttons after failed scan
+        PopupUI.enableButtonsAfterOperation(true);
 
         this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
         return; // Salir sin continuar
@@ -718,10 +737,9 @@ class FacturasManager {
       // Restaurar vista de tabla cuando hay error
       if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
       if (this.loadingEl) this.loadingEl.style.display = 'none';
-      
-      if (this.scanDocumentBtn) {
-        this.scanDocumentBtn.disabled = false;
-      }
+
+      // Re-enable buttons after error
+      PopupUI.enableButtonsAfterOperation(true);
     }
   }
 
@@ -783,6 +801,8 @@ class FacturasManager {
     
     this.showNotification('Descarga cancelada por el usuario', 'warning');
     this.hideCancelButton();
+    // Re-enable buttons after cancellation
+    PopupUI.enableButtonsAfterOperation(true);
   }
 
   showCancelButton() {
@@ -793,7 +813,6 @@ class FacturasManager {
       this.downloadBtn.disabled = true;
       this.downloadBtn.innerHTML = `
         <i class="fa-solid fa-download" aria-hidden="true"></i>
-        <span>Descargando...</span>
       `;
     }
   }
@@ -806,7 +825,6 @@ class FacturasManager {
       this.downloadBtn.disabled = false;
       this.downloadBtn.innerHTML = `
         <i class="fa-solid fa-download" aria-hidden="true"></i>
-        <span>Descargar</span>
       `;
     }
   }

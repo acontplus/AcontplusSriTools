@@ -13,10 +13,8 @@ class FacturasManager {
     this.tableContainerEl = null;
     this.noDataEl = null;
     this.scanDocumentBtn = null;
-    this.exportBtn = null;
     this.downloadBtn = null;
     this.cancelBtn = null;
-    this.verifyBtn = null;
 
     // Inicializar DownloadCounter
     this.initDownloadCounter();
@@ -71,10 +69,8 @@ class FacturasManager {
       this.loadingEl = PopupUI.safeGetElement('loading');
       this.tableContainerEl = PopupUI.safeGetElement('table-container');
       this.scanDocumentBtn = PopupUI.safeGetElement('start-process');
-      this.exportBtn = PopupUI.safeGetElement('export-excel-btn');
       this.downloadBtn = PopupUI.safeGetElement('download-btn');
       this.cancelBtn = PopupUI.safeGetElement('cancel-download-btn');
-      this.verifyBtn = PopupUI.safeGetElement('verify-btn');
       this.downloadLocationInput = PopupUI.safeGetElement('download-location');
       this.savePathBtn = PopupUI.safeGetElement('save-download-path');
 
@@ -160,11 +156,113 @@ class FacturasManager {
         });
     }
 
+    // Event listener for options popover toggle with CSS animations
+    const optionsToggleBtn = document.getElementById('options-toggle-popover');
+    const optionsPopover = document.getElementById('options-popover');
+
+    if (optionsToggleBtn && optionsPopover) {
+        const showOptionsPopover = () => {
+            optionsPopover.classList.remove('hidden');
+            // Trigger animation by forcing reflow
+            optionsPopover.offsetHeight;
+            optionsPopover.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
+        };
+
+        const hideOptionsPopover = () => {
+            optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+            setTimeout(() => {
+                optionsPopover.classList.add('hidden');
+            }, 300);
+        };
+
+        optionsToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (optionsPopover.classList.contains('hidden')) {
+                showOptionsPopover();
+            } else {
+                hideOptionsPopover();
+            }
+        });
+
+        // Close popover when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!optionsToggleBtn.contains(e.target) && !optionsPopover.contains(e.target)) {
+                if (!optionsPopover.classList.contains('hidden')) {
+                    hideOptionsPopover();
+                }
+            }
+        });
+
+        // Close popover on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !optionsPopover.classList.contains('hidden')) {
+                hideOptionsPopover();
+            }
+        });
+    }
+
     if (this.scanDocumentBtn) this.scanDocumentBtn.addEventListener('click', () => this.startNewSearchRobusta());
-    if (this.exportBtn) this.exportBtn.addEventListener('click', (e) => { e.preventDefault(); this.exportComponent.exportSelected(); });
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
     if (this.cancelBtn) this.cancelBtn.addEventListener('click', (e) => { e.preventDefault(); this.cancelDownload(); });
-    if (this.verifyBtn) this.verifyBtn.addEventListener('click', (e) => { e.preventDefault(); this.verifyDownloadsManual(true); });
+
+    // Event listeners for options popover buttons
+    const exportExcelBtn = document.querySelector('[data-action="export_excel"]');
+    const configRutaBtn = document.querySelector('[data-action="config_ruta"]');
+    const verificarDescargasBtn = document.querySelector('[data-action="verificar_descargas"]');
+
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.exportComponent.exportSelected();
+            // Hide popover after action
+            const optionsPopover = document.getElementById('options-popover');
+            if (optionsPopover) {
+                optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+                setTimeout(() => {
+                    optionsPopover.classList.add('hidden');
+                }, 300);
+            }
+        });
+    }
+
+    if (configRutaBtn) {
+        configRutaBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Show download settings popover
+            const downloadSettingsPopover = document.getElementById('download-settings-popover');
+            if (downloadSettingsPopover) {
+                downloadSettingsPopover.classList.remove('hidden');
+                downloadSettingsPopover.offsetHeight;
+                downloadSettingsPopover.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
+                if (this.downloadLocationInput) {
+                    this.loadDownloadPath();
+                }
+            }
+            // Hide options popover
+            const optionsPopover = document.getElementById('options-popover');
+            if (optionsPopover) {
+                optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+                setTimeout(() => {
+                    optionsPopover.classList.add('hidden');
+                }, 300);
+            }
+        });
+    }
+
+    if (verificarDescargasBtn) {
+        verificarDescargasBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.verifyDownloadsManual(true);
+            // Hide popover after action
+            const optionsPopover = document.getElementById('options-popover');
+            if (optionsPopover) {
+                optionsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
+                setTimeout(() => {
+                    optionsPopover.classList.add('hidden');
+                }, 300);
+            }
+        });
+    }
 
     if (this.tbodyEl) {
       this.tbodyEl.addEventListener('change', (e) => {
@@ -355,8 +453,7 @@ class FacturasManager {
         this.downloadBtn.disabled = false;
         PopupUI.safeSetHTML(this.downloadBtn, '<span class="btn-text">Descargar</span>');
     }
-    this.exportBtn.disabled = this.dataManager.selectedFacturas.size === 0;
-    this.verifyBtn.disabled = this.dataManager.selectedFacturas.size === 0;
+    // Note: exportBtn and verifyBtn are now handled through the options popover
 
     let message = `Descarga finalizada. ${exitosos} de ${total} archivos descargados.`;
     let type = 'success';
@@ -411,11 +508,9 @@ class FacturasManager {
     const formato = document.getElementById('doc-type').value;
     const facturasParaDescargar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
 
-    // Mostrar botón de cancelar y deshabilitar exportar y verificar
+    // Mostrar botón de cancelar
     this.showCancelButton();
     this.downloadCancelled = false;
-    this.exportBtn.disabled = true;
-    this.verifyBtn.disabled = true;
 
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -445,8 +540,6 @@ class FacturasManager {
         if (!sessionCheck.sessionActive) {
           // Restaurar UI y mostrar mensaje de sesión expirada
           this.hideCancelButton();
-          this.exportBtn.disabled = false;
-          this.verifyBtn.disabled = false;
           this.downloadBtn.disabled = false;
 
           this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
@@ -690,8 +783,6 @@ class FacturasManager {
     
     this.showNotification('Descarga cancelada por el usuario', 'warning');
     this.hideCancelButton();
-    this.exportBtn.disabled = false;
-    this.verifyBtn.disabled = false;
   }
 
   showCancelButton() {

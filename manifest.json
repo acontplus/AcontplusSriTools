@@ -48,6 +48,7 @@
         "libs/*",
         "src/*",
         "assets/css/*",
+        "assets/js/*",
         "assets/fonts/*",
         ".env.sri-tool-extension"
       ],

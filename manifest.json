@@ -45,7 +45,6 @@
     {
       "resources": [
         "popup/popup.html",
-        "libs/*",
         "src/*",
         "assets/css/*",
         "assets/js/*",

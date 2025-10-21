@@ -22,6 +22,9 @@
     <link href="../assets/css/local-fonts.css" rel="stylesheet">
     <!-- SheetJS LOCAL - Solucion CSP -->
     <script src="../assets/js/xlsx.full.min.js"></script>
+    <!-- Lucide Icons LOCAL - Solucion CSP -->
+    <script src="../assets/js/lucide.min.js"></script>
+    <script src="../assets/js/lucide-init.js"></script>
 </head>
 
 <body class="p-4 md:p-6 min-w-[600px]" role="main">
@@ -67,32 +70,63 @@
 
         <div id="main">
             <div id="principal" class="tab-panel active">
-                <section class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 mt-4"
-                    aria-label="Estadísticas de documentos">
-                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
+                <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 mt-5" aria-label="Estadísticas de documentos">
+                    <!-- <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
                         aria-label="Contador de documentos totales">
                         <p class="text-gray-500 text-xs">Total Documentos</p>
                         <p id="total-docs" class="text-2xl font-bold text-gray-800" aria-label="Total de documentos">0
                         </p>
+                    </div> -->
+                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg" aria-label="Contador de documentos totales">
+                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Total Documentos</p>
+                        <div class="flex justify-between items-center">
+                            <p id="total-docs" class="text-2xl font-extrabold" aria-label="Total de documentos">0</p>
+                            <i data-lucide="file-text" class="h-6 w-6 opacity-70"></i>
+                        </div>
                     </div>
-                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
+
+                    <!-- <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
                         aria-label="Contador de documentos seleccionados">
                         <p class="text-gray-500 text-xs">Seleccionados</p>
                         <p id="selected-docs" class="text-2xl font-bold" style="color: var(--brand-pink);"
                             aria-label="Documentos seleccionados">0</p>
+                    </div> -->
+                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg" aria-label="Contador de documentos seleccionados">
+                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Seleccionados</p>
+                        <div class="flex justify-between items-center">
+                            <p id="selected-docs" class="text-2xl font-extrabold" style="color: var(--brand-pink);" aria-label="Documentos seleccionados">0</p>
+                            <i data-lucide="check-square" class="h-6 w-6 opacity-70"></i>
+                        </div>
                     </div>
-                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
+
+
+                    <!-- <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
                         aria-label="Contador de documentos descargados">
                         <p class="text-gray-500 text-xs">Descargados</p>
                         <p id="downloaded-docs" class="text-2xl font-bold text-green-600"
                             aria-label="Documentos descargados">0
                         </p>
+                    </div> -->
+                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg" aria-label="Contador de documentos descargados">
+                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Descargados</p>
+                        <div class="flex justify-between items-center">
+                            <p id="downloaded-docs" class="text-2xl font-extrabold text-green-600" aria-label="Documentos descargados">0</p>
+                            <i data-lucide="download" class="h-6 w-6 opacity-70"></i>
+                        </div>
                     </div>
-                    <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
+
+                    <!-- <div class="card" style="padding: 0.5rem;" role="status" aria-live="polite"
                         aria-label="Suma total de documentos">
                         <p class="text-gray-500 text-xs">Suma Total</p>
                         <p id="total-sum" class="text-xl font-bold" style="color: var(--brand-pink);"
                             aria-label="Suma total de importes">$0.00</p>
+                    </div> -->
+                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg" aria-label="Suma total de documentos">
+                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Suma Total</p>
+                        <div class="flex justify-between items-center">
+                            <p id="total-sum" class="text-2xl font-extrabold" style="color: var(--brand-pink);" aria-label="Suma Total">0</p>
+                            <i data-lucide="credit-card" class="h-6 w-6 opacity-70"></i>
+                        </div>
                     </div>
                 </section>
 
@@ -461,7 +495,6 @@
     <script src="../src/popup/components/notifications.js"></script>
     <script src="../src/popup/index.js"></script>
     <script src="../src/popup/components/tab-manager.js"></script>
-    <script src="../assets/js/lucide-init.js"></script>
 </body>
 
 </html>

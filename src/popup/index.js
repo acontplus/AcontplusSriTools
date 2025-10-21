@@ -12,7 +12,7 @@ class FacturasManager {
     this.loadingEl = null;
     this.tableContainerEl = null;
     this.noDataEl = null;
-    this.newSearchBtn = null;
+    this.scanDocumentBtn = null;
     this.exportBtn = null;
     this.downloadBtn = null;
     this.cancelBtn = null;
@@ -70,7 +70,7 @@ class FacturasManager {
       this.tbodyEl = PopupUI.safeGetElement('docs-table-body');
       this.loadingEl = PopupUI.safeGetElement('loading');
       this.tableContainerEl = PopupUI.safeGetElement('table-container');
-      this.newSearchBtn = PopupUI.safeGetElement('start-process');
+      this.scanDocumentBtn = PopupUI.safeGetElement('start-process');
       this.exportBtn = PopupUI.safeGetElement('export-excel-btn');
       this.downloadBtn = PopupUI.safeGetElement('download-btn');
       this.cancelBtn = PopupUI.safeGetElement('cancel-download-btn');
@@ -160,7 +160,7 @@ class FacturasManager {
         });
     }
 
-    if (this.newSearchBtn) this.newSearchBtn.addEventListener('click', () => this.startNewSearchRobusta());
+    if (this.scanDocumentBtn) this.scanDocumentBtn.addEventListener('click', () => this.startNewSearchRobusta());
     if (this.exportBtn) this.exportBtn.addEventListener('click', (e) => { e.preventDefault(); this.exportComponent.exportSelected(); });
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
     if (this.cancelBtn) this.cancelBtn.addEventListener('click', (e) => { e.preventDefault(); this.cancelDownload(); });
@@ -481,8 +481,8 @@ class FacturasManager {
   }
 
   async startNewSearchRobusta() {
-    if (this.newSearchBtn) {
-      this.newSearchBtn.disabled = true;
+    if (this.scanDocumentBtn) {
+      this.scanDocumentBtn.disabled = true;
     }
 
     // Ocultar tabla y mostrar loader
@@ -512,7 +512,7 @@ class FacturasManager {
         // Restaurar UI y mostrar mensaje de sesión expirada
         if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
         if (this.loadingEl) this.loadingEl.style.display = 'none';
-        if (this.newSearchBtn) this.newSearchBtn.disabled = false;
+        if (this.scanDocumentBtn) this.scanDocumentBtn.disabled = false;
 
         this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
         return; // Salir sin continuar
@@ -626,8 +626,8 @@ class FacturasManager {
       if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
       if (this.loadingEl) this.loadingEl.style.display = 'none';
       
-      if (this.newSearchBtn) {
-        this.newSearchBtn.disabled = false;
+      if (this.scanDocumentBtn) {
+        this.scanDocumentBtn.disabled = false;
       }
     }
   }

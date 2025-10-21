@@ -139,92 +139,75 @@
                 </section>
 
                 <!-- 3. Panel de Acciones -->
+                <form class="flex flex-wrap items-center justify-between gap-4" role="form" aria-label="Formulario de acciones">
+                    <div class="flex items-center w-full justify-start space-x-3"></div>
+                    <div class="flex items-center w-full justify-end space-x-3">
 
-                <!-- Fila 2: Acciones Masivas (Compactas y Alineadas a la Derecha) -->
-                <div class="flex items-center w-full justify-end space-x-3">
-
-                    <!-- Botón de Analizar (Menos prominente) -->
-                    <button id="start-process"
-                        class="flex items-center px-4 py-2 rounded-lg text-white font-semibold text-xs transition duration-150 shadow-md bg-gray-400 justify-center"
-                    >
-                        <i data-lucide="search" class="h-3 w-3 mr-2"></i>
-                        <span class="">Escanear</span>
-                    </button>
-
-                    <!-- Botón/Dropdown de Descarga Masiva (Color primario de acción) -->
-                    <div class="relative">
-                        <button id="download-btn"
-                            class="flex items-center px-4 py-2 rounded-lg text-white font-semibold text-xs transition duration-150 shadow-md bg-indigo-600 hover:bg-indigo-700 justify-center">
-                            <i data-lucide="download" class="h-3 w-3 mr-2"></i>
-                            <span id="download-count">Descargar</span>
-                            <i data-lucide="chevron-down" class="h-3 w-3 ml-2 transition-transform duration-150"></i>
+                        <!-- Botón de Analizar (Menos prominente) -->
+                        <button id="start-process"
+                            class="flex items-center px-4 py-2 rounded-lg text-white font-semibold text-xs transition duration-150 shadow-md bg-gray-400 justify-center"
+                        >
+                            <i data-lucide="search" aria-hidden="true" class="h-3 w-3 mr-2"></i>
+                            <span>Escanear</span>
                         </button>
 
-                        <!-- Popover de Descarga -->
-                        <div id="download-popover"
-                            class="absolute right-0 mt-2 w-48 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 z-40 transform origin-top-right transition ease-out duration-100 hidden">
-                            <div class="py-2" role="menu" aria-orientation="vertical" aria-labelledby="download-menu">
-                                <button data-format="xml"
-                                    class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                    role="menuitem">
-                                    <i data-lucide="file-code" class="mr-3 h-3 w-3"></i>
-                                    Descargar XML
-                                </button>
-                                <button data-format="pdf"
-                                    class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                    role="menuitem">
-                                    <i data-lucide="file-text" class="mr-3 h-3 w-3"></i>
-                                    Descargar PDF
-                                </button>
-                                <div class="border-t border-gray-100 my-1"></div>
-                                <button data-format="ambos"
-                                    class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 font-bold transition duration-150"
-                                    role="menuitem">
-                                    <i data-lucide="package" class="mr-3 h-3 w-3"></i>
-                                    Descargar Ambos
-                                </button>
+                        <!-- Botón/Dropdown de Descarga Masiva (Color primario de acción) -->
+                        <div class="flex items-center" role="group" aria-labelledby="download-group-label">
+                            <span id="download-group-label" class="sr-only">Opciones de descarga</span>
+                            <label for="doc-type" class="sr-only">Tipo de documento a descargar</label>
+                            <select id="doc-type"
+                                class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
+                                aria-label="Seleccionar tipo de archivo para descargar">
+                                <option value="xml">Descargar XML</option>
+                                <option value="pdf">Descargar PDF</option>
+                                <option value="both">Descargar XML y PDF</option>
+                            </select>
+                            <button id="download-btn" disabled
+                                class="bg-gray-400 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1"
+                                aria-label="Iniciar descarga de documentos seleccionados">
+                                <i class="fa-solid fa-download" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <!-- Botón de Popover de Opciones Adicionales (Color más sutil) -->
+                        <div class="relative">
+                            <button id="options-toggle"
+                                class="flex items-center px-4 py-2 bg-dark-600 text-white font-semibold text-xs rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md"
+                                title="Opciones adicionales">
+                                <i data-lucide="more-horizontal" class="h-3 w-3 mr-2"></i>
+                                Opciones
+                            </button>
+
+                            <!-- Popover (Desplegable) -->
+                            <div id="options-popover"
+                                class="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 z-40 transform origin-top-right transition ease-out duration-100 hidden">
+                                <div class="py-2" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                    <button data-action="export_excel"
+                                        class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
+                                        role="menuitem">
+                                        <i data-lucide="table" class="mr-3 h-3 w-3"></i>
+                                        Exportar en Excel
+                                    </button>
+                                    <button data-action="config_ruta"
+                                        class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
+                                        role="menuitem">
+                                        <i data-lucide="settings" class="mr-3 h-3 w-3"></i>
+                                        Configurar Ruta
+                                    </button>
+                                    <button data-action="verificar_descargas"
+                                        class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
+                                        role="menuitem">
+                                        <i data-lucide="check-check" class="mr-3 h-3 w-3"></i>
+                                        Verificar Descargas
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </form>
 
-                    <!-- Botón de Popover de Opciones Adicionales (Color más sutil) -->
-                    <div class="relative">
-                        <button id="options-toggle"
-                            class="flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold text-xs rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md"
-                            title="Opciones adicionales">
-                            <i data-lucide="more-horizontal" class="h-3 w-3 mr-2"></i>
-                            Opciones
-                        </button>
-
-                        <!-- Popover (Desplegable) -->
-                        <div id="options-popover"
-                            class="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 z-40 transform origin-top-right transition ease-out duration-100 hidden">
-                            <div class="py-2" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                                <button data-action="export_excel"
-                                    class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                    role="menuitem">
-                                    <i data-lucide="table" class="mr-3 h-3 w-3"></i>
-                                    Exportar en Excel
-                                </button>
-                                <button data-action="config_ruta"
-                                    class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                    role="menuitem">
-                                    <i data-lucide="settings" class="mr-3 h-3 w-3"></i>
-                                    Configurar Ruta
-                                </button>
-                                <button data-action="verificar_descargas"
-                                    class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                    role="menuitem">
-                                    <i data-lucide="check-check" class="mr-3 h-3 w-3"></i>
-                                    Verificar Descargas
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-
+                
+                <!--
                 <section class="bg-white p-4 rounded-lg shadow-md mb-6" aria-label="Panel de acciones">
                     <form class="flex flex-wrap items-center justify-between gap-4" role="form"
                         aria-label="Formulario de acciones">
@@ -259,7 +242,6 @@
                             </button>
                         </div>
 
-                        <!-- Grupo de Acciones Secundarias -->
                         <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
                             <span id="secondary-actions-label" class="sr-only">Acciones secundarias</span>
 
@@ -313,6 +295,9 @@
                     </form>
                 </section>
 
+                --->
+
+
                 <!-- Loading State -->
                 <section id="loading" class="loading" style="display: none;" aria-live="polite"
                     aria-label="Indicador de carga" role="status">
@@ -334,7 +319,7 @@
                 </section>
 
                 <!-- 4. Tabla de Documentos -->
-                <section id="table-container" class="bg-white rounded-lg shadow-md overflow-hidden"
+                <section id="table-container" class="bg-white rounded-lg shadow-md overflow-hidden mt-3"
                     aria-label="Tabla de documentos electrónicos del SRI">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left text-gray-600" role="table"

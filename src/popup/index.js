@@ -6,7 +6,6 @@ class FacturasManager {
     this.version = '1.4.1-Final';
     this.facturas = [];
     this.selectedFacturas = new Set();
-    this.paginationInfo = { current: 1, total: 1 };
 
     // Elementos DOM
     this.tbodyEl = null;
@@ -23,9 +22,6 @@ class FacturasManager {
     this.initDownloadCounter();
     this.selectMissingBtn = null;
     this.progressFillEl = null;
-    this.paginationProgressEl = null;
-    this.currentPageEl = null;
-    this.totalPagesEl = null;
     this.downloadLocationInput = null;
     this.savePathBtn = null;
 
@@ -79,14 +75,10 @@ class FacturasManager {
       this.downloadBtn = PopupUI.safeGetElement('download-btn');
       this.cancelBtn = PopupUI.safeGetElement('cancel-download-btn');
       this.verifyBtn = PopupUI.safeGetElement('verify-btn');
-      this.paginationProgressEl = PopupUI.safeGetElement('pagination-progress');
-      this.currentPageEl = PopupUI.safeGetElement('current-page');
-      this.totalPagesEl = PopupUI.safeGetElement('total-pages');
       this.downloadLocationInput = PopupUI.safeGetElement('download-location');
       this.savePathBtn = PopupUI.safeGetElement('save-download-path');
 
       this.tableComponent.initialize(this.tbodyEl);
-      this.createMissingProgressElements();
     } catch (error) {
       console.error('Error inicializando elementos:', error);
       this.showNotification('Error inicializando interfaz', 'error');
@@ -676,18 +668,6 @@ class FacturasManager {
       this.progressFillEl.style.width = percentage + '%';
     }
 
-    if (this.currentPageEl) {
-      PopupUI.safeSetText(this.currentPageEl, (progress.currentPage || 1).toString());
-    }
-
-    if (this.totalPagesEl) {
-      PopupUI.safeSetText(this.totalPagesEl, (progress.totalPages || 1).toString());
-    }
-
-    if (this.paginationProgressEl) {
-      this.paginationProgressEl.style.display = 'block';
-    }
-
     if (progress.documentosEncontrados !== undefined) {
       const totalCountEl = document.getElementById('total-docs');
       if (totalCountEl) {
@@ -696,19 +676,6 @@ class FacturasManager {
     }
 
     const porcentaje = progress.porcentaje || Math.round((progress.currentPage / progress.totalPages) * 100);
-  }
-
-  createMissingProgressElements() {
-    if (this.paginationProgressEl && !this.progressFillEl) {
-      const progressBar = this.paginationProgressEl.querySelector('.progress-bar');
-      if (progressBar) {
-        const progressFill = document.createElement('div');
-        progressFill.id = 'progress-fill';
-        progressFill.className = 'progress-fill';
-        progressBar.appendChild(progressFill);
-        this.progressFillEl = progressFill;
-      }
-    }
   }
 
   cancelDownload() {

@@ -1,4 +1,4 @@
-// Servicios de UI para el popup de Acontplus SRI Tools v1.4.1
+// Servicios de UI para el popup de Acontplus SRI Tools v1.4.2
 // Utilidades para manipulación segura del DOM
 
 class PopupUI {

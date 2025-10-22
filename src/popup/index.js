@@ -46,15 +46,11 @@ class FacturasManager {
       // Verificar si DownloadCounter está disponible
       if (typeof DownloadCounter !== 'undefined') {
         if (!window.downloadCounter) {
-          console.log('🔧 Inicializando DownloadCounter en popup')
           window.downloadCounter = new DownloadCounter();
         }
       } else {
-        console.error('❌ DownloadCounter no está definido - verificar orden de carga de scripts')
-        // Intentar cargar después de un delay
         setTimeout(() => {
           if (typeof DownloadCounter !== 'undefined' && !window.downloadCounter) {
-            console.log('🔧 DownloadCounter disponible después del delay - inicializando')
             window.downloadCounter = new DownloadCounter();
           }
         }, 1000);
@@ -77,7 +73,6 @@ class FacturasManager {
 
       this.tableComponent.initialize(this.tbodyEl);
     } catch (error) {
-      console.error('Error inicializando elementos:', error);
       this.showNotification('Error inicializando interfaz', 'error');
     }
   }
@@ -87,15 +82,14 @@ class FacturasManager {
     if (closeBtn) {
       closeBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        // Envía un mensaje al background script para que se encargue de cerrar el panel
         chrome.runtime.sendMessage({ action: 'closePanel' });
       });
     }
 
     if (this.savePathBtn) {
         this.savePathBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.saveDownloadPath();
+          e.preventDefault();
+          this.saveDownloadPath();
         });
     }
 
@@ -152,7 +146,7 @@ class FacturasManager {
         // Close popover on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !downloadSettingsPopover.classList.contains('hidden')) {
-                hidePopover();
+              hidePopover();
             }
         });
     }

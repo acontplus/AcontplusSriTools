@@ -193,7 +193,20 @@ class FacturasManager {
         });
     }
 
-    if (this.scanDocumentBtn) this.scanDocumentBtn.addEventListener('click', () => this.startNewSearchRobusta());
+    if (this.scanDocumentBtn) {
+        this.scanDocumentBtn.addEventListener('click', () => this.startNewSearchRobusta());
+        
+        // Add hover effects for analyze button
+        this.scanDocumentBtn.addEventListener('mouseover', () => {
+            this.scanDocumentBtn.style.backgroundColor = '#B8145F';
+            this.scanDocumentBtn.style.borderColor = '#B8145F';
+        });
+        
+        this.scanDocumentBtn.addEventListener('mouseout', () => {
+            this.scanDocumentBtn.style.backgroundColor = '#D61672';
+            this.scanDocumentBtn.style.borderColor = '#D61672';
+        });
+    }
     if (this.downloadBtn) this.downloadBtn.addEventListener('click', (e) => { e.preventDefault(); this.descargarSeleccionados(); });
     if (this.cancelBtn) this.cancelBtn.addEventListener('click', (e) => { e.preventDefault(); this.cancelDownload(); });
 

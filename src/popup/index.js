@@ -496,7 +496,8 @@ class FacturasManager {
     }
 
     // Re-enable buttons after download completion
-    PopupUI.enableButtonsAfterOperation(true);
+    const hasSelections = this.dataManager.selectedFacturas.size > 0;
+    PopupUI.enableButtonsAfterOperation(hasSelections);
 
     let message = `Descarga finalizada. ${exitosos} de ${total} archivos descargados.`;
     let type = 'success';
@@ -587,7 +588,8 @@ class FacturasManager {
           // Restaurar UI y mostrar mensaje de sesión expirada
           this.hideCancelButton();
           // Re-enable buttons after session error
-          PopupUI.enableButtonsAfterOperation(true);
+          const hasSelections = this.dataManager.selectedFacturas.size > 0;
+          PopupUI.enableButtonsAfterOperation(hasSelections);
 
           this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
           return; // Salir sin continuar
@@ -617,7 +619,8 @@ class FacturasManager {
         console.error('Error al iniciar la descarga:', error);
         this.showNotification(`Error: ${error.message}`, 'error');
         // Re-enable buttons after download error
-        PopupUI.enableButtonsAfterOperation(true);
+        const hasSelections = this.dataManager.selectedFacturas.size > 0;
+        PopupUI.enableButtonsAfterOperation(hasSelections);
         this.handleDownloadComplete(0, facturasParaDescargar.length, facturasParaDescargar.length);
     }
   }
@@ -654,7 +657,8 @@ class FacturasManager {
         if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
         if (this.loadingEl) this.loadingEl.style.display = 'none';
         // Re-enable buttons after failed scan
-        PopupUI.enableButtonsAfterOperation(true);
+        const hasSelections = this.dataManager.selectedFacturas.size > 0;
+        PopupUI.enableButtonsAfterOperation(hasSelections);
 
         this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
         return; // Salir sin continuar
@@ -769,7 +773,8 @@ class FacturasManager {
       if (this.loadingEl) this.loadingEl.style.display = 'none';
 
       // Re-enable buttons after error
-      PopupUI.enableButtonsAfterOperation(true);
+      const hasSelections = this.dataManager.selectedFacturas.size > 0;
+      PopupUI.enableButtonsAfterOperation(hasSelections);
     }
   }
 
@@ -832,7 +837,8 @@ class FacturasManager {
     this.showNotification('Descarga cancelada por el usuario', 'warning');
     this.hideCancelButton();
     // Re-enable buttons after cancellation
-    PopupUI.enableButtonsAfterOperation(true);
+    const hasSelections = this.dataManager.selectedFacturas.size > 0;
+    PopupUI.enableButtonsAfterOperation(hasSelections);
   }
 
   showCancelButton() {

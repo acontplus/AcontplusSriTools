@@ -112,6 +112,11 @@ class DataManager {
     }
 
     this.updateSelectionCount();
+    
+    // Update button states when selection changes
+    if (this.manager && this.manager.updatePopoverButtonStates) {
+      this.manager.updatePopoverButtonStates();
+    }
   }
 
   seleccionarFaltantes() {
@@ -161,6 +166,11 @@ class DataManager {
     this.manager.updateDisplay();
     this.selectedFacturas.clear();
     this.updateSelectionCount();
+    
+    // Update button states after clearing selection
+    if (this.manager && this.manager.updatePopoverButtonStates) {
+      this.manager.updatePopoverButtonStates();
+    }
 
     const totalDocuments = this.facturas.length;
     const totalPages = this.paginationInfo.total;
@@ -175,6 +185,9 @@ class DataManager {
     }
 
     this.manager.showNotification(message, 'success');
+
+    // Re-enable buttons after search completion (no selections initially)
+    PopupUI.enableButtonsAfterOperation(false);
 
     if (this.manager.newSearchBtn) {
       this.manager.newSearchBtn.disabled = false;

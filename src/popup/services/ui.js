@@ -81,16 +81,27 @@ class PopupUI {
   static setButtonsState(enabled, buttonSelectors = [], options = {}) {
     const { onlySelectionDependent = false } = options;
 
-    // Default buttons that are always managed
-    const defaultSelectors = [
+    // Buttons that are always disabled during operations (scan/download)
+    const operationButtons = [
       '#start-process', // Scan button
-      '#download-btn', // Download button
     ];
 
-    // Combine with provided selectors
-    const allSelectors = [...new Set([...defaultSelectors, ...buttonSelectors])];
+    // Buttons that depend on selection
+    const selectionDependentButtons = [
+      '#download-btn', // Download button
+      '[data-action="export_excel"]', // Export Excel
+      '[data-action="verificar_descargas"]' // Verify downloads
+    ];
 
-    allSelectors.forEach(selector => {
+    let targetSelectors = [];
+    
+    if (onlySelectionDependent) {
+      targetSelectors = selectionDependentButtons;
+    } else {
+      targetSelectors = [...operationButtons, ...selectionDependentButtons, ...buttonSelectors];
+    }
+
+    targetSelectors.forEach(selector => {
       const buttons = document.querySelectorAll(selector);
       buttons.forEach(button => {
         if (enabled) {
@@ -98,12 +109,6 @@ class PopupUI {
           button.disabled = false;
           button.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
           button.removeAttribute('disabled');
-
-          // For popover buttons, also check if they should be enabled based on selection
-          if (onlySelectionDependent && (selector === '[data-action="export_excel"]' || selector === '[data-action="verificar_descargas"]')) {
-            // This will be handled by updatePopoverButtonStates
-            return;
-          }
         } else {
           // Disable button
           button.disabled = true;
@@ -124,10 +129,36 @@ class PopupUI {
 
   /**
    * Convenience method to enable buttons after operations
-   * @param {boolean} onlySelectionDependent - Only enable buttons that depend on selection state
+   * @param {boolean} hasSelections - Whether there are selected items (for selection-dependent buttons)
    */
-  static enableButtonsAfterOperation(onlySelectionDependent = false) {
-    this.setButtonsState(true, [], { onlySelectionDependent });
+  static enableButtonsAfterOperation(hasSelections = false) {
+    // Always enable operation buttons (like scan)
+    const operationButtons = ['#start-process'];
+    operationButtons.forEach(selector => {
+      const buttons = document.querySelectorAll(selector);
+      buttons.forEach(button => {
+        button.disabled = false;
+        button.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        button.removeAttribute('disabled');
+      });
+    });
+
+    // Enable selection-dependent buttons only if there are selections
+    const selectionButtons = ['#download-btn', '[data-action="export_excel"]', '[data-action="verificar_descargas"]'];
+    selectionButtons.forEach(selector => {
+      const buttons = document.querySelectorAll(selector);
+      buttons.forEach(button => {
+        if (hasSelections) {
+          button.disabled = false;
+          button.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+          button.removeAttribute('disabled');
+        } else {
+          button.disabled = true;
+          button.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+          button.setAttribute('disabled', 'true');
+        }
+      });
+    });
   }
 
   /**
@@ -135,6 +166,20 @@ class PopupUI {
    * @param {boolean} hasSelections - Whether there are selected items
    */
   static updateSelectionDependentButtons(hasSelections) {
+    // Update main Download button with specific CSS handling
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+      if (hasSelections) {
+        downloadBtn.disabled = false;
+        downloadBtn.removeAttribute('disabled');
+        downloadBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+      } else {
+        downloadBtn.disabled = true;
+        downloadBtn.setAttribute('disabled', 'true');
+        downloadBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+      }
+    }
+
     // Update Exportar en Excel button
     const exportExcelBtn = document.querySelector('[data-action="export_excel"]');
     if (exportExcelBtn) {

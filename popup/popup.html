@@ -185,100 +185,42 @@
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!--
-                <section class="bg-white p-4 rounded-lg shadow-md mb-6" aria-label="Panel de acciones">
-                    <form class="flex flex-wrap items-center justify-between gap-4" role="form"
-                        aria-label="Formulario de acciones">
-                        <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
-                            <button id="start-process"
-                                class="btn-primary text-white font-bold py-2 px-5 rounded-lg transition-all duration-300 flex items-center gap-2 -ml-1"
-                                aria-label="Iniciar análisis de comprobantes electrónicos del SRI">
-                                <i class="fa-solid fa-search" aria-hidden="true"></i>
-                            </button>
-                            <div class="flex items-center" role="group" aria-labelledby="download-group-label">
-                                <span id="download-group-label" class="sr-only">Opciones de descarga</span>
-                                <label for="doc-type" class="sr-only">Tipo de documento a descargar</label>
-                                <select id="doc-type"
-                                    class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
-                                    aria-label="Seleccionar tipo de archivo para descargar">
-                                    <option value="xml">Descargar XML</option>
-                                    <option value="pdf">Descargar PDF</option>
-                                    <option value="both">Descargar XML y PDF</option>
-                                </select>
-                                <button id="download-btn" disabled
-                                    class="bg-gray-400 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1"
-                                    aria-label="Iniciar descarga de documentos seleccionados">
-                                    <i class="fa-solid fa-download" aria-hidden="true"></i>
-                                    <span>Descargar</span>
-                                </button>
-                            </div>
-
-                            <button id="cancel-download-btn" style="display: none;"
-                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-lg transition-all duration-300 flex items-center gap-2 ml-1"
-                                aria-label="Cancelar descarga en progreso">
-                                <i class="fa-solid fa-stop" aria-hidden="true"></i>
-                            </button>
-                        </div>
-
-                        <div class="flex items-center gap-3" role="group" aria-labelledby="secondary-actions-label">
-                            <span id="secondary-actions-label" class="sr-only">Acciones secundarias</span>
-
-                            <button id="export-excel-btn" disabled
-                                class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2"
-                                aria-label="Exportar documentos seleccionados a Excel">
-                                <i class="fa-solid fa-file-excel" aria-hidden="true"></i>
-                                <span>Exportar</span>
-                            </button>
-                            <button id="verify-btn" disabled
-                                class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2"
-                                aria-label="Verificar documentos descargados">
-                                <i class="fa-solid fa-check-double" aria-hidden="true"></i>
-                                <span>Verificar</span>
-                            </button>
-                            <div class="relative">
-                                <button id="toggle-download-settings"
-                                    class="bg-blue-400 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2"
-                                    aria-label="Configurar ubicación de descarga">
-                                    <i class="fa-solid fa-cog" aria-hidden="true"></i>
-                                    <span>Configurar Ruta</span>
-                                </button>
-                                <div id="download-settings-popover"
-                                    class="absolute top-full right-0 mt-2 w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 z-50 hidden opacity-0 scale-95 translate-y-2 transition-all duration-300 ease-out"
-                                    role="region" aria-label="Configuración de ubicación de descarga">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                            <i class="fa-solid fa-folder-open text-pink-500" aria-hidden="true"></i>
-                                            Ubicación de guardado:
-                                        </h3>
-                                        <button id="close-download-settings"
-                                            class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100">
-                                            <i class="fa-solid fa-times text-sm" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex flex-1">
-                                            <input id="download-location" type="text"
-                                                placeholder="Si está vacío, se usará la carpeta de Descargas predeterminada"
-                                                class="bg-gray-100 text-gray-800 text-sm px-3 py-2 rounded-l-md border border-r-0 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 flex-1 outline-none transition-all duration-200">
-                                            <button id="save-download-path"
-                                                class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white text-sm font-medium px-4 py-2 rounded-r-md border border-pink-500 transition-all duration-200 flex items-center gap-2 hover:shadow-lg transform hover:scale-105">
-                                                <i class="fa-solid fa-save text-xs" aria-hidden="true"></i>
-                                                Guardar
+                            <!-- Modal de Configuración de Descarga (con diseño de popover) -->
+                            <div id="download-settings-modal"
+                                class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden opacity-0 transition-opacity duration-300 ease-out"
+                                role="dialog" aria-label="Configuración de ubicación de descarga">
+                                <div id="modal-backdrop" class="flex items-center justify-center min-h-screen p-4">
+                                    <div id="download-settings-content"
+                                        class="w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 transform scale-95 transition-transform duration-300 ease-out">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                                <i class="fa-solid fa-folder-open text-pink-500" aria-hidden="true"></i>
+                                                Ubicación de guardado:
+                                            </h3>
+                                            <button id="close-download-settings"
+                                                class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100">
+                                                <i class="fa-solid fa-times text-sm" aria-hidden="true"></i>
                                             </button>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex flex-1">
+                                                <input id="download-location" type="text"
+                                                    placeholder="Si está vacío, se usará la carpeta de Descargas predeterminada"
+                                                    class="bg-gray-100 text-gray-800 text-sm px-3 py-2 rounded-l-md border border-r-0 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 flex-1 outline-none transition-all duration-200">
+                                                <button id="save-download-path"
+                                                    class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white text-sm font-medium px-4 py-2 rounded-r-md border border-pink-500 transition-all duration-200 flex items-center gap-2 hover:shadow-lg transform hover:scale-105">
+                                                    <i class="fa-solid fa-save text-xs" aria-hidden="true"></i>
+                                                    Guardar
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </form>
-                </section>
-
-                --->
-
+                    </div>
+                </div>
 
                 <!-- Loading State -->
                 <section id="loading" class="loading" style="display: none;" aria-live="polite"

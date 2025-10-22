@@ -93,63 +93,60 @@ class FacturasManager {
         });
     }
 
-    // Event listener for download settings popover toggle with CSS animations
-    const toggleDownloadSettingsBtn = document.getElementById('toggle-download-settings');
-    const downloadSettingsPopover = document.getElementById('download-settings-popover');
-    const closeDownloadSettingsBtn = document.getElementById('close-download-settings');
+    // Event listener for download settings modal toggle with CSS animations
+    const downloadSettingsModal = document.getElementById('download-settings-modal');
+    const downloadSettingsContent = document.getElementById('download-settings-content');
+    const closeDownloadSettings = document.getElementById('close-download-settings');
 
-    if (toggleDownloadSettingsBtn && downloadSettingsPopover) {
-        const showPopover = () => {
-            downloadSettingsPopover.classList.remove('hidden');
-            // Trigger animation by forcing reflow
-            downloadSettingsPopover.offsetHeight;
-            downloadSettingsPopover.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
-            // Load current download path into the input
-            if (this.downloadLocationInput) {
-                this.loadDownloadPath();
-            }
-        };
-
-        const hidePopover = () => {
-            downloadSettingsPopover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
-            setTimeout(() => {
-                downloadSettingsPopover.classList.add('hidden');
-            }, 300);
-        };
-
-        toggleDownloadSettingsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (downloadSettingsPopover.classList.contains('hidden')) {
-                showPopover();
-            } else {
-                hidePopover();
-            }
-        });
-
-        // Close popover when clicking close button
-        if (closeDownloadSettingsBtn) {
-            closeDownloadSettingsBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                hidePopover();
+    // --- Función para abrir ---
+    function openDownloadSettings() {
+        if (downloadSettingsModal) {
+            downloadSettingsModal.classList.remove("hidden");
+            requestAnimationFrame(() => {
+                downloadSettingsModal.classList.remove("opacity-0");
+                downloadSettingsContent.classList.remove("scale-95");
+                downloadSettingsContent.classList.add("scale-100");
             });
+
+            // Si tienes esta función ya implementada:
+            if (typeof loadDownloadPath === "function") loadDownloadPath();
+        }
+    }
+
+    // --- Función para cerrar ---
+    function closeDownloadSettingsModal() {
+        if (downloadSettingsModal) {
+            downloadSettingsModal.classList.add("opacity-0");
+            downloadSettingsContent.classList.remove("scale-100");
+            downloadSettingsContent.classList.add("scale-95");
+            setTimeout(() => downloadSettingsModal.classList.add("hidden"), 300);
+        }
+    }
+
+    // Event listeners for modal (siempre activos)
+    if (downloadSettingsModal) {
+        // --- Cerrar con el botón ❌ ---
+        if (closeDownloadSettings) {
+            closeDownloadSettings.addEventListener("click", closeDownloadSettingsModal);
         }
 
-        // Close popover when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!toggleDownloadSettingsBtn.contains(e.target) && !downloadSettingsPopover.contains(e.target)) {
-                if (!downloadSettingsPopover.classList.contains('hidden')) {
-                    hidePopover();
-                }
+        // --- Cerrar al hacer clic en el fondo ---
+        downloadSettingsModal.addEventListener("click", (e) => {
+            if (e.target === downloadSettingsModal || e.target.id === 'modal-backdrop') {
+                closeDownloadSettingsModal();
             }
         });
 
-        // Close popover on Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !downloadSettingsPopover.classList.contains('hidden')) {
-              hidePopover();
+        // --- Cerrar con la tecla Escape ---
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !downloadSettingsModal.classList.contains('hidden')) {
+                closeDownloadSettingsModal();
             }
         });
     }
+
+    // --- Exportar función si la usas desde otro script ---
+    window.openDownloadSettings = openDownloadSettings;
 
     // Event listener for options popover toggle with CSS animations
     const optionsToggleBtn = document.getElementById('options-toggle-popover');
@@ -233,16 +230,8 @@ class FacturasManager {
     if (configRutaBtn) {
         configRutaBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            // Show download settings popover
-            const downloadSettingsPopover = document.getElementById('download-settings-popover');
-            if (downloadSettingsPopover) {
-                downloadSettingsPopover.classList.remove('hidden');
-                downloadSettingsPopover.offsetHeight;
-                downloadSettingsPopover.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
-                if (this.downloadLocationInput) {
-                    this.loadDownloadPath();
-                }
-            }
+            // Show download settings modal
+            openDownloadSettings();
             // Hide options popover
             const optionsPopover = document.getElementById('options-popover');
             if (optionsPopover) {

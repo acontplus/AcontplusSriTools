@@ -875,33 +875,13 @@ class FacturasManager {
     }
 
     try {
-        // Verificar si la API File System Access está disponible y funciona
-        if (window.showDirectoryPicker) {
-            try {
-                // Intentar usar File System Access
-                await this.verifyWithFileSystemAccess(facturasToCheck, selectedOnly);
-            } catch (fsError) {
-                // Si falla por subframes o permisos, usar fallback
-                if (fsError.message.includes('Cross origin sub frames') || fsError.message.includes('sub frames')) {
-                    console.log('File System Access no funciona en subframes, usando chrome.downloads API');
-                    await this.verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly);
-                } else {
-                    throw fsError; // Re-lanzar otros errores
-                }
-            }
-        } else {
-            // Fallback: usar chrome.downloads API
-            console.log('File System Access API no disponible, usando método alternativo con chrome.downloads');
-            await this.verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly);
-        }
+        // Usar solo chrome.downloads API
+        console.log('Verificando descargas usando chrome.downloads API');
+        await this.verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly);
 
     } catch (error) {
-        if (error.name === 'AbortError') {
-            this.showNotification('Verificación cancelada por el usuario.', 'info');
-        } else {
-            console.error("Error al verificar descargas:", error);
-            this.showNotification(`Error: ${error.message}`, 'error');
-        }
+        console.error("Error al verificar descargas:", error);
+        this.showNotification(`Error: ${error.message}`, 'error');
     }
   }
 
@@ -998,7 +978,10 @@ class FacturasManager {
 
   // Método alternativo usando chrome.downloads API
   async verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly) {
-    this.showNotification('Verificando descargas usando método alternativo...', 'info');
+    this.showNotification('Verificando descargas desde historial de Chrome...', 'info');
+
+    // Limpiar datos guardados para forzar verificación fresca
+    this.dataManager.fileInfo.clear();
 
     // Obtener todas las descargas completadas usando chrome.downloads API
     const downloads = await new Promise((resolve, reject) => {
@@ -1013,19 +996,16 @@ class FacturasManager {
 
     // Verificar si realmente hay descargas en el historial
     if (downloads.length === 0) {
-        // No hay descargas en historial - limpiar estado guardado
-        localStorage.removeItem('sri_export_hash');
-        localStorage.removeItem('sri_export_date');
-        chrome.storage.local.remove(['lastExportHash', 'lastExportDate']);
-        
-        this.showNotification('❌ No se encontraron descargas previas en el historial', 'warning');
+        this.showNotification('❌ No se encontraron descargas en el historial de Chrome', 'warning');
         return;
     }
+
+    console.log(`📋 Verificando contra ${downloads.length} descargas en el historial`);
 
     // Crear un Set con los nombres de archivos descargados
     const downloadedFiles = new Set(downloads.map(d => d.filename.split(/[/\\]/).pop()));
 
-    const foundIds = [];
+    const foundXmlIds = [];
     const foundPdfIds = [];
 
     // Verificar cada factura seleccionada
@@ -1036,46 +1016,43 @@ class FacturasManager {
         const hasXml = downloadedFiles.has(xmlFileName);
         const hasPdf = downloadedFiles.has(pdfFileName);
 
-        if (hasXml || hasPdf) {
-            foundIds.push(factura.id);
-            if (hasPdf) foundPdfIds.push(factura.id);
-
-            // Store download IDs for opening later
-            const fileData = {};
-            if (hasXml) {
-                const xmlDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === xmlFileName);
-                if (xmlDownload) fileData.xml = { downloadId: xmlDownload.id };
-            }
-            if (hasPdf) {
-                const pdfDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === pdfFileName);
-                if (pdfDownload) fileData.pdf = { downloadId: pdfDownload.id };
-            }
-            this.dataManager.fileInfo.set(factura.id, fileData);
-        } else {
-            console.log(`Factura ${factura.id}: no encontrada`);
+        // Agregar a foundXmlIds si tiene XML
+        if (hasXml) {
+            foundXmlIds.push(factura.id);
         }
-    }
+        
+        // Agregar a foundPdfIds si tiene PDF
+        if (hasPdf) {
+            foundPdfIds.push(factura.id);
+        }
 
-    // Si no se encontraron archivos, limpiar estado guardado
-    if (foundIds.length === 0) {
-        localStorage.removeItem('sri_export_hash');
-        localStorage.removeItem('sri_export_date');
-        chrome.storage.local.remove(['lastExportHash', 'lastExportDate']);
+        // Store download IDs for opening later
+        const fileData = {};
+        if (hasXml) {
+            const xmlDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === xmlFileName);
+            if (xmlDownload) fileData.xml = { downloadId: xmlDownload.id };
+        }
+        if (hasPdf) {
+            const pdfDownload = downloads.find(d => d.filename.split(/[/\\]/).pop() === pdfFileName);
+            if (pdfDownload) fileData.pdf = { downloadId: pdfDownload.id };
+        }
+        if (hasXml || hasPdf) {
+            this.dataManager.fileInfo.set(factura.id, fileData);
+        }
+        
+        console.log(`✅ Factura ${factura.numero}: XML=${hasXml}, PDF=${hasPdf}`);
     }
 
     // Actualizar la UI con los resultados
-    this.dataManager.handleVerificationComplete(foundIds, foundPdfIds, facturasToCheck.length, selectedOnly);
+    this.dataManager.handleVerificationComplete(foundXmlIds, foundPdfIds, facturasToCheck.length, selectedOnly);
 
-    const encontrados = foundIds.length;
+    const encontradosXml = foundXmlIds.length;
+    const encontradosPdf = foundPdfIds.length;
     const total = facturasToCheck.length;
-    const faltantes = total - encontrados;
 
-    let mensaje = `✅ Verificación completada (método alternativo): ${encontrados} de ${total} archivos encontrados.`;
-    if (faltantes > 0) {
-        mensaje += ` ${faltantes} faltantes.`;
-    }
+    let mensaje = `✅ Verificación completada: ${encontradosXml} XML, ${encontradosPdf} PDF de ${total} archivos.`;
 
-    this.showNotification(mensaje, encontrados > 0 ? 'success' : 'warning');
+    this.showNotification(mensaje, (encontradosXml > 0 || encontradosPdf > 0) ? 'success' : 'warning');
   }
 
   // Método auxiliar para escanear directorio recursivamente

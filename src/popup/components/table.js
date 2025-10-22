@@ -66,7 +66,7 @@ class TableComponent {
           <td class="px-6 py-3">${factura.razonSocial || ''}</td>
           <td class="px-6 py-3">${factura.fechaEmision || ''}</td>
           <td class="px-6 py-3 text-right">$${(factura.importeTotal || 0).toFixed(2)}</td>
-          <td class="px-6 py-3 text-center">${factura.verificado === true ? '✅' : factura.verificado === false ? '❌' : ''}${factura.tienePdf ? ` <span class="pdf-icon cursor-pointer hover:bg-gray-100 p-1 rounded" data-factura-id="${factura.id}" title="Abrir PDF">📄</span>` : ''}</td>
+          <td class="px-6 py-3 text-center">${factura.tieneXml ? '✅' : ''}${factura.tienePdf ? ` <span class="pdf-icon cursor-pointer hover:bg-gray-100 p-1 rounded" data-factura-id="${factura.id}" title="Abrir PDF">📄</span>` : ''}${factura.fueVerificado && !factura.tieneXml && !factura.tienePdf ? '❌' : ''}</td>
       </tr>`;
     }).join('');
 

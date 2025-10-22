@@ -34,22 +34,23 @@ class DataManager {
     });
   }
 
-  handleVerificationComplete(foundIds, foundPdfIds, total, selectedOnly) {
-    const foundSet = new Set(foundIds);
+  handleVerificationComplete(foundXmlIds, foundPdfIds, total, selectedOnly) {
+    const xmlSet = new Set(foundXmlIds);
     const pdfSet = new Set(foundPdfIds);
 
-    // Actualizar la propiedad verificado en los objetos factura
+    // Actualizar propiedades según los resultados
     this.facturas.forEach(factura => {
         if (!selectedOnly || this.selectedFacturas.has(factura.id)) {
-            factura.verificado = foundSet.has(factura.id);
+            factura.tieneXml = xmlSet.has(factura.id);
             factura.tienePdf = pdfSet.has(factura.id);
+            factura.fueVerificado = true;
         }
     });
 
     // Re-renderizar la tabla para mostrar los cambios
     this.manager.renderTable();
 
-    // this.manager.showNotification(`Resultados de verificación aplicados: ${foundIds.length} de ${total} encontrados.`, 'success');
+    console.log(`🔍 Verificación aplicada: ${foundXmlIds.length} XML, ${foundPdfIds.length} PDF`);
   }
 
   updateSelectionCount() {

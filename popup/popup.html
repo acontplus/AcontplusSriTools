@@ -132,7 +132,9 @@
                         <!-- Botón de Analizar (Menos prominente) -->
                         <button id="start-process"
                             class="flex items-center px-4 py-1.5 rounded-lg text-white font-semibold text-xs transition duration-150 shadow-md border-2 justify-center"
-                            style="background-color: #D61672; border-color: #D61672; hover:background-color: #B8145F; hover:border-color: #B8145F;">
+                            style="background-color: #D61672; border-color: #D61672;"
+                            onmouseover="this.style.backgroundColor='#B8145F'; this.style.borderColor='#B8145F';"
+                            onmouseout="this.style.backgroundColor='#D61672'; this.style.borderColor='#D61672';">
                             <i data-lucide="search" aria-hidden="true" class="h-3 w-3 mr-2"></i>
                             <span>Escanear</span>
                         </button>

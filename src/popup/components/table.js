@@ -85,7 +85,23 @@ class TableComponent {
       return;
     }
 
-    const totals = facturas.reduce((acc, factura) => {
+    // Get visible rows to calculate totals only for filtered results
+    const visibleRows = this.manager.tbodyEl ? 
+      Array.from(this.manager.tbodyEl.querySelectorAll('tr[data-id]')).filter(row => row.style.display !== 'none') : 
+      [];
+
+    let facturasToCalculate;
+    
+    if (visibleRows.length > 0 && visibleRows.length < facturas.length) {
+      // There's a filter active, use only visible facturas
+      const visibleIds = new Set(visibleRows.map(row => row.dataset.id));
+      facturasToCalculate = facturas.filter(factura => visibleIds.has(factura.id));
+    } else {
+      // No filter or all visible, use all facturas
+      facturasToCalculate = facturas;
+    }
+
+    const totals = facturasToCalculate.reduce((acc, factura) => {
       acc.subtotal += factura.valorSinImpuestos || 0;
       acc.iva += factura.iva || 0;
       acc.total += factura.importeTotal || 0;
@@ -94,7 +110,7 @@ class TableComponent {
 
     const footerHTML = `
       <tr class="border-t border-gray-200">
-        <td colspan="6" class="px-6 py-3 text-right text-gray-800">TOTAL:</td>
+        <td colspan="6" class="px-6 py-3 text-right text-gray-800"></td>
         <td class="px-6 py-3 text-right text-gray-800">$${totals.total.toFixed(2)}</td>
         <td></td>
       </tr>

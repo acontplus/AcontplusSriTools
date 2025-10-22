@@ -369,23 +369,25 @@ class FacturasManager {
       rows.forEach(row => {
         row.style.display = '';
       });
-      return;
+    } else {
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        let matchFound = false;
+
+        // Search in relevant columns (Nro Comprobante, RUC, Razón Social)
+        for (let i = 2; i <= 4; i++) { // Columns 3, 4, 5 (0-indexed: 2, 3, 4)
+          if (cells[i] && cells[i].textContent.toLowerCase().includes(searchLower)) {
+            matchFound = true;
+            break;
+          }
+        }
+
+        row.style.display = matchFound ? '' : 'none';
+      });
     }
 
-    rows.forEach(row => {
-      const cells = row.querySelectorAll('td');
-      let matchFound = false;
-
-      // Search in relevant columns (Nro Comprobante, RUC, Razón Social)
-      for (let i = 2; i <= 4; i++) { // Columns 3, 4, 5 (0-indexed: 2, 3, 4)
-        if (cells[i] && cells[i].textContent.toLowerCase().includes(searchLower)) {
-          matchFound = true;
-          break;
-        }
-      }
-
-      row.style.display = matchFound ? '' : 'none';
-    });
+    // Recalculate totals after filtering
+    this.tableComponent.renderTotals();
   }
 
   // Resto de métodos delegados o implementados directamente

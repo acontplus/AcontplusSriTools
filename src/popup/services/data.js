@@ -80,10 +80,15 @@ class DataManager {
 
     updateButton(this.manager.downloadBtn, 'btn-primary', hasSelection);
 
+    // Actualizar estado del checkbox maestro basado en filas visibles
     const masterCheckbox = document.getElementById('select-all');
     if (masterCheckbox) {
-      masterCheckbox.checked = this.selectedFacturas.size === this.facturas.length && this.facturas.length > 0;
-      masterCheckbox.indeterminate = this.selectedFacturas.size > 0 && this.selectedFacturas.size < this.facturas.length;
+      const visibleRows = document.querySelectorAll('#docs-table-body tr[data-id]:not([style*="display: none"])');
+      const visibleFacturaIds = Array.from(visibleRows).map(row => row.dataset.id).filter(id => id);
+      const selectedVisibleCount = visibleFacturaIds.filter(id => this.selectedFacturas.has(id)).length;
+      
+      masterCheckbox.checked = selectedVisibleCount === visibleFacturaIds.length && visibleFacturaIds.length > 0;
+      masterCheckbox.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < visibleFacturaIds.length;
     }
   }
 
@@ -92,9 +97,23 @@ class DataManager {
     const shouldSelectAll = masterCheckbox ? masterCheckbox.checked : this.selectedFacturas.size === 0;
 
     if (shouldSelectAll) {
-      this.facturas.forEach(factura => this.selectedFacturas.add(factura.id));
+      // Solo seleccionar facturas visibles (no filtradas)
+      const visibleRows = document.querySelectorAll('#docs-table-body tr[data-id]:not([style*="display: none"])');
+      visibleRows.forEach(row => {
+        const facturaId = row.dataset.id;
+        if (facturaId) {
+          this.selectedFacturas.add(facturaId);
+        }
+      });
     } else {
-      this.selectedFacturas.clear();
+      // Solo deseleccionar facturas visibles (no filtradas)
+      const visibleRows = document.querySelectorAll('#docs-table-body tr[data-id]:not([style*="display: none"])');
+      visibleRows.forEach(row => {
+        const facturaId = row.dataset.id;
+        if (facturaId) {
+          this.selectedFacturas.delete(facturaId);
+        }
+      });
     }
 
     this.manager.renderTable();

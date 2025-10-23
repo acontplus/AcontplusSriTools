@@ -17,12 +17,30 @@ class TableComponent {
     const downloadedCountEl = document.getElementById('downloaded-docs');
     const totalSumEl = document.getElementById('total-sum');
 
+    // Get visible rows to calculate counts only for filtered results
+    const visibleRows = this.manager.tbodyEl ? 
+      Array.from(this.manager.tbodyEl.querySelectorAll('tr[data-id]')).filter(row => row.style.display !== 'none') : 
+      [];
+
+    let facturasToCount, selectedVisibleCount;
+    
+    if (visibleRows.length > 0 && visibleRows.length < this.manager.dataManager.facturas.length) {
+      // There's a filter active, use only visible facturas
+      const visibleIds = new Set(visibleRows.map(row => row.dataset.id));
+      facturasToCount = this.manager.dataManager.facturas.filter(factura => visibleIds.has(factura.id));
+      selectedVisibleCount = Array.from(this.manager.dataManager.selectedFacturas).filter(id => visibleIds.has(id)).length;
+    } else {
+      // No filter or all visible, use all facturas
+      facturasToCount = this.manager.dataManager.facturas;
+      selectedVisibleCount = this.manager.dataManager.selectedFacturas.size;
+    }
+
     if (totalCountEl) {
-      PopupUI.safeSetText(totalCountEl, this.manager.dataManager.facturas.length.toString());
+      PopupUI.safeSetText(totalCountEl, facturasToCount.length.toString());
     }
 
     if (selectedCountEl) {
-      PopupUI.safeSetText(selectedCountEl, this.manager.dataManager.selectedFacturas.size.toString());
+      PopupUI.safeSetText(selectedCountEl, selectedVisibleCount.toString());
     }
 
     if (downloadedCountEl) {
@@ -30,7 +48,7 @@ class TableComponent {
     }
 
     if (totalSumEl) {
-      const totalAmount = this.manager.dataManager.facturas.reduce((sum, f) => sum + (f.importeTotal || 0), 0);
+      const totalAmount = facturasToCount.reduce((sum, f) => sum + (f.importeTotal || 0), 0);
       PopupUI.safeSetText(totalSumEl, '$' + totalAmount.toFixed(2));
     }
   }
@@ -71,6 +89,13 @@ class TableComponent {
     }).join('');
 
     PopupUI.safeSetHTML(this.tbodyEl, tableHTML);
+    
+    // Preserve search filter after rendering
+    const searchInput = document.getElementById('search-input');
+    if (searchInput && searchInput.value.trim()) {
+      this.manager.handleSearch(searchInput.value);
+    }
+    
     this.renderTotals(); // Render totals after rendering table
   }
 

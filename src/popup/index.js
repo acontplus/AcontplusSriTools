@@ -565,7 +565,29 @@ class FacturasManager {
     }
 
     const formato = document.getElementById('doc-type').value;
-    const facturasParaDescargar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
+    
+    // Get visible rows to download only filtered selected items
+    const visibleRows = this.tbodyEl ? 
+      Array.from(this.tbodyEl.querySelectorAll('tr[data-id]')).filter(row => row.style.display !== 'none') : 
+      [];
+
+    let facturasParaDescargar;
+    
+    if (visibleRows.length > 0 && visibleRows.length < this.dataManager.facturas.length) {
+      // There's a filter active, use only visible selected facturas
+      const visibleIds = new Set(visibleRows.map(row => row.dataset.id));
+      facturasParaDescargar = this.dataManager.facturas.filter(f => 
+        this.dataManager.selectedFacturas.has(f.id) && visibleIds.has(f.id)
+      );
+    } else {
+      // No filter or all visible, use all selected facturas
+      facturasParaDescargar = this.dataManager.facturas.filter(f => this.dataManager.selectedFacturas.has(f.id));
+    }
+
+    if (facturasParaDescargar.length === 0) {
+      this.showNotification('No hay documentos seleccionados visibles para descargar', 'warning');
+      return;
+    }
 
     // Disable buttons during download operation
     PopupUI.disableButtonsForOperation();

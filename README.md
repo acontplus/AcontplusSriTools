@@ -51,17 +51,76 @@ Como último recurso, busca tablas con múltiples columnas que contengan palabra
 
 1. **Crear estructura de archivos**:
    ```
-   sri-documentos-extractor/
+   AcontplusSriTools/
    ├── manifest.json
    ├── content.js
-   ├── content.css
-   ├── popup.html
-   ├── popup.js
-   ├── popup.css
-   └── icons/
-       ├── icon16.png
-       ├── icon48.png
-       └── icon128.png
+   ├── package.json
+   ├── package-lock.json
+   ├── README.md
+   ├── .gitignore
+   ├── assets/
+   │   ├── css/
+   │   │   ├── content.css
+   │   │   ├── feedback-modal.css
+   │   │   ├── fontawesome-all.min.css
+   │   │   ├── local-fonts.css
+   │   │   ├── popup.css
+   │   │   └── tailwind.min.css
+   │   ├── fonts/
+   │   │   ├── fa-brands-400.ttf
+   │   │   ├── fa-regular-400.ttf
+   │   │   ├── fa-regular-400.woff
+   │   │   ├── fa-regular-400.woff2
+   │   │   ├── fa-solid-900.ttf
+   │   │   ├── fa-solid-900.woff
+   │   │   └── fa-solid-900.woff2
+   │   └── js/
+   │       ├── lucide-init.js
+   │       ├── lucide.min.js
+   │       ├── supabase.js
+   │       └── xlsx.full.min.js
+   ├── database/
+   │   ├── rls-policies.sql
+   │   └── supabase.sql
+   ├── icons/
+   │   ├── icon16.png
+   │   ├── icon32.png
+   │   ├── icon48.png
+   │   ├── icon128.png
+   │   ├── ICONO COLOR.png
+   │   ├── logo_app.png
+   │   └── logo.png
+   ├── popup/
+   │   └── popup.html
+   ├── src/
+   │   ├── background/
+   │   │   └── index.js
+   │   ├── content/
+   │   │   ├── downloader.js
+   │   │   ├── extractor.js
+   │   │   ├── index.js
+   │   │   └── pagination.js
+   │   ├── popup/
+   │   │   ├── auth-component.js
+   │   │   ├── index.js
+   │   │   ├── components/
+   │   │   │   ├── export.js
+   │   │   │   ├── notifications.js
+   │   │   │   ├── tab-manager.js
+   │   │   │   └── table.js
+   │   │   └── services/
+   │   │       ├── data.js
+   │   │       └── ui.js
+   │   ├── services/
+   │   │   ├── download-counter.js
+   │   │   ├── feedback-integration.js
+   │   │   └── feedback-modal.js
+   │   └── shared/
+   │       ├── config.js
+   │       ├── http-client.js
+   │       └── utils.js
+   └── supabase/
+       └── .gitignore
    ```
 
 2. **Instalar en Chrome**:

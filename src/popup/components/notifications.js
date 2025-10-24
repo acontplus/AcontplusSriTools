@@ -5,9 +5,34 @@ class NotificationComponent {
   constructor(manager) {
     this.manager = manager;
     this.activeNotifications = [];
+    this.notificationQueue = [];
+    this.isProcessingQueue = false;
   }
 
   showNotification(message, type = 'info') {
+    this.notificationQueue.push({ message, type });
+    this.processQueue();
+  }
+
+  async processQueue() {
+    if (this.isProcessingQueue || this.notificationQueue.length === 0) return;
+    
+    this.isProcessingQueue = true;
+    
+    while (this.notificationQueue.length > 0) {
+      // Esperar hasta que no haya notificaciones activas
+      while (this.activeNotifications.length > 0) {
+        await this.delay(100);
+      }
+      
+      const { message, type } = this.notificationQueue.shift();
+      await this.createNotification(message, type);
+    }
+    
+    this.isProcessingQueue = false;
+  }
+
+  async createNotification(message, type) {
     const notification = document.createElement('div');
     notification.className = 'notification notification-' + type;
 
@@ -20,13 +45,19 @@ class NotificationComponent {
 
     PopupUI.safeSetHTML(notification,
       '<span style="margin-right: 8px; font-size: 16px;">' + (icons[type] || icons.info) + '</span>' +
-      '<span>' + message + '</span>'
+      '<span style="flex: 1;">' + message + '</span>' +
+      '<span class="close-btn" style="margin-left: 8px; cursor: pointer; font-weight: bold; color: #666;">×</span>'
     );
 
     document.body.appendChild(notification);
     this.activeNotifications.push(notification);
 
-    // Calcular posición basada en notificaciones existentes
+    // Agregar event listener para cerrar
+    const closeBtn = notification.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => {
+      this.removeNotification(notification);
+    });
+
     const topPosition = 20 + (this.activeNotifications.length - 1) * 70;
 
     notification.style.cssText = `
@@ -44,6 +75,8 @@ class NotificationComponent {
       max-width: 300px;
       transform: translateX(120%);
       transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
     `;
 
     setTimeout(() => {
@@ -52,7 +85,7 @@ class NotificationComponent {
 
     setTimeout(() => {
       this.removeNotification(notification);
-    }, 5000);
+    }, 4500);
   }
 
   removeNotification(notification) {
@@ -66,7 +99,6 @@ class NotificationComponent {
         if (index > -1) {
           this.activeNotifications.splice(index, 1);
         }
-        // Reposicionar notificaciones restantes
         this.repositionNotifications();
       }, 300);
     }
@@ -77,6 +109,10 @@ class NotificationComponent {
       const newTop = 20 + index * 70;
       notification.style.top = newTop + 'px';
     });
+  }
+
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 

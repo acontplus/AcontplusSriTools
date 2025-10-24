@@ -196,7 +196,7 @@ class DataManager {
     const totalPages = this.paginationInfo.total;
     const optimization = progress.optimization;
 
-    let message = '✅ Búsqueda completada: ' + totalDocuments + ' documentos encontrados';
+    let message = 'Búsqueda completada: ' + totalDocuments + ' documentos encontrados';
     if (totalPages > 1) {
       message += ' en ' + totalPages + ' página(s)';
     }

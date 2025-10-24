@@ -126,6 +126,11 @@ class MessageHandler {
           chrome.runtime.sendMessage({ action: 'hideCancelButton' });
           sendResponse({ success: true });
           break;
+        case 'sessionLost':
+          // Notificar al popup sobre sesión perdida
+          chrome.runtime.sendMessage({ action: 'sessionLost', message: message.message });
+          sendResponse({ success: true });
+          break;
         case 'downloadFile':
           (async () => {
             try {

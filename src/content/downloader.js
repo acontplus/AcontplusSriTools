@@ -166,6 +166,16 @@ class SRIDownloader {
 
       const blob = await response.blob();
 
+      // Validar si es HTML (sesión perdida)
+      if (blob.type.includes('text/html')) {
+        chrome.runtime.sendMessage({
+          action: 'sessionLost',
+          message: 'Sesión perdida. Recarga la página del SRI e inicia sesión nuevamente.'
+        });
+        this.downloadCancelled = true;
+        return false;
+      }
+
       // Convertir el blob a data URL para enviarlo al background script
       const reader = new FileReader();
       reader.readAsDataURL(blob);

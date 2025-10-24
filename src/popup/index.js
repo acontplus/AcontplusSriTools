@@ -295,6 +295,12 @@ class FacturasManager {
         else if (message.action === 'descargaFinalizada') this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
         else if (message.action === 'verificationError') this.showNotification(`Error de verificación: ${message.error}`, 'error');
         else if (message.action === 'hideCancelButton') this.hideCancelButton();
+        else if (message.action === 'sessionLost') {
+          this.hideCancelButton();
+          const hasSelections = this.dataManager.selectedFacturas.size > 0;
+          PopupUI.enableButtonsAfterOperation(hasSelections);
+          this.showNotification(message.message, 'error');
+        }
     });
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -613,26 +619,7 @@ class FacturasManager {
           throw new Error('La extensión no está cargada. Recarga la página del SRI y busca documentos primero.');
         }
 
-        // Verificar estado de sesión antes de descargar
-        console.log('Verificando estado de sesión antes de descargar...');
-        const sessionCheck = await this.sendMessageWithRetry(tab.id, { action: 'checkSession' }, 2);
 
-        if (!sessionCheck.success) {
-          throw new Error('Error al verificar sesión antes de descarga: ' + sessionCheck.error);
-        }
-
-        if (!sessionCheck.sessionActive) {
-          // Restaurar UI y mostrar mensaje de sesión expirada
-          this.hideCancelButton();
-          // Re-enable buttons after session error
-          const hasSelections = this.dataManager.selectedFacturas.size > 0;
-          PopupUI.enableButtonsAfterOperation(hasSelections);
-
-          this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
-          return; // Salir sin continuar
-        }
-
-        console.log('✅ Sesión activa confirmada antes de descarga:', sessionCheck.message);
 
         await chrome.scripting.executeScript({
             target: { tabId: tab.id },
@@ -681,27 +668,7 @@ class FacturasManager {
         throw new Error('Navega a una página del SRI (*.sri.gob.ec)');
       }
 
-      // Verificar estado de sesión antes de proceder
-      console.log('Verificando estado de sesión en SRI...');
-      const sessionCheck = await this.sendMessageWithRetry(tab.id, { action: 'checkSession' }, 2);
 
-      if (!sessionCheck.success) {
-        throw new Error('Error al verificar sesión: ' + sessionCheck.error);
-      }
-
-      if (!sessionCheck.sessionActive) {
-        // Restaurar UI y mostrar mensaje de sesión expirada
-        if (this.tableContainerEl) this.tableContainerEl.style.display = 'block';
-        if (this.loadingEl) this.loadingEl.style.display = 'none';
-        // Re-enable buttons after failed scan
-        const hasSelections = this.dataManager.selectedFacturas.size > 0;
-        PopupUI.enableButtonsAfterOperation(hasSelections);
-
-        this.showNotification('Ha perdido la sesión en el SRI. Por favor, recargue la página del SRI e inicie sesión nuevamente.', 'error');
-        return; // Salir sin continuar
-      }
-
-      console.log('✅ Sesión activa confirmada:', sessionCheck.message);
       // Verificar si el content script está cargado, si no, inyectarlo
       let pingResponse = null;
       try {

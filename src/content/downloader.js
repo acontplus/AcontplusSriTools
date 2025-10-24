@@ -86,10 +86,10 @@ class SRIDownloader {
         
         if (formato === 'both') {
             const exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex, dirHandle);
-            await this.extractor.esperar(250); // Pequeña pausa entre descargas
+            await this.extractor.esperar(250);
             const exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex, dirHandle);
             
-            if (exitoXml && exitoPdf) {
+            if (exitoXml || exitoPdf) {
                 descargados++;
             } else {
                 fallidos++;
@@ -127,6 +127,9 @@ class SRIDownloader {
     if (this.downloadCancelled) {
       return false;
     }
+
+    // Actualizar ViewState antes de cada descarga
+    this.extractor.view_state = document.querySelector("#javax\\.faces\\.ViewState")?.value || this.extractor.view_state;
 
     const url_links = window.location.href;
     const name_files = `${factura.numero.replace(/ /g, '_')}.${formato}`;

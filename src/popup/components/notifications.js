@@ -4,6 +4,7 @@
 class NotificationComponent {
   constructor(manager) {
     this.manager = manager;
+    this.activeNotifications = [];
   }
 
   showNotification(message, type = 'info') {
@@ -23,10 +24,14 @@ class NotificationComponent {
     );
 
     document.body.appendChild(notification);
+    this.activeNotifications.push(notification);
+
+    // Calcular posición basada en notificaciones existentes
+    const topPosition = 20 + (this.activeNotifications.length - 1) * 70;
 
     notification.style.cssText = `
       position: fixed;
-      top: 20px;
+      top: ${topPosition}px;
       right: 20px;
       background: white;
       border: 1px solid #ddd;
@@ -46,13 +51,32 @@ class NotificationComponent {
     }, 100);
 
     setTimeout(() => {
+      this.removeNotification(notification);
+    }, 5000);
+  }
+
+  removeNotification(notification) {
+    if (notification && notification.parentNode) {
       notification.style.transform = 'translateX(120%)';
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
         }
+        const index = this.activeNotifications.indexOf(notification);
+        if (index > -1) {
+          this.activeNotifications.splice(index, 1);
+        }
+        // Reposicionar notificaciones restantes
+        this.repositionNotifications();
       }, 300);
-    }, 5000);
+    }
+  }
+
+  repositionNotifications() {
+    this.activeNotifications.forEach((notification, index) => {
+      const newTop = 20 + index * 70;
+      notification.style.top = newTop + 'px';
+    });
   }
 }
 

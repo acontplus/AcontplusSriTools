@@ -1,6 +1,8 @@
 // Feedback Modal - Sin imports, usando Supabase global
 
 class FeedbackModal {
+
+
     constructor() {
         this.modal = null
         this.form = null
@@ -291,6 +293,43 @@ class FeedbackModal {
         }, 5000)
     }
 
+    async sendFeedbackToEmail (payload) {
+        const URL_FUNCTIONS = "https://dxtiskspbikjpyrpeast.supabase.co/functions/v1/resend-email-acontplus-tools-sri"
+        const ANONN_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4dGlza3NwYmlranB5cnBlYXN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTc5MjAsImV4cCI6MjA3NjA5MzkyMH0.BvW6UCdC--yLt0XHiYzhfyFTcthga7C7RtzCYdN1r1k"
+
+        try {
+            const emailResponse = await fetch(URL_FUNCTIONS, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${ANONN_KEY}`
+                },
+                body: JSON.stringify({
+                    to: 'christian.zarate@acontplus.com',
+                    subject: `Nuevo Feedback - ${payload.p_full_name}`,
+                    html: `
+                        <h2>Nuevo Feedback Recibido</h2>
+                        <p><strong>De:</strong> ${payload.p_full_name} (${payload.p_email})</p>
+                        <p><strong>RUC:</strong> ${payload.p_ruc || 'No proporcionado'}</p>
+                        <p><strong>Teléfono:</strong> ${payload.p_telefono || 'No proporcionado'}</p>
+                        <p><strong>Versión:</strong> ${payload.p_extension_version}</p>
+                        <hr>
+                        <h3>Comentarios:</h3>
+                        <p>${payload.p_comentarios}</p>
+                        <hr>
+                        <p><small>Enviado desde: ${payload.p_metadata.url}</small></p>
+                    `
+                })
+            })
+
+            if (!emailResponse.ok) {
+                console.warn('Error enviando email de notificación:', await emailResponse.text())
+            }
+        } catch (error) {
+            console.error('Error al invocar función de email:', error)
+        }
+    }
+
     async handleSubmit(e) {
         e.preventDefault()
         
@@ -335,6 +374,8 @@ class FeedbackModal {
             if (error) {
                 throw error
             }
+
+            await this.sendFeedbackToEmail(payload)
 
             // Mostrar éxito
             document.getElementById('loadingState').style.display = 'none'

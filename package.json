@@ -1,6 +1,6 @@
 {
   "name": "acontplussritools",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "Una extensión de Google Chrome desarrollada para **Acontplus S.A.S.** que analiza automáticamente las páginas del sistema de comprobantes electrónicos del SRI de Ecuador y extrae la información de documentos electrónicos sin necesidad de filtros manuales.",
   "main": "content.js",
   "scripts": {

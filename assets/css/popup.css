@@ -312,7 +312,7 @@ table td {
     background: none;
 }
 
-/* --- NAVEGACIÓN INTEGRADA AL HEADER --- */
+/* --- NAVEGACIÓN SIMPLE --- */
 .tab-nav {
     display: flex;
     background: transparent;
@@ -522,4 +522,160 @@ tbody tr:hover {
     background-color: #c2185b;
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* --- ESTILOS PARA LAS MEJORAS DE AYUDA Y CONOCENOS --- */
+
+/* Hero sections mejorados */
+.help-hero, .conocenos-hero {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Guide step cards */
+.guide-step-card {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.guide-step-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* FAQ Accordion styles */
+.faq-item-modern {
+    transition: all 0.3s ease;
+}
+
+.faq-toggle {
+    transition: all 0.2s ease;
+}
+
+.faq-toggle:hover {
+    transform: translateX(4px);
+}
+
+.faq-content {
+    transition: all 0.3s ease;
+    max-height: 0;
+    overflow: hidden;
+}
+
+.faq-content:not(.hidden) {
+    max-height: 500px;
+    animation: fadeInContent 0.3s ease-out;
+}
+
+@keyframes fadeInContent {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Feature cards para conocenos */
+.feature-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.feature-card:hover::before {
+    left: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+/* Testimonial cards */
+.testimonial-card {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* CTA final section */
+.cta-final {
+    position: relative;
+    background-size: 200% 200%;
+    animation: gradientShift 6s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .guide-step-card {
+        margin-bottom: 2rem;
+    }
+    
+    .feature-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .help-hero, .conocenos-hero {
+        padding: 1.5rem;
+    }
+    
+    .cta-final {
+        padding: 2rem 1rem;
+    }
+}
+
+/* Smooth scrolling for FAQ */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Loading animation for images */
+.feature-card img, .testimonial-card img {
+    transition: opacity 0.3s ease;
+}
+
+.feature-card img:not([src]), .testimonial-card img:not([src]) {
+    opacity: 0;
+}
+
+/* Hover effects for buttons */
+button, .btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover, .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Improved text readability */
+.text-gradient {
+    background: linear-gradient(135deg, var(--brand-pink), var(--brand-orange));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }

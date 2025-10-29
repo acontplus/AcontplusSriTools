@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
     youtubeVideoLink.addEventListener("click", function () {
       // Abrir video de YouTube en nueva pestaña
       chrome.tabs.create({
-        url: "https://youtu.be/wEYuhdi7DaU?si=T2fSY7MnaI28mI5l",
+        url: "https://youtu.be/wEYuhdi7DaU?si=WtbDMcJ7dbnBOvFt",
         active: true,
       });
     });

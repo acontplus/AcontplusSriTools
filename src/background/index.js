@@ -131,6 +131,30 @@ class MessageHandler {
           chrome.runtime.sendMessage({ action: 'sessionLost', message: message.message });
           sendResponse({ success: true });
           break;
+        case 'updateBadge':
+          // Actualizar badge de la extensión con el número de documentos
+          const count = message.count || 0;
+          if (count > 0) {
+            chrome.action.setBadgeText({ text: count.toString() });
+            chrome.action.setBadgeBackgroundColor({ color: '#D61672' }); // Color de marca
+            chrome.action.setTitle({ title: `ACONTPLUS SRI Tools - ${count} documentos sincronizados` });
+          } else {
+            chrome.action.setBadgeText({ text: '' });
+            chrome.action.setTitle({ title: 'ACONTPLUS SRI Tools' });
+          }
+          sendResponse({ success: true });
+          break;
+        case 'storeData':
+          // Almacenar datos cuando el content script no puede acceder a chrome.storage
+          try {
+            await chrome.storage.local.set(message.data);
+            console.log('✅ Datos almacenados desde background script');
+            sendResponse({ success: true });
+          } catch (error) {
+            console.error('❌ Error almacenando datos en background:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         case 'downloadFile':
           (async () => {
             try {

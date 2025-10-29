@@ -39,6 +39,19 @@ class FacturasManager {
     this.dataManager.loadStoredData();
     this.loadDownloadPath(); // Cargar la ruta de descarga guardada
     this.updatePopoverButtonStates(); // Initialize button states
+    this.clearExtensionBadge(); // Limpiar badge al abrir la extensión
+  }
+
+  clearExtensionBadge() {
+    // Limpiar el badge cuando se abre la extensión
+    try {
+      chrome.runtime.sendMessage({
+        action: 'updateBadge',
+        count: 0
+      });
+    } catch (error) {
+      console.log('Badge clear not available:', error);
+    }
   }
 
   initDownloadCounter() {

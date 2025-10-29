@@ -679,3 +679,46 @@ button:hover, .btn:hover {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+/* Auto-sync notification styles */
+.acontplus-auto-sync-notification {
+    font-family: 'Bahnschrift', sans-serif !important;
+}
+
+.acontplus-auto-sync-notification .sync-notification-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acontplus-auto-sync-notification .close-notification {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    margin-left: auto;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.acontplus-auto-sync-notification .close-notification:hover {
+    opacity: 1;
+}
+
+@keyframes slideInRight {
+    from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
+/* YouTube play button hover effect */
+.youtube-play-btn:hover {
+    background-color: var(--brand-pink-dark) !important;
+}

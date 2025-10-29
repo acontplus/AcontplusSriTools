@@ -182,11 +182,55 @@ class SRIDocumentosExtractor {
 
   guardarDatos() {
     try {
-      chrome.storage.local.set({
+      // Verificar si chrome.storage está disponible
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({
+          facturasData: this.documentos,
+          lastExtraction: new Date().toISOString()
+        });
+        console.log('✅ Datos guardados en chrome.storage:', this.documentos.length, 'documentos');
+      } else {
+        // Fallback: usar localStorage como alternativa temporal
+        console.warn('⚠️ chrome.storage no disponible, usando localStorage como fallback');
+        const dataToStore = {
+          facturasData: this.documentos,
+          lastExtraction: new Date().toISOString()
+        };
+        localStorage.setItem('acontplus_sri_data', JSON.stringify(dataToStore));
+        
+        // Intentar enviar los datos al background script como alternativa
+        this.sendDataToBackground();
+      }
+    } catch (error) { 
+      console.warn('❌ Error guardando datos:', error);
+      // Último recurso: almacenar en variable global
+      window.acontplusSRIData = {
         facturasData: this.documentos,
         lastExtraction: new Date().toISOString()
-      });
-    } catch (error) { console.warn('No se pudieron guardar los datos:', error); }
+      };
+    }
+  }
+
+  sendDataToBackground() {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({
+          action: 'storeData',
+          data: {
+            facturasData: this.documentos,
+            lastExtraction: new Date().toISOString()
+          }
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.warn('⚠️ Error enviando datos al background:', chrome.runtime.lastError);
+          } else {
+            console.log('✅ Datos enviados al background script');
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('⚠️ Error enviando mensaje al background:', error);
+    }
   }
 
   esperar(ms) {

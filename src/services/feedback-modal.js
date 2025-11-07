@@ -295,7 +295,7 @@ class FeedbackModal {
 
     async handleSubmit(e) {
         e.preventDefault()
-        
+
         // Validar formulario
         if (!this.validateForm()) {
             return

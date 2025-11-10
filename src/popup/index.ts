@@ -11,6 +11,7 @@ import { PopupUI } from './services/ui';
 import { TableComponent } from './components/table';
 import { ExportComponent } from './components/export';
 import { NotificationComponent } from './components/notifications';
+import { TabManager } from './components/tab-manager';
 
 export class FacturasManager {
   public version = VERSION;
@@ -54,6 +55,9 @@ export class FacturasManager {
     this.loadDownloadPath();
     this.updatePopoverButtonStates();
     this.clearExtensionBadge();
+    
+    // Inicializar sistema de tabs
+    new TabManager();
   }
 
   private clearExtensionBadge(): void {

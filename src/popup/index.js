@@ -902,97 +902,6 @@ class FacturasManager {
     }
   }
 
-  // Método moderno con File System Access API
-  async verifyWithFileSystemAccess(facturasToCheck, selectedOnly) {
-    this.showNotification('Selecciona la carpeta de Descargas para verificar archivos...', 'info');
-
-    // Solicitar acceso directo a la carpeta de descargas
-    const dirHandle = await window.showDirectoryPicker({
-        mode: 'read',
-        startIn: 'downloads' // Sugerir carpeta de descargas
-    });
-
-    console.log('Acceso concedido a la carpeta:', dirHandle.name);
-
-    // Escanear archivos en la carpeta seleccionada (incluyendo subcarpetas)
-    const downloadedFiles = new Map(); // filename -> {size, hash}
-
-    await this.scanDirectoryRecursively(dirHandle, downloadedFiles, '');
-
-    console.log(`Total archivos escaneados: ${downloadedFiles.size}`);
-
-    const foundIds = [];
-    const foundPdfIds = [];
-    const missingFiles = [];
-
-    // Verificar cada factura
-    for (const factura of facturasToCheck) {
-        const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
-        const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
-
-        const xmlInfo = downloadedFiles.get(xmlFileName);
-        const pdfInfo = downloadedFiles.get(pdfFileName);
-
-        let hasValidXml = false;
-        let hasValidPdf = false;
-
-        if (xmlInfo) {
-            // Verificar integridad básica: tamaño > 0
-            hasValidXml = xmlInfo.size > 0;
-            if (!hasValidXml) {
-                console.warn(`Archivo XML corrupto o vacío: ${xmlFileName}`);
-            }
-        }
-
-        if (pdfInfo) {
-            hasValidPdf = pdfInfo.size > 0;
-            if (!hasValidPdf) {
-                console.warn(`Archivo PDF corrupto o vacío: ${pdfFileName}`);
-            }
-        }
-
-        if (hasValidXml || hasValidPdf) {
-            foundIds.push(factura.id);
-            if (hasValidPdf) foundPdfIds.push(factura.id);
-
-            // Store file information for opening later
-            const fileData = {};
-            if (hasValidXml && xmlInfo) {
-                const xmlDownload = await this.findDownloadByFilename(xmlFileName);
-                fileData.xml = { downloadId: xmlDownload?.id, path: xmlInfo.fullPath };
-            }
-            if (hasValidPdf && pdfInfo) {
-                const pdfDownload = await this.findDownloadByFilename(pdfFileName);
-                fileData.pdf = { downloadId: pdfDownload?.id, path: pdfInfo.fullPath };
-            }
-            this.dataManager.fileInfo.set(factura.id, fileData);
-
-            console.log(`Factura ${factura.id}: encontrada (${hasValidXml ? 'XML' : ''}${hasValidXml && hasValidPdf ? '+' : ''}${hasValidPdf ? 'PDF' : ''})`);
-        } else {
-            missingFiles.push(factura.numero);
-            console.log(`Factura ${factura.id}: no encontrada o corrupta`);
-        }
-    }
-
-    // Actualizar la UI con los resultados
-    this.dataManager.handleVerificationComplete(foundIds, foundPdfIds, facturasToCheck.length, selectedOnly);
-
-    const encontrados = foundIds.length;
-    const total = facturasToCheck.length;
-    const faltantes = total - encontrados;
-
-    let mensaje = `✅ Verificación completada: ${encontrados} de ${total} archivos verificados.`;
-    if (faltantes > 0) {
-        mensaje += ` ${faltantes} faltantes o corruptos.`;
-    }
-
-    this.showNotification(mensaje, encontrados > 0 ? 'success' : 'warning');
-
-    if (missingFiles.length > 0) {
-        console.log('Archivos faltantes:', missingFiles);
-    }
-  }
-
   // Método alternativo usando chrome.downloads API
   async verifyWithChromeDownloadsAPI(facturasToCheck, selectedOnly) {
     this.showNotification('Verificando descargas desde historial de Chrome...', 'info');
@@ -1017,8 +926,6 @@ class FacturasManager {
         return;
     }
 
-    console.log(`📋 Verificando contra ${downloads.length} descargas en el historial`);
-
     // Crear un Set con los nombres de archivos descargados
     const downloadedFiles = new Set(downloads.map(d => d.filename.split(/[/\\]/).pop()));
 
@@ -1037,7 +944,7 @@ class FacturasManager {
         if (hasXml) {
             foundXmlIds.push(factura.id);
         }
-        
+
         // Agregar a foundPdfIds si tiene PDF
         if (hasPdf) {
             foundPdfIds.push(factura.id);
@@ -1095,26 +1002,7 @@ class FacturasManager {
             }
         }
     } catch (error) {
-        console.warn(`Error escaneando directorio ${path}:`, error);
-    }
-  }
-
-  // Método auxiliar para encontrar descarga por nombre de archivo
-  async findDownloadByFilename(filename) {
-    try {
-        const downloads = await new Promise((resolve, reject) => {
-            chrome.downloads.search({ filenameRegex: filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$' }, (results) => {
-                if (chrome.runtime.lastError) {
-                    reject(new Error(chrome.runtime.lastError.message));
-                } else {
-                    resolve(results);
-                }
-            });
-        });
-        return downloads.find(d => d.filename.split(/[/\\]/).pop() === filename);
-    } catch (error) {
-        console.warn('Error buscando descarga:', error);
-        return null;
+      console.warn(`Error escaneando directorio ${path}:`, error);
     }
   }
 
@@ -1134,18 +1022,13 @@ class FacturasManager {
   // Método para abrir archivo PDF
   async openPdfFile(facturaId) {
     try {
-        console.log('Intentando abrir PDF para factura:', facturaId);
-        console.log('fileInfo disponible:', this.dataManager.fileInfo);
         const fileInfo = this.dataManager.fileInfo.get(facturaId);
-        console.log('fileInfo para esta factura:', fileInfo);
         if (!fileInfo || !fileInfo.pdf) {
             this.showNotification('Información del archivo PDF no encontrada.', 'error');
             return;
         }
 
         if (fileInfo.pdf.downloadId) {
-            // Usar chrome.downloads API (preferido)
-            console.log('Abriendo PDF con downloadId:', fileInfo.pdf.downloadId);
             chrome.downloads.open(fileInfo.pdf.downloadId, () => {
                 if (chrome.runtime.lastError) {
                     console.error('Error abriendo PDF con downloadId:', fileInfo.pdf.downloadId, chrome.runtime.lastError);

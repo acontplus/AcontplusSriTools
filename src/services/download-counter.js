@@ -10,7 +10,6 @@ class DownloadCounter {
         try {
             // Verificar si ya envió feedback
             const feedbackSent = await this.hasSentFeedback()
-            console.log('📝 Feedback ya enviado:', feedbackSent)
 
             if (feedbackSent) return false
 
@@ -21,11 +20,8 @@ class DownloadCounter {
             // Guardar nuevo contador
             await this.setDownloadCount(newCount)
 
-            console.log(`📊 Descarga #${newCount} registrada (trigger en ${this.TRIGGER_COUNT})`)
-
             // Verificar si debe mostrar modal
             if (newCount >= this.TRIGGER_COUNT) {
-                console.log('🎯 Mostrando modal - se alcanzó el trigger count')
                 this.showFeedbackModal()
                 return true
             } else {
@@ -113,7 +109,6 @@ class DownloadCounter {
 
     // Método para testing - forzar mostrar modal
     async forceShowModal() {
-        console.log('🧪 TESTING: Forzando mostrar modal')
         this.showFeedbackModal()
     }
 

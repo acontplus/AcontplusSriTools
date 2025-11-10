@@ -49,8 +49,6 @@ class DataManager {
 
     // Re-renderizar la tabla para mostrar los cambios
     this.manager.renderTable();
-
-    console.log(`🔍 Verificación aplicada: ${foundXmlIds.length} XML, ${foundPdfIds.length} PDF`);
   }
 
   updateSelectionCount() {

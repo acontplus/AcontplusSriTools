@@ -65,18 +65,24 @@ module.exports = (env, argv) => {
 
     optimization: {
       minimize: isProduction,
+      runtimeChunk: 'single',
       splitChunks: {
         chunks: 'all',
         cacheGroups: {
-          vendor: {
+          vendors: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
+            chunks: 'all',
             priority: 10,
+            enforce: true,
           },
           shared: {
             test: /[\\/]src[\\/]shared[\\/]/,
             name: 'shared',
+            chunks: 'all',
             priority: 5,
+            minChunks: 2,
+            enforce: true,
           },
         },
       },

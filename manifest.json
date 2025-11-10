@@ -24,14 +24,14 @@
         "*://comprobantes-electronicos-internet/*",
         "*://srienlinea.sri.gob.ec/*"
       ],
-      "js": ["src/shared/utils.js", "src/services/supabase-config.js", "src/services/download-counter.js", "src/content/pagination.js", "src/content/downloader.js", "src/content/extractor.js", "src/content/auto-sync.js", "src/content/index.js", "src/services/feedback-modal.js", "src/services/feedback-integration.js"],
+      "js": ["runtime.js", "shared.js", "content/index.js"],
       "css": ["assets/css/content.css", "assets/css/feedback-modal.css"],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
   "background": {
-    "service_worker": "src/background/index.js"
+    "service_worker": "background.js"
   },
   "action": {
     "default_title": "Acontplus SRI Tools"

@@ -297,6 +297,12 @@ export class SRIAutoSync {
 }
 
 // Exportar globalmente
+declare global {
+  interface Window {
+    SRIAutoSync: typeof SRIAutoSync;
+  }
+}
+
 if (typeof window !== 'undefined') {
-  (window as any).SRIAutoSync = SRIAutoSync;
+  window.SRIAutoSync = SRIAutoSync;
 }

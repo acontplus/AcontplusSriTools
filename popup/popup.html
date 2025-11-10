@@ -837,17 +837,10 @@
         <p id="toast-message" aria-label="Mensaje de notificación"></p>
     </div>
 
-    <!-- Scripts modulares del popup -->
-    <script src="../src/services/download-counter.js"></script>
-    <script src="../src/services/supabase-config.js"></script>
-    <script src="../src/services/feedback-modal.js"></script>
-    <script src="../src/popup/services/ui.js"></script>
-    <script src="../src/popup/services/data.js"></script>
-    <script src="../src/popup/components/table.js"></script>
-    <script src="../src/popup/components/export.js"></script>
-    <script src="../src/popup/components/notifications.js"></script>
-    <script src="../src/popup/index.js"></script>
-    <script src="../src/popup/components/tab-manager.js"></script>
+    <!-- Scripts compilados con Webpack -->
+    <script src="../vendors.js"></script>
+    <script src="../shared.js"></script>
+    <script src="../popup/index.js"></script>
     <!-- Lucide Icons LOCAL -->
     <script src="../assets/js/lucide.min.js"></script>
     <script src="../assets/js/lucide-init.js"></script>

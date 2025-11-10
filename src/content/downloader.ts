@@ -58,7 +58,11 @@ export class SRIDownloader {
   ): Promise<void> {
     let descargados = 0;
     let fallidos = 0;
+    let saltados = 0;
     this.downloadCancelled = false;
+
+    // Obtener archivos ya descargados
+    const archivosExistentes = await this.obtenerArchivosExistentes();
 
     for (let i = 0; i < facturas.length; i++) {
       if (this.downloadCancelled) {
@@ -99,19 +103,47 @@ export class SRIDownloader {
         }
 
         if (formato === 'both') {
-          const exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex);
-          await SRIUtils.esperar(DELAYS.DOWNLOAD_FORMAT);
-          const exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex);
+          const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
+          const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
+          
+          let exitoXml = false;
+          let exitoPdf = false;
+          
+          // Descargar XML solo si no existe
+          if (!archivosExistentes.has(xmlFileName)) {
+            exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex);
+            await SRIUtils.esperar(DELAYS.DOWNLOAD_FORMAT);
+          } else {
+            console.log(`⏭️ Saltando ${xmlFileName} - ya existe`);
+            exitoXml = true; // Contar como exitoso porque ya existe
+          }
+          
+          // Descargar PDF solo si no existe
+          if (!archivosExistentes.has(pdfFileName)) {
+            exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex);
+          } else {
+            console.log(`⏭️ Saltando ${pdfFileName} - ya existe`);
+            exitoPdf = true; // Contar como exitoso porque ya existe
+          }
 
-          if (exitoXml || exitoPdf) {
+          if (exitoXml && exitoPdf) {
             descargados++;
           } else {
             fallidos++;
           }
         } else {
-          const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex);
-          if (exito) descargados++;
-          else fallidos++;
+          const fileName = `${factura.numero.replace(/ /g, '_')}.${formato}`;
+          
+          // Verificar si el archivo ya existe
+          if (archivosExistentes.has(fileName)) {
+            console.log(`⏭️ Saltando ${fileName} - ya existe`);
+            saltados++;
+            descargados++; // Contar como exitoso porque ya existe
+          } else {
+            const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex);
+            if (exito) descargados++;
+            else fallidos++;
+          }
         }
 
         await SRIUtils.esperar(DELAYS.DOWNLOAD_BETWEEN);
@@ -125,10 +157,40 @@ export class SRIDownloader {
       action: 'descargaFinalizada',
       exitosos: descargados,
       fallidos: fallidos,
+      saltados: saltados,
       total: facturas.length,
     });
 
     chrome.runtime.sendMessage({ action: 'hideCancel' });
+  }
+
+  private async obtenerArchivosExistentes(): Promise<Set<string>> {
+    try {
+      const downloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
+        chrome.downloads.search(
+          {
+            state: 'complete',
+            exists: true, // Solo archivos que existen
+          },
+          (results) => {
+            resolve(results || []);
+          }
+        );
+      });
+
+      const archivos = new Set<string>();
+      downloads.forEach((download) => {
+        const fileName = download.filename.split(/[/\\]/).pop();
+        if (fileName) {
+          archivos.add(fileName);
+        }
+      });
+
+      return archivos;
+    } catch (error) {
+      console.error('Error obteniendo archivos existentes:', error);
+      return new Set();
+    }
   }
 
   cancelDownload(): void {

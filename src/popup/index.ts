@@ -163,7 +163,7 @@ export class FacturasManager {
       if (message.action === 'updateDownloadProgress') {
         this.updateDownloadButtonProgress(message.current, message.total);
       } else if (message.action === 'descargaFinalizada') {
-        this.handleDownloadComplete(message.exitosos, message.fallidos, message.total);
+        this.handleDownloadComplete(message.exitosos, message.fallidos, message.total, message.saltados);
       } else if (message.action === 'hideCancelButton') {
         this.hideCancelButton();
       } else if (message.action === 'sessionLost') {
@@ -565,7 +565,7 @@ export class FacturasManager {
     }
   }
 
-  private handleDownloadComplete(exitosos: number, fallidos: number, total: number): void {
+  private handleDownloadComplete(exitosos: number, fallidos: number, total: number, saltados?: number): void {
     if (this.downloadBtn) {
       this.downloadBtn.disabled = false;
       this.downloadBtn.innerHTML = '<span class="btn-text">Descargar</span>';
@@ -576,10 +576,16 @@ export class FacturasManager {
 
     let message = `Descarga finalizada. ${exitosos} de ${total} archivos descargados.`;
     let type: 'success' | 'warning' | 'error' = 'success';
+    
+    if (saltados && saltados > 0) {
+      message += ` ${saltados} ya existían.`;
+    }
+    
     if (fallidos > 0) {
       message += ` ${fallidos} fallaron.`;
       type = fallidos === total ? 'error' : 'warning';
     }
+    
     this.showNotification(message, type);
 
     this.hideCancelButton();
@@ -864,5 +870,5 @@ document.head.appendChild(style);
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
-  (window as unknown).facturasManager = new FacturasManager();
+  (window as any).facturasManager = new FacturasManager();
 });

@@ -139,7 +139,7 @@ export function sanitizePath(path: string): string {
     .filter(part => part !== '..' && part !== '.')
     .join('/')
     .replace(/^\/+/, '')
-    .replace(/[^a-zA-Z0-9_\-\/]/g, '');
+    .replace(/[^a-zA-Z0-9_\-/]/g, '');
 }
 
 /**

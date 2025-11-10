@@ -438,53 +438,98 @@ export class FacturasManager {
     }
 
     try {
-      this.showNotification('Verificando descargas desde historial de Chrome...', 'info');
       this.dataManager.fileInfo.clear();
 
+      // Buscar descargas completadas que AÚN EXISTEN en el disco
       const downloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve, reject) => {
-        chrome.downloads.search({ state: 'complete' }, (results) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(results);
+        chrome.downloads.search(
+          { 
+            state: 'complete',
+            exists: true  // Solo archivos que existen físicamente
+          }, 
+          (results) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else {
+              resolve(results);
+            }
           }
-        });
+        );
       });
 
       if (downloads.length === 0) {
-        this.showNotification('❌ No se encontraron descargas en el historial de Chrome', 'warning');
+        this.showNotification('❌ No se encontraron descargas existentes en el historial', 'warning');
         return;
       }
 
-      const downloadedFiles = new Set(downloads.map((d) => d.filename.split(/[/\\]/).pop()));
+      // Crear un mapa de archivos descargados con su información completa
+      const downloadMap = new Map<string, chrome.downloads.DownloadItem>();
+      downloads.forEach((download) => {
+        const fileName = download.filename.split(/[/\\]/).pop();
+        if (fileName) {
+          downloadMap.set(fileName, download);
+        }
+      });
 
       const foundXmlIds: string[] = [];
       const foundPdfIds: string[] = [];
+      let xmlDeleted = 0;
+      let pdfDeleted = 0;
 
+      // Verificar cada factura
       for (const factura of facturasToCheck) {
-        const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
-        const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
+        const baseFileName = factura.numero.replace(/ /g, '_');
+        const xmlFileName = `${baseFileName}.xml`;
+        const pdfFileName = `${baseFileName}.pdf`;
 
-        const hasXml = downloadedFiles.has(xmlFileName);
-        const hasPdf = downloadedFiles.has(pdfFileName);
+        const xmlDownload = downloadMap.get(xmlFileName);
+        const pdfDownload = downloadMap.get(pdfFileName);
 
-        if (hasXml) foundXmlIds.push(factura.id);
-        if (hasPdf) foundPdfIds.push(factura.id);
+        // Verificar XML
+        if (xmlDownload && xmlDownload.exists !== false) {
+          foundXmlIds.push(factura.id);
+        } else if (!xmlDownload) {
+          // Buscar en historial completo (incluyendo eliminados)
+          const allDownloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
+            chrome.downloads.search({ state: 'complete' }, (results) => {
+              resolve(results || []);
+            });
+          });
+          const wasDownloaded = allDownloads.some(
+            (d) => d.filename.split(/[/\\]/).pop() === xmlFileName
+          );
+          if (wasDownloaded) xmlDeleted++;
+        }
 
+        // Verificar PDF
+        if (pdfDownload && pdfDownload.exists !== false) {
+          foundPdfIds.push(factura.id);
+        } else if (!pdfDownload) {
+          const allDownloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
+            chrome.downloads.search({ state: 'complete' }, (results) => {
+              resolve(results || []);
+            });
+          });
+          const wasDownloaded = allDownloads.some(
+            (d) => d.filename.split(/[/\\]/).pop() === pdfFileName
+          );
+          if (wasDownloaded) pdfDeleted++;
+        }
+
+        // Guardar información de archivos encontrados
         const fileData: FileInfo = {};
-        if (hasXml) {
-          const xmlDownload = downloads.find((d) => d.filename.split(/[/\\]/).pop() === xmlFileName);
-          if (xmlDownload) fileData.xml = { downloadId: xmlDownload.id };
+        if (xmlDownload) {
+          fileData.xml = { downloadId: xmlDownload.id };
         }
-        if (hasPdf) {
-          const pdfDownload = downloads.find((d) => d.filename.split(/[/\\]/).pop() === pdfFileName);
-          if (pdfDownload) fileData.pdf = { downloadId: pdfDownload.id };
+        if (pdfDownload) {
+          fileData.pdf = { downloadId: pdfDownload.id };
         }
-        if (hasXml || hasPdf) {
+        if (xmlDownload || pdfDownload) {
           this.dataManager.fileInfo.set(factura.id, fileData);
         }
       }
 
+      // Actualizar la UI con los resultados
       this.dataManager.handleVerificationComplete(
         foundXmlIds,
         foundPdfIds,
@@ -492,8 +537,14 @@ export class FacturasManager {
         selectedOnly
       );
 
-      const mensaje = `✅ Verificación completada: ${foundXmlIds.length} XML, ${foundPdfIds.length} PDF de ${facturasToCheck.length} archivos.`;
-      this.showNotification(mensaje, foundXmlIds.length > 0 || foundPdfIds.length > 0 ? 'success' : 'warning');
+      // Mensaje detallado
+      let mensaje = `✅ Verificación completada: ${foundXmlIds.length} XML, ${foundPdfIds.length} PDF encontrados`;
+      if (xmlDeleted > 0 || pdfDeleted > 0) {
+        mensaje += ` (${xmlDeleted + pdfDeleted} archivos fueron eliminados del disco)`;
+      }
+      
+      const hasFiles = foundXmlIds.length > 0 || foundPdfIds.length > 0;
+      this.showNotification(mensaje, hasFiles ? 'success' : 'warning');
     } catch (error: any) {
       console.error('Error al verificar descargas:', error);
       this.showNotification(`Error: ${error.message}`, 'error');
@@ -695,9 +746,7 @@ export class FacturasManager {
         3
       );
 
-      if (response && response.success) {
-        this.showNotification('🔍 Búsqueda iniciada en todas las páginas disponibles', 'info');
-      } else {
+      if (!response || !response.success) {
         throw new Error(response.error || 'Error desconocido iniciando búsqueda');
       }
     } catch (error: any) {
@@ -746,7 +795,6 @@ export class FacturasManager {
       }
     });
 
-    this.showNotification('Descarga cancelada por el usuario', 'warning');
     this.hideCancelButton();
     const hasSelections = this.dataManager.selectedFacturas.size > 0;
     PopupUI.enableButtonsAfterOperation(hasSelections);
@@ -772,7 +820,6 @@ export class FacturasManager {
 
       if (fileInfo.pdf.downloadId) {
         chrome.downloads.open(fileInfo.pdf.downloadId);
-        this.showNotification('Abriendo PDF...', 'info');
       } else {
         this.showNotification('No se puede determinar cómo abrir el PDF.', 'error');
       }
@@ -817,5 +864,5 @@ document.head.appendChild(style);
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
-  (window as any).facturasManager = new FacturasManager();
+  (window as unknown).facturasManager = new FacturasManager();
 });

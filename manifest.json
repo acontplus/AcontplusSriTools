@@ -24,7 +24,13 @@
         "*://comprobantes-electronicos-internet/*",
         "*://srienlinea.sri.gob.ec/*"
       ],
-      "js": ["runtime.js", "shared.js", "content/index.js"],
+      "js": [
+        "runtime.js",
+        "shared.js",
+        "services/download-counter.js",
+        "services/feedback-modal.js",
+        "content/index.js"
+      ],
       "css": ["assets/css/content.css", "assets/css/feedback-modal.css"],
       "run_at": "document_idle",
       "all_frames": false

@@ -13,6 +13,8 @@ module.exports = (env, argv) => {
       background: './src/background/index.ts',
       'content/index': './src/content/index.ts',
       'popup/index': './src/popup/index.ts',
+      'services/feedback-modal': './src/services/feedback-modal.ts',
+      'services/download-counter': './src/services/download-counter.ts',
     },
 
     output: {

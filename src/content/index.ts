@@ -1,0 +1,89 @@
+// Content Script principal - Migrado a TypeScript
+
+import { IFRAME_ID, DELAYS } from '@shared/constants';
+import { SRIDocumentosExtractor } from './extractor';
+
+// Marcar que el content script está cargado
+(window as any).SRIExtractorLoaded = true;
+
+// Inicializar extensión
+function initializeExtension(): void {
+  if (typeof (window as any).SRIDocumentosExtractor === 'undefined') {
+    console.error(
+      '❌ SRIDocumentosExtractor no está definido. Verificar orden de carga de scripts.'
+    );
+    return;
+  }
+
+  try {
+    (window as any).sriExtractorInstance = new SRIDocumentosExtractor();
+    console.log('✅ SRI Extractor inicializado correctamente');
+  } catch (error) {
+    console.error('❌ Error inicializando extensión:', error);
+  }
+}
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeExtension);
+} else {
+  setTimeout(initializeExtension, DELAYS.INIT_DELAY);
+}
+
+// --- Lógica para la interfaz inyectada ---
+
+let iframe: HTMLIFrameElement | null = null;
+let isUIVisible = false;
+
+function createUI(): HTMLIFrameElement {
+  const existing = document.getElementById(IFRAME_ID) as HTMLIFrameElement;
+  if (existing) {
+    return existing;
+  }
+
+  const iframeElement = document.createElement('iframe');
+  iframeElement.id = IFRAME_ID;
+  iframeElement.src = chrome.runtime.getURL('popup/popup.html');
+
+  // Estilos del panel lateral
+  Object.assign(iframeElement.style, {
+    backgroundColor: 'white',
+    position: 'fixed',
+    top: '16px',
+    right: '16px',
+    width: '1000px',
+    height: 'calc(100% - 32px)',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    zIndex: '99999999',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+    transition: 'transform 0.3s ease-out',
+    transform: 'translateX(105%)',
+  });
+
+  document.body.appendChild(iframeElement);
+  return iframeElement;
+}
+
+function toggleUI(): void {
+  if (!iframe) {
+    iframe = createUI();
+  }
+
+  if (isUIVisible) {
+    iframe.style.transform = 'translateX(105%)';
+  } else {
+    iframe.style.transform = 'translateX(0)';
+  }
+
+  isUIVisible = !isUIVisible;
+}
+
+// Listener para mensajes del background script
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.action === 'toggleUI') {
+    toggleUI();
+    sendResponse({ success: true });
+  }
+  return true;
+});

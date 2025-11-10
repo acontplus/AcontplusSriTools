@@ -1,6 +1,10 @@
-# SRI Documentos Extractor - Extensión Chrome
+# SRI Documentos Extractor - Extensión Chrome (TypeScript)
 
 Una extensión de Google Chrome desarrollada para **Acontplus S.A.S.** que analiza automáticamente las páginas del sistema de comprobantes electrónicos del SRI de Ecuador y extrae la información de documentos electrónicos sin necesidad de filtros manuales.
+
+## 🚀 Migrado a TypeScript + Webpack
+
+Este proyecto ha sido completamente migrado a TypeScript con Webpack para mejor mantenibilidad, type safety y optimización del bundle.
 
 ## 🚀 Características
 
@@ -11,6 +15,15 @@ Una extensión de Google Chrome desarrollada para **Acontplus S.A.S.** que anali
 - **Exportación Dual**: JSON para APIs y CSV para Excel
 - **Estadísticas en Tiempo Real**: Muestra totales de documentos seleccionados
 - **Monitoreo Continuo**: Detecta nuevas tablas que aparezcan dinámicamente
+
+## ✅ Estado de Migración
+
+- ✅ **100% migrado a TypeScript**
+- ✅ **Webpack configurado y funcionando**
+- ✅ **Código duplicado eliminado**
+- ✅ **Type safety completo**
+- ✅ **Build optimizado con code splitting**
+- ✅ **Todas las funcionalidades preservadas**
 
 ## 📋 Datos Extraídos Automáticamente
 
@@ -45,11 +58,80 @@ Analiza el contenido de las tablas buscando patrones típicos:
 ### 4. **Detección General**
 Como último recurso, busca tablas con múltiples columnas que contengan palabras clave relacionadas con documentos electrónicos.
 
-## 🛠️ Instalación
+## 🛠️ Instalación y Desarrollo
 
-### Instalación Manual (Desarrollo)
+### Requisitos Previos
+- Node.js 18+ y npm
+- Chrome/Chromium
 
-1. **Crear estructura de archivos**:
+### Instalación
+
+1. **Clonar e instalar dependencias**:
+   ```bash
+   git clone <repo-url>
+   cd AcontplusSriTools
+   npm install
+   ```
+
+2. **Compilar el proyecto**:
+   ```bash
+   # Desarrollo (watch mode)
+   npm run dev
+   
+   # Producción
+   npm run build
+   ```
+
+3. **Cargar en Chrome**:
+   - Abre `chrome://extensions/`
+   - Activa "Modo de desarrollador"
+   - Clic en "Cargar extensión descomprimida"
+   - Selecciona la carpeta `dist/`
+
+### Comandos Disponibles
+
+```bash
+npm run dev          # Watch mode (recompila automáticamente)
+npm run build        # Build de producción
+npm run clean        # Limpiar carpeta dist/
+npm run rebuild      # Clean + Build
+npm run type-check   # Verificar tipos TypeScript
+npm run lint         # Linting con ESLint
+```
+
+### Estructura del Proyecto (TypeScript)
+
+```
+src/
+├── background/          # Service Worker
+│   └── index.ts
+├── content/            # Content Scripts
+│   ├── index.ts
+│   ├── extractor.ts
+│   ├── pagination.ts
+│   └── downloader.ts
+├── popup/             # Interfaz de usuario
+│   ├── index.ts
+│   ├── components/
+│   │   ├── export.ts
+│   │   ├── table.ts
+│   │   └── notifications.ts
+│   └── services/
+│       ├── data.ts
+│       └── ui.ts
+├── services/          # Servicios compartidos
+│   └── supabase.ts
+└── shared/            # Código compartido
+    ├── constants.ts   # Constantes centralizadas
+    ├── types.ts       # Tipos TypeScript
+    ├── utils.ts       # Utilidades
+    ├── storage.ts     # Chrome Storage Manager
+    └── messaging.ts   # Sistema de mensajería
+```
+
+### Instalación Manual (Legacy - Solo para referencia)
+
+1. **Estructura de archivos legacy**:
    ```
    AcontplusSriTools/
    ├── manifest.json

@@ -338,10 +338,30 @@ export class FacturasManager {
     const newPath = this.downloadLocationInput.value.trim();
     try {
       await StorageManager.saveDownloadPath(newPath);
-      this.showNotification('Ruta de descarga guardada.', 'success');
+      
+      // Cerrar el modal
+      this.closeDownloadSettingsModal();
+      
+      // Mostrar notificación de éxito
+      const message = newPath 
+        ? `✅ Ruta de descarga configurada: ${newPath}` 
+        : '✅ Ruta de descarga restablecida a la carpeta predeterminada';
+      this.showNotification(message, 'success');
     } catch (error) {
       console.error('Error guardando la ruta de descarga:', error);
-      this.showNotification('No se pudo guardar la ruta.', 'error');
+      this.showNotification('❌ No se pudo guardar la ruta de descarga', 'error');
+    }
+  }
+
+  private closeDownloadSettingsModal(): void {
+    const downloadSettingsModal = document.getElementById('download-settings-modal');
+    const downloadSettingsContent = document.getElementById('download-settings-content');
+    
+    if (downloadSettingsModal) {
+      downloadSettingsModal.classList.add('opacity-0');
+      downloadSettingsContent?.classList.remove('scale-100');
+      downloadSettingsContent?.classList.add('scale-95');
+      setTimeout(() => downloadSettingsModal.classList.add('hidden'), 300);
     }
   }
 

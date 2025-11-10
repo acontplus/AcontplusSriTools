@@ -3,18 +3,14 @@
 import { IFRAME_ID, DELAYS } from '@shared/constants';
 import { SRIDocumentosExtractor } from './extractor';
 
+// Exportar la clase globalmente
+(window as any).SRIDocumentosExtractor = SRIDocumentosExtractor;
+
 // Marcar que el content script está cargado
 (window as any).SRIExtractorLoaded = true;
 
 // Inicializar extensión
 function initializeExtension(): void {
-  if (typeof (window as any).SRIDocumentosExtractor === 'undefined') {
-    console.error(
-      '❌ SRIDocumentosExtractor no está definido. Verificar orden de carga de scripts.'
-    );
-    return;
-  }
-
   try {
     (window as any).sriExtractorInstance = new SRIDocumentosExtractor();
     console.log('✅ SRI Extractor inicializado correctamente');

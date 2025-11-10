@@ -111,14 +111,18 @@ class NotificationManager {
   constructor(_stateManager: StateManager) {}
 
   mostrarBienvenida(): void {
-    const mensaje = {
-      type: 'basic' as chrome.notifications.TemplateType,
-      iconUrl: 'icons/icon48.png',
-      title: `Acontplus SRI Tools v${VERSION}`,
-      message: '¡Bienvenido! Extracción robusta y optimizada de documentos SRI.',
-    };
+    // Solo mostrar notificación si la API está disponible
+    if (typeof chrome.notifications !== 'undefined' && chrome.notifications.create) {
+      const mensaje = {
+        type: 'basic' as chrome.notifications.TemplateType,
+        iconUrl: 'icons/icon48.png',
+        title: `Acontplus SRI Tools v${VERSION}`,
+        message: '¡Bienvenido! Extracción robusta y optimizada de documentos SRI.',
+      };
 
-    chrome.notifications.create('bienvenida', mensaje);
+      chrome.notifications.create('bienvenida', mensaje);
+    }
+    
     chrome.storage.local.set({
       [STORAGE_KEYS.PRIMERA_INSTALACION]: true,
       [STORAGE_KEYS.FECHA_INSTALACION]: new Date().toISOString(),
@@ -127,14 +131,17 @@ class NotificationManager {
   }
 
   mostrarActualizacion(versionAnterior: string): void {
-    const mensaje = {
-      type: 'basic' as chrome.notifications.TemplateType,
-      iconUrl: 'icons/icon48.png',
-      title: 'Acontplus SRI Tools - Actualizado',
-      message: `Actualizado de v${versionAnterior} a v${VERSION} con mejoras de interfaz.`,
-    };
+    // Solo mostrar notificación si la API está disponible
+    if (typeof chrome.notifications !== 'undefined' && chrome.notifications.create) {
+      const mensaje = {
+        type: 'basic' as chrome.notifications.TemplateType,
+        iconUrl: 'icons/icon48.png',
+        title: 'Acontplus SRI Tools - Actualizado',
+        message: `Actualizado de v${versionAnterior} a v${VERSION} con mejoras de interfaz.`,
+      };
 
-    chrome.notifications.create('actualizacion', mensaje);
+      chrome.notifications.create('actualizacion', mensaje);
+    }
   }
 }
 

@@ -65,21 +65,23 @@ module.exports = (env, argv) => {
 
     optimization: {
       minimize: isProduction,
-      runtimeChunk: 'single',
+      runtimeChunk: {
+        name: (entrypoint) => entrypoint.name === 'background' ? false : 'runtime',
+      },
       splitChunks: {
-        chunks: 'all',
+        chunks: (chunk) => chunk.name !== 'background',
         cacheGroups: {
           vendors: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
-            chunks: 'all',
+            chunks: (chunk) => chunk.name !== 'background',
             priority: 10,
             enforce: true,
           },
           shared: {
             test: /[\\/]src[\\/]shared[\\/]/,
             name: 'shared',
-            chunks: 'all',
+            chunks: (chunk) => chunk.name !== 'background',
             priority: 5,
             minChunks: 2,
             enforce: true,

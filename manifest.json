@@ -34,7 +34,12 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Acontplus SRI Tools"
+    "default_title": "Acontplus SRI Tools",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -46,15 +51,22 @@
       "resources": [
         "popup/popup.html",
         "popup/index.js",
+        "popup/index.js.map",
+        "popup/components/*",
+        "popup/services/*",
         "runtime.js",
+        "runtime.js.map",
         "shared.js",
+        "shared.js.map",
         "assets/css/*",
         "assets/js/*",
-        "assets/fonts/*"
+        "assets/fonts/*",
+        "icons/*"
       ],
       "matches": [
         "*://*.sri.gob.ec/*",
-        "*://comprobantes-electronicos-internet/*"
+        "*://comprobantes-electronicos-internet/*",
+        "*://srienlinea.sri.gob.ec/*"
       ]
     }
   ],

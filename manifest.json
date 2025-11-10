@@ -45,11 +45,12 @@
     {
       "resources": [
         "popup/popup.html",
-        "src/*",
+        "popup/index.js",
+        "runtime.js",
+        "shared.js",
         "assets/css/*",
         "assets/js/*",
-        "assets/fonts/*",
-        ".env.sri-tool-extension"
+        "assets/fonts/*"
       ],
       "matches": [
         "*://*.sri.gob.ec/*",

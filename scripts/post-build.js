@@ -19,7 +19,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
 // Actualizar rutas de scripts compilados
 manifest.content_scripts[0].js = [
-  'vendors.js',
+  'runtime.js',
   'shared.js',
   'content/index.js'
 ];

@@ -69,22 +69,31 @@ module.exports = (env, argv) => {
     optimization: {
       minimize: isProduction,
       runtimeChunk: {
-        name: (entrypoint) => entrypoint.name === 'background' ? false : 'runtime',
+        name: (entrypoint) => {
+          // No runtime chunk para background y servicios
+          if (entrypoint.name === 'background' || entrypoint.name.startsWith('services/')) {
+            return false;
+          }
+          return 'runtime';
+        },
       },
       splitChunks: {
-        chunks: (chunk) => chunk.name !== 'background',
+        chunks: (chunk) => {
+          // No split chunks para background y servicios
+          return chunk.name !== 'background' && !chunk.name.startsWith('services/');
+        },
         cacheGroups: {
           vendors: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
-            chunks: (chunk) => chunk.name !== 'background',
+            chunks: (chunk) => chunk.name !== 'background' && !chunk.name.startsWith('services/'),
             priority: 10,
             enforce: true,
           },
           shared: {
             test: /[\\/]src[\\/]shared[\\/]/,
             name: 'shared',
-            chunks: (chunk) => chunk.name !== 'background',
+            chunks: (chunk) => chunk.name !== 'background' && !chunk.name.startsWith('services/'),
             priority: 5,
             minChunks: 2,
             enforce: true,

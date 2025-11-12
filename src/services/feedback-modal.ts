@@ -313,6 +313,17 @@ export class FeedbackModal {
     if (loadingState) loadingState.style.display = 'block';
 
     try {
+      // Esperar a que initSupabase esté disponible
+      let attempts = 0;
+      while (typeof (window as any).initSupabase !== 'function' && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+
+      if (typeof (window as any).initSupabase !== 'function') {
+        throw new Error('initSupabase no está disponible después de 5 segundos');
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const supabase = await (window as any).initSupabase();
       if (!supabase) {

@@ -21,6 +21,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 manifest.content_scripts[0].js = [
   'runtime.js',
   'shared.js',
+  'services/supabase.js',
   'services/download-counter.js',
   'services/feedback-modal.js',
   'content/index.js'

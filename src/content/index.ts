@@ -10,10 +10,18 @@ import { SRIDocumentosExtractor } from './extractor';
 (window as any).SRIExtractorLoaded = true;
 
 // Inicializar extensión
-function initializeExtension(): void {
+async function initializeExtension(): Promise<void> {
   try {
     (window as any).sriExtractorInstance = new SRIDocumentosExtractor();
     console.log('✅ SRI Extractor inicializado correctamente');
+    
+    // Inicializar Supabase si está disponible
+    if (typeof (window as any).initSupabase !== 'undefined') {
+      await (window as any).initSupabase();
+      console.log('✅ Supabase inicializado');
+    } else {
+      console.warn('⚠️ initSupabase no está disponible');
+    }
     
     // Inicializar FeedbackModal si está disponible
     if (typeof (window as any).FeedbackModal !== 'undefined' && !(window as any).feedbackModal) {

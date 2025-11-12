@@ -43,4 +43,5 @@ export async function initSupabase(): Promise<SupabaseClient | null> {
 // Exportar globalmente
 if (typeof window !== 'undefined') {
   (window as any).initSupabase = initSupabase;
+  console.log('✅ initSupabase exportado globalmente');
 }

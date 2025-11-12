@@ -27,6 +27,7 @@
       "js": [
         "runtime.js",
         "shared.js",
+        "services/supabase.js",
         "services/download-counter.js",
         "services/feedback-modal.js",
         "content/index.js"

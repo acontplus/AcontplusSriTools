@@ -8,14 +8,19 @@ export class DownloadCounter {
   async incrementDownload(): Promise<boolean> {
     try {
       const feedbackSent = await this.hasSentFeedback();
-      if (feedbackSent) return false;
+      if (feedbackSent) {
+        console.log('✅ Feedback ya fue enviado, no se incrementa contador');
+        return false;
+      }
 
       const currentCount = await this.getDownloadCount();
       const newCount = currentCount + 1;
 
       await this.setDownloadCount(newCount);
+      console.log(`📊 Contador de descargas: ${newCount}/${this.TRIGGER_COUNT}`);
 
       if (newCount >= this.TRIGGER_COUNT) {
+        console.log('🎉 ¡4ta descarga alcanzada! Mostrando modal...');
         this.showFeedbackModal();
         return true;
       } else {
@@ -64,26 +69,40 @@ export class DownloadCounter {
   }
 
   private showFeedbackModal(): void {
+    console.log('🎯 Intentando mostrar modal de feedback...');
+    
     try {
+      // Verificar si FeedbackModal está disponible
       if (typeof (window as any).FeedbackModal === 'undefined') {
-        console.error('❌ FeedbackModal no está definido');
+        console.error('❌ FeedbackModal no está definido en window');
+        console.log('📋 Propiedades disponibles en window:', Object.keys(window).filter(k => k.includes('Feedback') || k.includes('feedback')));
         return;
       }
 
+      console.log('✅ FeedbackModal encontrado');
+
+      // Crear instancia si no existe
       if (!(window as any).feedbackModal) {
+        console.log('🔧 Creando nueva instancia de FeedbackModal');
         (window as any).feedbackModal = new (window as any).FeedbackModal();
       }
 
+      console.log('📢 Mostrando modal...');
       (window as any).feedbackModal.show();
 
+      // Actualizar título después de un momento
       setTimeout(() => {
         const modalContent = document.querySelector('.modal-header h3');
         if (modalContent) {
           modalContent.textContent = '¡Ayúdanos a mejorar! - 4ta descarga completada';
+          console.log('✅ Título del modal actualizado');
+        } else {
+          console.warn('⚠️ No se encontró el elemento .modal-header h3');
         }
       }, 100);
     } catch (error) {
       console.error('❌ Error mostrando modal de feedback:', error);
+      console.error('Stack trace:', error);
     }
   }
 

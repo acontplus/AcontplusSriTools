@@ -14,6 +14,18 @@ function initializeExtension(): void {
   try {
     (window as any).sriExtractorInstance = new SRIDocumentosExtractor();
     console.log('✅ SRI Extractor inicializado correctamente');
+    
+    // Inicializar FeedbackModal si está disponible
+    if (typeof (window as any).FeedbackModal !== 'undefined' && !(window as any).feedbackModal) {
+      (window as any).feedbackModal = new (window as any).FeedbackModal();
+      console.log('✅ FeedbackModal inicializado');
+    }
+    
+    // Inicializar DownloadCounter si está disponible
+    if (typeof (window as any).DownloadCounter !== 'undefined' && !(window as any).downloadCounter) {
+      (window as any).downloadCounter = new (window as any).DownloadCounter();
+      console.log('✅ DownloadCounter inicializado');
+    }
   } catch (error) {
     console.error('❌ Error inicializando extensión:', error);
   }
@@ -21,7 +33,10 @@ function initializeExtension(): void {
 
 // Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeExtension);
+  document.addEventListener('DOMContentLoaded', () => {
+    // Esperar un poco más para asegurar que todos los scripts se carguen
+    setTimeout(initializeExtension, DELAYS.INIT_DELAY);
+  });
 } else {
   setTimeout(initializeExtension, DELAYS.INIT_DELAY);
 }
@@ -51,7 +66,7 @@ function createUI(): HTMLIFrameElement {
     height: 'calc(100% - 32px)',
     border: '1px solid #e0e0e0',
     borderRadius: '8px',
-    zIndex: '99999999',
+    zIndex: '999999', // Reducido para que el modal (2147483647) aparezca encima
     boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
     transition: 'transform 0.3s ease-out',
     transform: 'translateX(105%)',

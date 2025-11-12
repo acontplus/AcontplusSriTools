@@ -68,6 +68,11 @@ export class FeedbackModal {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     this.modal = document.getElementById('feedbackModal');
     this.form = document.getElementById('feedbackForm') as HTMLFormElement;
+    
+    // Asegurar que el modal tenga el z-index más alto posible
+    if (this.modal) {
+      this.modal.style.zIndex = '2147483647'; // Máximo z-index posible en CSS
+    }
   }
 
   private bindEvents(): void {

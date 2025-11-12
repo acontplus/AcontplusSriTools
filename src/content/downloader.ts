@@ -10,6 +10,19 @@ export class SRIDownloader {
 
   constructor(private extractor: SRIDocumentosExtractor) {}
 
+  /**
+   * Incrementa el contador de descargas y muestra modal si es necesario
+   */
+  private async incrementarContadorDescarga(): Promise<void> {
+    try {
+      if (typeof (window as any).downloadCounter !== 'undefined') {
+        await (window as any).downloadCounter.incrementDownload();
+      }
+    } catch (error) {
+      console.warn('Error incrementando contador de descargas:', error);
+    }
+  }
+
   async verificarDescargasEnPagina(facturas: Documento[]): Promise<void> {
     try {
       if (!('showDirectoryPicker' in window)) {
@@ -112,6 +125,9 @@ export class SRIDownloader {
           // Descargar XML solo si no existe
           if (!archivosExistentes.has(xmlFileName)) {
             exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex);
+            if (exitoXml) {
+              await this.incrementarContadorDescarga();
+            }
             await SRIUtils.esperar(DELAYS.DOWNLOAD_FORMAT);
           } else {
             console.log(`⏭️ Saltando ${xmlFileName} - ya existe`);
@@ -121,6 +137,9 @@ export class SRIDownloader {
           // Descargar PDF solo si no existe
           if (!archivosExistentes.has(pdfFileName)) {
             exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex);
+            if (exitoPdf) {
+              await this.incrementarContadorDescarga();
+            }
           } else {
             console.log(`⏭️ Saltando ${pdfFileName} - ya existe`);
             exitoPdf = true; // Contar como exitoso porque ya existe
@@ -141,8 +160,12 @@ export class SRIDownloader {
             descargados++; // Contar como exitoso porque ya existe
           } else {
             const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex);
-            if (exito) descargados++;
-            else fallidos++;
+            if (exito) {
+              descargados++;
+              await this.incrementarContadorDescarga();
+            } else {
+              fallidos++;
+            }
           }
         }
 

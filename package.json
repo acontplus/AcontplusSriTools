@@ -1,6 +1,6 @@
 {
   "name": "acontplus-sri-tools",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "Extractor de Comprobantes Electronicos del SRI para Acontplus S.A.S.",
   "private": true,
   "scripts": {

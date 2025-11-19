@@ -1,6 +1,6 @@
 // Constantes compartidas
 
-export const VERSION = '1.4.5';
+export const VERSION = '1.4.6';
 export const EXTENSION_NAME = 'Acontplus SRI Tools';
 
 export const STORAGE_KEYS = {

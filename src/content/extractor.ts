@@ -153,6 +153,9 @@ export class SRIDocumentosExtractor {
     const regsTotal = tbody.childElementCount;
     this.documentos = [];
 
+    // Obtener número de página actual
+    const currentPageNumber = this.getCurrentPageNumber();
+
     const tablaElement = tbody.closest('table');
     if (tablaElement) {
       this.pagination.mapearCabeceras(tablaElement);
@@ -177,7 +180,8 @@ export class SRIDocumentosExtractor {
               celdas,
               tipoComprobante,
               i,
-              regsActual
+              regsActual,
+              currentPageNumber
             );
             if (documento) {
               this.documentos.push(documento);
@@ -190,6 +194,41 @@ export class SRIDocumentosExtractor {
     }
 
     this.guardarDatos();
+  }
+
+  /**
+   * Obtiene el número de página actual del paginador del SRI
+   */
+  private getCurrentPageNumber(): number {
+    try {
+      const paginatorSelector = `#frmPrincipal\\:tabla${this.tipo_emisi}_paginator_bottom`;
+      const paginator = document.querySelector(paginatorSelector);
+
+      if (paginator) {
+        const current = paginator.querySelector('.ui-paginator-current');
+        if (current) {
+          const text = current.textContent || '';
+          
+          // Buscar patrón "(X de Y)"
+          const pageMatch = text.match(/\((\d+)\s+de\s+(\d+)\)/);
+          if (pageMatch) {
+            return parseInt(pageMatch[1]);
+          }
+          
+          // Alternativa: calcular basándose en registros
+          const rangeMatch = text.match(/(\d+)\s*-\s*(\d+)\s+de\s+(\d+)/);
+          if (rangeMatch) {
+            const startRecord = parseInt(rangeMatch[1]);
+            const endRecord = parseInt(rangeMatch[2]);
+            const recordsPerPage = endRecord - startRecord + 1;
+            return Math.ceil(startRecord / recordsPerPage);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Error obteniendo número de página:', error);
+    }
+    return 1;
   }
 
   public guardarDatos(): void {

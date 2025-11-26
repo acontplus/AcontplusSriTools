@@ -157,6 +157,9 @@ export class SRIPagination {
     this.extractor.documentos = [];
     this.extractor.intentos = 0;
 
+    // Obtener número de página actual
+    const currentPageNumber = this.getCurrentPageNumber();
+
     const tablaElement = this.extractor.body_tabla?.closest('table');
     if (tablaElement) {
       this.mapearCabeceras(tablaElement);
@@ -187,7 +190,8 @@ export class SRIPagination {
                 celdas,
                 this.extractor.tipoComprobante!,
                 i,
-                regs_actual
+                regs_actual,
+                currentPageNumber
               );
               if (documento) {
                 this.extractor.documentos.push(documento);
@@ -198,7 +202,7 @@ export class SRIPagination {
 
         if (i % LIMITS.PROGRESS_UPDATE_INTERVAL === 0) {
           await this.extractor.updateProgress(
-            `Procesando documentos ${i} de ${this.extractor.regs_total}`
+            `Procesando documentos ${i} de ${this.extractor.regs_total} (Página ${currentPageNumber})`
           );
         }
         this.extractor.intentos = 0;
@@ -209,6 +213,42 @@ export class SRIPagination {
     }
 
     this.extractor.allDocuments.push(...this.extractor.documentos);
+  }
+
+  /**
+   * Obtiene el número de página actual del paginador del SRI
+   */
+  private getCurrentPageNumber(): number {
+    try {
+      const paginatorSelector = `#frmPrincipal\\:tabla${this.extractor.tipo_emisi}_paginator_bottom`;
+      const paginator = document.querySelector(paginatorSelector);
+
+      if (paginator) {
+        const current = paginator.querySelector(SELECTORS.PAGINATOR_CURRENT);
+        if (current) {
+          // El texto es algo como "Mostrando 1 - 100 de 350" o "(1 de 4)"
+          const text = current.textContent || '';
+          
+          // Buscar patrón "(X de Y)" para número de página
+          const pageMatch = text.match(/\((\d+)\s+de\s+(\d+)\)/);
+          if (pageMatch) {
+            return parseInt(pageMatch[1]);
+          }
+          
+          // Alternativa: calcular página basándose en registros mostrados
+          const rangeMatch = text.match(/(\d+)\s*-\s*(\d+)\s+de\s+(\d+)/);
+          if (rangeMatch) {
+            const startRecord = parseInt(rangeMatch[1]);
+            const endRecord = parseInt(rangeMatch[2]);
+            const recordsPerPage = endRecord - startRecord + 1;
+            return Math.ceil(startRecord / recordsPerPage);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Error obteniendo número de página:', error);
+    }
+    return 1;
   }
 
   public detectarTablaRobusta(): {
@@ -267,7 +307,8 @@ export class SRIPagination {
     celdas: NodeListOf<HTMLElement>,
     _tipoComprobante: TipoComprobante,
     index: number,
-    rowIndex: number
+    rowIndex: number,
+    pageNumber: number = 1
   ): Documento | null {
     try {
       const h = this.extractor.headerMap;
@@ -296,6 +337,7 @@ export class SRIPagination {
 
       const documentoFinal: Documento = {
         rowIndex,
+        pageNumber, // Página donde se encontró el documento
         id: datos.claveAcceso || Date.now().toString(),
         numero: datos.tipoSerie,
         ruc,

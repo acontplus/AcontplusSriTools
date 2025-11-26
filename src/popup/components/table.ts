@@ -44,12 +44,13 @@ export class TableComponent {
     if (totalCountEl) safeSetText(totalCountEl, facturasToCount.length.toString());
     if (selectedCountEl) safeSetText(selectedCountEl, selectedVisibleCount.toString());
     
-    // Obtener contador real de descargas del downloadCounter
+    // Obtener contador de descargas de la sesión actual
     if (downloadedCountEl) {
       try {
         if (typeof (window as any).downloadCounter !== 'undefined') {
           const stats = await (window as any).downloadCounter.getStats();
-          safeSetText(downloadedCountEl, stats.count.toString());
+          // Usar sessionCount para mostrar solo las descargas de esta sesión
+          safeSetText(downloadedCountEl, stats.sessionCount.toString());
         } else {
           safeSetText(downloadedCountEl, '0');
         }

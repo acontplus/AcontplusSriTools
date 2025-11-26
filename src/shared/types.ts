@@ -3,6 +3,7 @@
 export interface Documento {
   id: string;
   rowIndex: number;
+  pageNumber: number; // Página donde se encontró el documento (1-based)
   numero: string;
   ruc: string;
   razonSocial: string;

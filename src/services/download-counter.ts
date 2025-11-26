@@ -2,14 +2,18 @@
 
 export class DownloadCounter {
   private readonly STORAGE_KEY = 'sri_download_count';
+  private readonly SESSION_KEY = 'sri_session_download_count'; // Contador de sesión actual
   private readonly FEEDBACK_SENT_KEY = 'sri_feedback_sent';
   private readonly TRIGGER_COUNT = 4;
 
   async incrementDownload(): Promise<boolean> {
     try {
+      // Incrementar contador de sesión (para mostrar en UI)
+      await this.incrementSessionCount();
+
       const feedbackSent = await this.hasSentFeedback();
       if (feedbackSent) {
-        console.log('✅ Feedback ya fue enviado, no se incrementa contador');
+        console.log('✅ Feedback ya fue enviado, no se incrementa contador global');
         return false;
       }
 
@@ -34,6 +38,7 @@ export class DownloadCounter {
     }
   }
 
+  // Contador global (persistente)
   async getDownloadCount(): Promise<number> {
     return new Promise((resolve) => {
       chrome.storage.local.get([this.STORAGE_KEY], (result) => {
@@ -46,6 +51,32 @@ export class DownloadCounter {
     return new Promise((resolve) => {
       chrome.storage.local.set({ [this.STORAGE_KEY]: count }, resolve);
     });
+  }
+
+  // Contador de sesión (se resetea manualmente al iniciar nuevo escaneo)
+  async getSessionCount(): Promise<number> {
+    return new Promise((resolve) => {
+      chrome.storage.local.get([this.SESSION_KEY], (result) => {
+        resolve(result[this.SESSION_KEY] || 0);
+      });
+    });
+  }
+
+  async setSessionCount(count: number): Promise<void> {
+    return new Promise((resolve) => {
+      chrome.storage.local.set({ [this.SESSION_KEY]: count }, resolve);
+    });
+  }
+
+  async incrementSessionCount(): Promise<number> {
+    const current = await this.getSessionCount();
+    const newCount = current + 1;
+    await this.setSessionCount(newCount);
+    return newCount;
+  }
+
+  async resetSessionCount(): Promise<void> {
+    await this.setSessionCount(0);
   }
 
   async hasSentFeedback(): Promise<boolean> {
@@ -110,10 +141,11 @@ export class DownloadCounter {
     await chrome.storage.local.remove([this.STORAGE_KEY, this.FEEDBACK_SENT_KEY]);
   }
 
-  async getStats(): Promise<{ count: number; feedbackSent: boolean; triggerCount: number }> {
+  async getStats(): Promise<{ count: number; sessionCount: number; feedbackSent: boolean; triggerCount: number }> {
     const count = await this.getDownloadCount();
+    const sessionCount = await this.getSessionCount();
     const feedbackSent = await this.hasSentFeedback();
-    return { count, feedbackSent, triggerCount: this.TRIGGER_COUNT };
+    return { count, sessionCount, feedbackSent, triggerCount: this.TRIGGER_COUNT };
   }
 
   async forceShowModal(): Promise<void> {

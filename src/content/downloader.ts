@@ -7,10 +7,93 @@ import type { Documento, FormatoDescarga, DownloadJob, BatchConfig } from '@shar
 import type { SRIDocumentosExtractor } from './extractor';
 import { DownloadQueue } from './download-queue';
 
+// Configuración de detección de SRI lento/caído
+const SRI_HEALTH_CONFIG = {
+  TIMEOUT_MS: 30000,              // 30 segundos timeout por petición
+  SLOW_THRESHOLD_MS: 10000,       // >10s = SRI lento
+  MAX_TIMEOUTS: 3,                // Pausar después de 3 timeouts
+  MAX_SLOW_RESPONSES: 5,          // Advertir después de 5 respuestas lentas
+  PAUSE_AFTER_TIMEOUT_MS: 15000,  // Pausar 15s después de timeout
+};
+
 export class SRIDownloader {
   private downloadCancelled = false;
+  private timeoutCount = 0;
+  private slowResponseCount = 0;
+  private lastResponseTimes: number[] = [];
 
   constructor(private extractor: SRIDocumentosExtractor) { }
+
+  /**
+   * Resetea los contadores de salud del SRI
+   */
+  private resetHealthCounters(): void {
+    this.timeoutCount = 0;
+    this.slowResponseCount = 0;
+    this.lastResponseTimes = [];
+  }
+
+  /**
+   * Registra el tiempo de respuesta y detecta problemas
+   */
+  private trackResponseTime(responseTimeMs: number): void {
+    this.lastResponseTimes.push(responseTimeMs);
+    
+    // Mantener solo las últimas 10 respuestas
+    if (this.lastResponseTimes.length > 10) {
+      this.lastResponseTimes.shift();
+    }
+
+    if (responseTimeMs > SRI_HEALTH_CONFIG.SLOW_THRESHOLD_MS) {
+      this.slowResponseCount++;
+      console.warn(`🐢 Respuesta lenta del SRI: ${(responseTimeMs / 1000).toFixed(1)}s`);
+
+      if (this.slowResponseCount >= SRI_HEALTH_CONFIG.MAX_SLOW_RESPONSES) {
+        chrome.runtime.sendMessage({
+          action: 'sriSlowDetected',
+          message: `El SRI está respondiendo lento (${this.slowResponseCount} respuestas > ${SRI_HEALTH_CONFIG.SLOW_THRESHOLD_MS / 1000}s). Las descargas pueden tardar más de lo normal.`,
+          avgResponseTime: this.getAverageResponseTime(),
+        });
+      }
+    }
+  }
+
+  /**
+   * Obtiene el tiempo promedio de respuesta
+   */
+  private getAverageResponseTime(): number {
+    if (this.lastResponseTimes.length === 0) return 0;
+    const sum = this.lastResponseTimes.reduce((a, b) => a + b, 0);
+    return Math.round(sum / this.lastResponseTimes.length);
+  }
+
+  /**
+   * Maneja un timeout del SRI
+   */
+  private async handleTimeout(): Promise<boolean> {
+    this.timeoutCount++;
+    console.error(`⏱️ Timeout #${this.timeoutCount} del SRI`);
+
+    if (this.timeoutCount >= SRI_HEALTH_CONFIG.MAX_TIMEOUTS) {
+      console.error(`🚫 Demasiados timeouts (${this.timeoutCount}). El SRI parece estar caído o muy lento.`);
+      
+      chrome.runtime.sendMessage({
+        action: 'sriDownDetected',
+        message: `El SRI no responde después de ${this.timeoutCount} intentos. Posiblemente está caído o en mantenimiento. Se pausarán las descargas.`,
+        timeoutCount: this.timeoutCount,
+      });
+
+      // Pausar antes de continuar
+      console.log(`⏸️ Pausando ${SRI_HEALTH_CONFIG.PAUSE_AFTER_TIMEOUT_MS / 1000}s antes de reintentar...`);
+      await SRIUtils.esperar(SRI_HEALTH_CONFIG.PAUSE_AFTER_TIMEOUT_MS);
+      
+      // Resetear contador para dar otra oportunidad
+      this.timeoutCount = 0;
+      return false; // Indicar que hubo problema
+    }
+
+    return true; // Puede continuar
+  }
 
   /**
    * Incrementa el contador de descargas y muestra modal si es necesario
@@ -72,6 +155,7 @@ export class SRIDownloader {
     formato: FormatoDescarga
   ): Promise<void> {
     this.downloadCancelled = false;
+    this.resetHealthCounters(); // Resetear contadores de salud del SRI
 
     try {
       // Cargar configuración de usuario
@@ -86,14 +170,10 @@ export class SRIDownloader {
         const baseFileName = factura.numero.replace(/ /g, '_');
 
         if (formato === 'both') {
-          // Para 'both', verificar si AMBOS archivos ya existen
           const xmlExists = archivosExistentes.has(`${baseFileName}.xml`);
           const pdfExists = archivosExistentes.has(`${baseFileName}.pdf`);
-
-          // Solo descargar si al menos uno NO existe
           return !(xmlExists && pdfExists);
         } else {
-          // Para formato único, verificar solo ese formato
           const fileName = `${baseFileName}.${formato}`;
           return !archivosExistentes.has(fileName);
         }
@@ -112,62 +192,11 @@ export class SRIDownloader {
         return;
       }
 
-      // Inicializar cola
-      downloadQueue.initializeQueue(facturasParaDescargar, formato);
-
-      // Función de descarga que se pasa a la cola
-      const downloadFunction = async (job: DownloadJob): Promise<boolean> => {
-        if (this.downloadCancelled) {
-          downloadQueue.pauseQueue();
-          return false;
-        }
-
-        // Actualizar ViewState antes de cada descarga
-        const viewStateEl = document.querySelector<HTMLInputElement>('#javax\\.faces\\.ViewState');
-        if (viewStateEl) {
-          this.extractor.view_state = viewStateEl.value;
-        }
-
-        const factura = job.documento;
-        const originalIndex = factura.rowIndex;
-
-        if (originalIndex === undefined || originalIndex < 0) {
-          return false;
-        }
-
-        try {
-          if (!isExtensionContextValid()) {
-            console.warn('Contexto de extensión invalidado');
-            downloadQueue.pauseQueue();
-            return false;
-          }
-
-          // Procesar según formato
-          if (job.formato === 'both') {
-            const exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex);
-            if (exitoXml) {
-              await this.incrementarContadorDescarga();
-            }
-            await SRIUtils.esperar(DELAYS.DOWNLOAD_FORMAT);
-
-            const exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex);
-            if (exitoPdf) {
-              await this.incrementarContadorDescarga();
-            }
-
-            return exitoXml && exitoPdf;
-          } else {
-            const exito = await this.descargarUnicoDocumento(factura, job.formato, originalIndex);
-            if (exito) {
-              await this.incrementarContadorDescarga();
-            }
-            return exito;
-          }
-        } catch (error) {
-          console.error(`Error descargando ${factura.claveAcceso}:`, error);
-          return false;
-        }
-      };
+      // Agrupar documentos por página para procesarlos en orden
+      const documentosPorPagina = this.agruparPorPagina(facturasParaDescargar);
+      const paginasOrdenadas = Array.from(documentosPorPagina.keys()).sort((a, b) => a - b);
+      
+      console.log(`📑 Documentos distribuidos en ${paginasOrdenadas.length} páginas: ${paginasOrdenadas.join(', ')}`);
 
       // Listener para cancelación
       const cancelListener = (message: any) => {
@@ -178,21 +207,108 @@ export class SRIDownloader {
       };
       chrome.runtime.onMessage.addListener(cancelListener);
 
-      // Procesar cola
-      await downloadQueue.processQueue(downloadFunction);
+      let totalExitosos = 0;
+      let totalFallidos = 0;
+
+      // Procesar página por página
+      for (const numeroPagina of paginasOrdenadas) {
+        if (this.downloadCancelled) break;
+
+        const documentosDePagina = documentosPorPagina.get(numeroPagina)!;
+        console.log(`\n📄 Procesando página ${numeroPagina} (${documentosDePagina.length} documentos)...`);
+
+        // Navegar a la página si es necesario
+        const navegacionExitosa = await this.navegarAPagina(numeroPagina);
+        if (!navegacionExitosa) {
+          console.error(`❌ No se pudo navegar a la página ${numeroPagina}, saltando ${documentosDePagina.length} documentos`);
+          totalFallidos += documentosDePagina.length;
+          continue;
+        }
+
+        // Inicializar cola para esta página
+        downloadQueue.initializeQueue(documentosDePagina, formato);
+
+        // Función de descarga
+        const downloadFunction = async (job: DownloadJob): Promise<boolean> => {
+          if (this.downloadCancelled) {
+            downloadQueue.pauseQueue();
+            return false;
+          }
+
+          // Actualizar ViewState antes de cada descarga
+          const viewStateEl = document.querySelector<HTMLInputElement>('#javax\\.faces\\.ViewState');
+          if (viewStateEl) {
+            this.extractor.view_state = viewStateEl.value;
+          }
+
+          const factura = job.documento;
+          const originalIndex = factura.rowIndex;
+
+          if (originalIndex === undefined || originalIndex < 0) {
+            return false;
+          }
+
+          try {
+            if (!isExtensionContextValid()) {
+              console.warn('Contexto de extensión invalidado');
+              downloadQueue.pauseQueue();
+              return false;
+            }
+
+            // Procesar según formato
+            if (job.formato === 'both') {
+              const exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex);
+              if (exitoXml) {
+                await this.incrementarContadorDescarga();
+              }
+              await SRIUtils.esperar(DELAYS.DOWNLOAD_FORMAT);
+
+              const exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex);
+              if (exitoPdf) {
+                await this.incrementarContadorDescarga();
+              }
+
+              return exitoXml && exitoPdf;
+            } else {
+              const exito = await this.descargarUnicoDocumento(factura, job.formato, originalIndex);
+              if (exito) {
+                await this.incrementarContadorDescarga();
+              }
+              return exito;
+            }
+          } catch (error) {
+            console.error(`Error descargando ${factura.claveAcceso}:`, error);
+            return false;
+          }
+        };
+
+        // Procesar cola de esta página
+        await downloadQueue.processQueue(downloadFunction);
+
+        // Acumular resultados
+        const failedJobs = downloadQueue.getFailedDocuments();
+        totalExitosos += documentosDePagina.length - failedJobs.length;
+        totalFallidos += failedJobs.length;
+
+        // Notificar progreso entre páginas
+        chrome.runtime.sendMessage({
+          action: 'paginaCompletada',
+          pagina: numeroPagina,
+          exitosos: documentosDePagina.length - failedJobs.length,
+          fallidos: failedJobs.length,
+          totalPaginas: paginasOrdenadas.length,
+        });
+      }
 
       // Cleanup
       chrome.runtime.onMessage.removeListener(cancelListener);
 
-      // Obtener resultados
-      const failedJobs = downloadQueue.getFailedDocuments();
-      const exitosos = facturasParaDescargar.length - failedJobs.length;
       const saltados = facturas.length - facturasParaDescargar.length;
 
       chrome.runtime.sendMessage({
         action: 'descargaFinalizada',
-        exitosos,
-        fallidos: failedJobs.length,
+        exitosos: totalExitosos,
+        fallidos: totalFallidos,
         saltados,
         total: facturas.length,
       });
@@ -235,6 +351,155 @@ export class SRIDownloader {
 
   cancelDownload(): void {
     this.downloadCancelled = true;
+  }
+
+  /**
+   * Agrupa documentos por número de página para procesarlos en orden
+   */
+  private agruparPorPagina(documentos: Documento[]): Map<number, Documento[]> {
+    const grupos = new Map<number, Documento[]>();
+    
+    for (const doc of documentos) {
+      const pagina = doc.pageNumber || 1;
+      if (!grupos.has(pagina)) {
+        grupos.set(pagina, []);
+      }
+      grupos.get(pagina)!.push(doc);
+    }
+    
+    return grupos;
+  }
+
+  /**
+   * Obtiene el número de página actual del paginador del SRI
+   */
+  private getCurrentPageFromDOM(): number {
+    try {
+      const paginatorSelector = `#frmPrincipal\\:tabla${this.extractor.tipo_emisi}_paginator_bottom`;
+      const paginator = document.querySelector(paginatorSelector);
+
+      if (paginator) {
+        const current = paginator.querySelector('.ui-paginator-current');
+        if (current) {
+          const text = current.textContent || '';
+          
+          // Buscar patrón "(X de Y)"
+          const pageMatch = text.match(/\((\d+)\s+de\s+(\d+)\)/);
+          if (pageMatch) {
+            return parseInt(pageMatch[1]);
+          }
+          
+          // Alternativa: calcular basándose en registros
+          const rangeMatch = text.match(/(\d+)\s*-\s*(\d+)\s+de\s+(\d+)/);
+          if (rangeMatch) {
+            const startRecord = parseInt(rangeMatch[1]);
+            const endRecord = parseInt(rangeMatch[2]);
+            const recordsPerPage = endRecord - startRecord + 1;
+            return Math.ceil(startRecord / recordsPerPage);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Error obteniendo página actual:', error);
+    }
+    return 1;
+  }
+
+  /**
+   * Navega a una página específica del paginador del SRI
+   */
+  private async navegarAPagina(targetPage: number): Promise<boolean> {
+    const currentPage = this.getCurrentPageFromDOM();
+    
+    if (currentPage === targetPage) {
+      console.log(`📄 Ya estamos en la página ${targetPage}`);
+      return true;
+    }
+
+    console.log(`🔄 Navegando de página ${currentPage} a página ${targetPage}...`);
+
+    try {
+      // Estrategia: usar los botones de navegación del paginador
+      const paginatorSelector = `#frmPrincipal\\:tabla${this.extractor.tipo_emisi}_paginator_bottom`;
+      const paginator = document.querySelector(paginatorSelector);
+
+      if (!paginator) {
+        console.error('❌ No se encontró el paginador');
+        return false;
+      }
+
+      // Buscar el botón de página específica o navegar secuencialmente
+      const pageButtons = paginator.querySelectorAll<HTMLElement>('.ui-paginator-page');
+      
+      // Intentar encontrar el botón de la página directamente
+      for (let i = 0; i < pageButtons.length; i++) {
+        const btn = pageButtons[i];
+        if (btn.textContent?.trim() === targetPage.toString()) {
+          btn.click();
+          await this.esperarCargaPagina();
+          return true;
+        }
+      }
+
+      // Si no encontramos el botón directo, navegar secuencialmente
+      if (targetPage > currentPage) {
+        // Navegar hacia adelante
+        for (let i = currentPage; i < targetPage; i++) {
+          const nextBtn = paginator.querySelector<HTMLElement>('.ui-paginator-next:not(.ui-state-disabled)');
+          if (nextBtn) {
+            nextBtn.click();
+            await this.esperarCargaPagina();
+          } else {
+            console.error(`❌ No se puede avanzar más allá de la página ${i}`);
+            return false;
+          }
+        }
+      } else {
+        // Navegar hacia atrás
+        for (let i = currentPage; i > targetPage; i--) {
+          const prevBtn = paginator.querySelector<HTMLElement>('.ui-paginator-prev:not(.ui-state-disabled)');
+          if (prevBtn) {
+            prevBtn.click();
+            await this.esperarCargaPagina();
+          } else {
+            console.error(`❌ No se puede retroceder más allá de la página ${i}`);
+            return false;
+          }
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Error navegando a página:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Espera a que la página cargue después de navegar
+   */
+  private async esperarCargaPagina(): Promise<void> {
+    // Esperar un tiempo base
+    await SRIUtils.esperar(DELAYS.PAGE_NAVIGATION);
+
+    // Esperar a que desaparezca el indicador de carga si existe
+    const maxWait = 10000; // 10 segundos máximo
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWait) {
+      const loadingIndicator = document.querySelector('.ui-blockui, .ui-loading');
+      if (!loadingIndicator) {
+        break;
+      }
+      await SRIUtils.esperar(200);
+    }
+
+    // Actualizar ViewState después de la navegación
+    const viewStateEl = document.querySelector<HTMLInputElement>('#javax\\.faces\\.ViewState');
+    if (viewStateEl) {
+      this.extractor.view_state = viewStateEl.value;
+      console.log(`🔑 ViewState actualizado después de navegación`);
+    }
   }
 
   private async descargarUnicoDocumento(
@@ -292,15 +557,58 @@ export class SRIDownloader {
         return false;
       }
 
-      const response = await fetch(urlSRI, {
-        headers: {
-          accept:
-            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-          'content-type': 'application/x-www-form-urlencoded',
-        },
-        body: frmBody,
-        method: 'POST',
-      });
+      const startTime = Date.now();
+      
+      // Crear AbortController para timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), SRI_HEALTH_CONFIG.TIMEOUT_MS);
+
+      let response: Response;
+      try {
+        response = await fetch(urlSRI, {
+          headers: {
+            accept:
+              'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'content-type': 'application/x-www-form-urlencoded',
+          },
+          body: frmBody,
+          method: 'POST',
+          signal: controller.signal,
+        });
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        // Detectar si fue un timeout (abort)
+        if (fetchError.name === 'AbortError') {
+          console.error(`⏱️ Timeout descargando ${nameFile} (>${SRI_HEALTH_CONFIG.TIMEOUT_MS / 1000}s)`);
+          const canContinue = await this.handleTimeout();
+          if (!canContinue) {
+            return false;
+          }
+          // Reintentar será manejado por el sistema de reintentos
+          throw new Error(`Timeout: El SRI no respondió en ${SRI_HEALTH_CONFIG.TIMEOUT_MS / 1000} segundos`);
+        }
+        
+        // Error de red (SRI caído, sin conexión, etc.)
+        if (fetchError.message?.includes('Failed to fetch') || fetchError.message?.includes('NetworkError')) {
+          console.error(`🌐 Error de red descargando ${nameFile}:`, fetchError.message);
+          chrome.runtime.sendMessage({
+            action: 'sriNetworkError',
+            message: 'Error de conexión con el SRI. Verifica tu conexión a internet o si el SRI está disponible.',
+          });
+          return false;
+        }
+        
+        throw fetchError;
+      }
+      
+      clearTimeout(timeoutId);
+      
+      // Registrar tiempo de respuesta
+      const responseTime = Date.now() - startTime;
+      this.trackResponseTime(responseTime);
+      
+      console.log(`⏱️ Respuesta en ${(responseTime / 1000).toFixed(1)}s para ${nameFile}`);
 
       if (!response.ok) {
         // Errores HTTP específicos
@@ -444,5 +752,5 @@ export class SRIDownloader {
 
 // Exportar globalmente
 if (typeof window !== 'undefined') {
-  (window as any).SRIDownloader = SRIDownloader;
+  (window as unknown).SRIDownloader = SRIDownloader;
 }

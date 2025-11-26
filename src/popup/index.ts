@@ -175,6 +175,15 @@ export class FacturasManager {
         const hasSelections = this.dataManager.selectedFacturas.size > 0;
         PopupUI.enableButtonsAfterOperation(hasSelections);
         this.showNotification(message.message, 'error');
+      } else if (message.action === 'sriSlowDetected') {
+        // SRI respondiendo lento
+        this.showNotification(`🐢 ${message.message}`, 'warning');
+      } else if (message.action === 'sriDownDetected') {
+        // SRI posiblemente caído
+        this.showNotification(`🚫 ${message.message}`, 'error');
+      } else if (message.action === 'sriNetworkError') {
+        // Error de red con el SRI
+        this.showNotification(`🌐 ${message.message}`, 'error');
       }
     });
 
@@ -1269,6 +1278,11 @@ export class FacturasManager {
   private async startNewSearchRobusta(): Promise<void> {
     PopupUI.disableButtonsForOperation();
 
+    // Resetear contador de descargas de sesión al iniciar nuevo escaneo
+    if (typeof (window as any).downloadCounter !== 'undefined') {
+      await (window as any).downloadCounter.resetSessionCount();
+    }
+
     if (this.tableContainerEl) this.tableContainerEl.style.display = 'none';
     if (this.loadingEl) this.loadingEl.style.display = 'block';
 
@@ -1455,5 +1469,5 @@ document.head.appendChild(style);
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
-  (window as any).facturasManager = new FacturasManager();
+  (window as unknown).facturasManager = new FacturasManager();
 });

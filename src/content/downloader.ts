@@ -752,5 +752,5 @@ export class SRIDownloader {
 
 // Exportar globalmente
 if (typeof window !== 'undefined') {
-  (window as unknown).SRIDownloader = SRIDownloader;
+  (window as any).SRIDownloader = SRIDownloader;
 }

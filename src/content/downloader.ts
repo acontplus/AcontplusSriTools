@@ -250,10 +250,15 @@ export class SRIDownloader {
     const viewStateEl = document.querySelector<HTMLInputElement>('#javax\\.faces\\.ViewState');
     if (viewStateEl) {
       this.extractor.view_state = viewStateEl.value;
+      console.log(`🔑 ViewState actualizado (${viewStateEl.value.substring(0, 30)}...)`);
+    } else {
+      console.warn('⚠️ No se encontró ViewState en la página');
     }
 
     const url_links = window.location.href;
     const name_files = `${factura.numero.replace(/ /g, '_')}.${formato}`;
+    
+    console.log(`📤 Descargando: ${name_files}, rowIndex: ${originalIndex}, tipo: ${this.extractor.tipo_emisi}`);
 
     let text_body = `frmPrincipal=frmPrincipal&javax.faces.ViewState=${encodeURIComponent(
       this.extractor.view_state

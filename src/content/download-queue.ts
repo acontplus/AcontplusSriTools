@@ -22,6 +22,7 @@ export class DownloadQueue {
   private isPaused: boolean = false;
   private startTime: number = 0;
   private completedCount: number = 0;
+  private consecutiveFailures: number = 0;
 
   constructor(config?: Partial<BatchConfig>) {
     this.config = {
@@ -178,6 +179,7 @@ export class DownloadQueue {
         job.endTime = Date.now();
         this.completed.add(job.id);
         this.completedCount++;
+        this.consecutiveFailures = 0; // Reset en éxito
         this.removeFromQueue(job.id);
         
         // Notificar progreso
@@ -186,10 +188,20 @@ export class DownloadQueue {
           progress: this.getProgress(),
         });
       } else {
+        this.consecutiveFailures++;
+        
+        // Si hay muchos fallos consecutivos, pausar y notificar
+        if (this.consecutiveFailures >= (DOWNLOAD_CONFIG.MAX_CONSECUTIVE_FAILURES || 5)) {
+          console.warn(`⚠️ ${this.consecutiveFailures} fallos consecutivos - El SRI puede estar bloqueando. Pausando 10 segundos...`);
+          await this.sleep(10000); // Pausa de 10 segundos
+          this.consecutiveFailures = 0; // Reset después de la pausa
+        }
+        
         await this.handleFailedJob(job, downloadFunction);
       }
     } catch (error: any) {
       job.error = error.message;
+      this.consecutiveFailures++;
       await this.handleFailedJob(job, downloadFunction);
     }
   }

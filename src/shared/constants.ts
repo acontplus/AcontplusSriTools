@@ -55,15 +55,16 @@ export const LIMITS = {
 } as const;
 
 export const DOWNLOAD_CONFIG = {
-  DEFAULT_BATCH_SIZE: 15,
-  DEFAULT_CONCURRENCY: 5,
+  DEFAULT_BATCH_SIZE: 10, // Reducido para mayor estabilidad
+  DEFAULT_CONCURRENCY: 3, // Reducido para no saturar el SRI
   MIN_BATCH_SIZE: 5,
   MAX_BATCH_SIZE: 30,
   MIN_CONCURRENCY: 1,
   MAX_CONCURRENCY: 10,
-  DELAY_BETWEEN_BATCHES: 2000,
-  PROGRESS_SAVE_INTERVAL: 5, // Guardar cada 5 documentos
-  RETRY_BACKOFF_BASE: 1000, // Base para backoff exponencial
+  DELAY_BETWEEN_BATCHES: 3000, // Aumentado a 3s entre lotes
+  PROGRESS_SAVE_INTERVAL: 5,
+  RETRY_BACKOFF_BASE: 2000, // Aumentado para dar más tiempo al SRI
+  MAX_CONSECUTIVE_FAILURES: 5, // Pausar si hay 5 fallos seguidos
 } as const;
 
 export const URLS = {

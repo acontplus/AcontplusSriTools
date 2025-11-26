@@ -1137,6 +1137,12 @@ export class FacturasManager {
       const etaText = estimatedTimeRemaining > 0 ? ` | ${formatTime(estimatedTimeRemaining)} restante` : '';
       
       this.downloadBtn.innerHTML = `<span class="btn-text">Lote ${currentBatch}/${totalBatches} | ${completedDocs}/${completedDocs + pendingDocs}${speedText}${etaText}</span>`;
+
+      // Actualizar contador de descargados
+      const downloadedDocsEl = PopupUI.safeGetElement('downloaded-docs');
+      if (downloadedDocsEl) {
+        downloadedDocsEl.textContent = completedDocs.toString();
+      }
     }
 
     if (this.cancelBtn && !this.downloadCancelled) {

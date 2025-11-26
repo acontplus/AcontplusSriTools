@@ -56,12 +56,12 @@ export const LIMITS = {
 
 export const DOWNLOAD_CONFIG = {
   DEFAULT_BATCH_SIZE: 10,
-  DEFAULT_CONCURRENCY: 1, // Reducido a 1 para máxima estabilidad con ViewState
+  DEFAULT_CONCURRENCY: 3, // Aumentado a 3 para mayor velocidad
   MIN_BATCH_SIZE: 5,
   MAX_BATCH_SIZE: 50,
   MIN_CONCURRENCY: 1,
   MAX_CONCURRENCY: 5,
-  DELAY_BETWEEN_BATCHES: 3000, // 3 segundos entre lotes normales
+  DELAY_BETWEEN_BATCHES: 1500, // Reducido a 1.5s entre lotes
   LONG_PAUSE_INTERVAL: 100, // Pausa larga cada 100 documentos
   LONG_PAUSE_DURATION: 20000, // 20 segundos de pausa larga
   PROGRESS_SAVE_INTERVAL: 5,

@@ -80,22 +80,24 @@ module.exports = (env, argv) => {
       splitChunks: {
         chunks: (chunk) => {
           // No split chunks para background y servicios
-          return chunk.name !== 'background' && !chunk.name.startsWith('services/');
+          return chunk.name && chunk.name !== 'background' && !chunk.name.startsWith('services/');
         },
         cacheGroups: {
           vendors: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
-            chunks: (chunk) => chunk.name !== 'background' && !chunk.name.startsWith('services/'),
+            chunks: (chunk) => chunk.name && chunk.name !== 'background' && !chunk.name.startsWith('services/'),
             priority: 10,
             enforce: true,
           },
           shared: {
-            test: /[\\/]src[\\/]shared[\\/]/,
             name: 'shared',
-            chunks: (chunk) => chunk.name !== 'background' && !chunk.name.startsWith('services/'),
-            priority: 5,
+            chunks(chunk) {
+              return chunk.name !== 'background' && chunk.name && !chunk.name.startsWith('services/');
+            },
             minChunks: 2,
+            priority: 10,
+            reuseExistingChunk: true,
             enforce: true,
           },
         },

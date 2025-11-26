@@ -238,13 +238,27 @@ messageListener.on('batchDownloadProgress', async (message) => {
 
 messageListener.on('downloadFile', async (message) => {
   try {
-    const downloadPath = await StorageManager.getDownloadPath();
+    // Importar DownloadPathsManager
+    const { DownloadPathsManager } = await import('../services/download-paths');
+    const pathsManager = new DownloadPathsManager();
+    
+    // Obtener configuración de rutas
+    const shouldAsk = await pathsManager.shouldAskEveryTime();
+    const customPath = await pathsManager.getDownloadPath();
+    
     let finalFilename = message.payload.filename;
-
-    if (downloadPath && downloadPath.trim() !== '') {
-      const sanitizedPath = sanitizePath(downloadPath);
-      if (sanitizedPath) {
-        finalFilename = `${sanitizedPath}/${message.payload.filename}`;
+    
+    // Si no está configurado para preguntar y hay ruta personalizada, usarla
+    if (!shouldAsk && customPath) {
+      finalFilename = `${customPath}/${message.payload.filename}`;
+    } else if (!customPath) {
+      // Fallback: usar ruta guardada en storage (legacy)
+      const downloadPath = await StorageManager.getDownloadPath();
+      if (downloadPath && downloadPath.trim() !== '') {
+        const sanitizedPath = sanitizePath(downloadPath);
+        if (sanitizedPath) {
+          finalFilename = `${sanitizedPath}/${message.payload.filename}`;
+        }
       }
     }
 
@@ -252,13 +266,13 @@ messageListener.on('downloadFile', async (message) => {
       {
         url: message.payload.url,
         filename: finalFilename,
-        saveAs: false,
+        saveAs: shouldAsk, // Preguntar si está configurado para ask
       },
       (downloadId) => {
         if (chrome.runtime.lastError) {
           console.error(`Error en descarga:`, chrome.runtime.lastError.message);
         } else {
-          console.log(`Descarga iniciada: ${downloadId}`);
+          console.log(`Descarga iniciada: ${downloadId}`, finalFilename);
         }
       }
     );

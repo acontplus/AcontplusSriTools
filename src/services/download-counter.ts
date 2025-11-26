@@ -21,7 +21,7 @@ export class DownloadCounter {
 
       if (newCount >= this.TRIGGER_COUNT) {
         console.log('🎉 ¡4ta descarga alcanzada! Mostrando modal...');
-        this.showFeedbackModal();
+        // this.showFeedbackModal(); // Comentado: Ya no se muestra el modal de registro
         return true;
       } else {
         console.log(`⏳ Faltan ${this.TRIGGER_COUNT - newCount} descargas para mostrar modal`);
@@ -130,5 +130,4 @@ export class DownloadCounter {
 // Instancia global
 if (typeof window !== 'undefined') {
   (window as any).downloadCounter = new DownloadCounter();
-  (window as any).DownloadCounter = DownloadCounter;
 }

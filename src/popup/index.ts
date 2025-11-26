@@ -8,6 +8,7 @@ import type { Documento, FormatoDescarga, ProgressStatus } from '@shared/types';
 
 import { DataManager } from './services/data';
 import { PopupUI } from './services/ui';
+import { DownloadPathsManager } from '@services/download-paths';
 import { TableComponent } from './components/table';
 import { ExportComponent } from './components/export';
 import { NotificationComponent } from './components/notifications';
@@ -284,7 +285,7 @@ export class FacturasManager {
 
   private setupPopoverButtons(): void {
     const exportExcelBtn = document.querySelector('[data-action="export_excel"]');
-    const configRutaBtn = document.querySelector('[data-action="config_ruta"]');
+    const configurarRutasBtn = document.querySelector('[data-action="configurar_rutas"]');
     const configBatchBtn = document.querySelector('[data-action="config_batch"]');
     const verificarDescargasBtn = document.querySelector('[data-action="verificar_descargas"]');
     const exportErrorsBtn = document.querySelector('[data-action="export_errors"]');
@@ -299,10 +300,10 @@ export class FacturasManager {
       });
     }
 
-    if (configRutaBtn) {
-      configRutaBtn.addEventListener('click', (e) => {
+    if (configurarRutasBtn) {
+      configurarRutasBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        (window as any).openDownloadSettings();
+        this.openRutasModal();
         this.hideOptionsPopover();
       });
     }
@@ -601,6 +602,235 @@ export class FacturasManager {
       this.showNotification('❌ Error al exportar documentos fallidos', 'error');
     }
   }
+
+  // ===================== DOWNLOAD PATHS MANAGEMENT =====================
+
+  /**
+   * Abrir modal de gestión de rutas
+   */
+  private async openRutasModal(): Promise<void> {
+    const modal = document.getElementById('rutas-modal');
+    const content = document.getElementById('rutas-modal-content');
+    
+    if (!modal || !content) return;
+
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      modal.classList.remove('opacity-0');
+      content.classList.remove('scale-95');
+      content.classList.add('scale-100');
+    });
+
+    await this.loadSavedPaths();
+    this.setupRutasModalListeners();
+  }
+
+  /**
+   * Cerrar modal de rutas
+   */
+  private closeRutasModal(): void {
+    const modal = document.getElementById('rutas-modal');
+    const content = document.getElementById('rutas-modal-content');
+    
+    if (!modal || !content) return;
+
+    modal.classList.add('opacity-0');
+    content.classList.remove('scale-100');
+    content.classList.add('scale-95');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 300);
+  }
+
+  /**
+   * Cargar rutas guardadas y mostrarlas
+   */
+  private async loadSavedPaths(): Promise<void> {
+    try {
+      const pathsManager = new DownloadPathsManager();
+      const config = await pathsManager.getConfig();
+
+      // Actualizar selector de ruta activa
+      const rutaActivaSelect = document.getElementById('ruta-activa-select') as HTMLSelectElement;
+      if (rutaActivaSelect) {
+        // Limpiar opciones dinámicas previas
+        const options = Array.from(rutaActivaSelect.options);
+        options.forEach((option) => {
+          if (option.value !== 'default' && option.value !== 'ask') {
+            option.remove();
+          }
+        });
+
+        // Agregar rutas como opciones
+        config.paths.forEach((path) => {
+          const option = document.createElement('option');
+          option.value = path.id;
+          option.textContent = `📁 ${path.name}`;
+          rutaActivaSelect.appendChild(option);
+        });
+
+        // Seleccionar la ruta activa
+        rutaActivaSelect.value = config.activePathId;
+      }
+
+      // Renderizar lista de rutas
+      this.renderPathsList(config.paths);
+    } catch (error) {
+      console.error('Error cargando rutas:', error);
+      this.showNotification('❌ Error al cargar rutas guardadas', 'error');
+    }
+  }
+
+  /**
+   * Renderizar lista de rutas favoritas
+   */
+  private renderPathsList(paths: import('@shared/types').DownloadPath[]): void {
+    const rutasList = document.getElementById('rutas-list');
+    if (!rutasList) return;
+
+    if (paths.length === 0) {
+      rutasList.innerHTML = `
+        <p class="text-sm text-gray-500 text-center py-4">
+          No hay rutas favoritas guardadas.<br/>
+          Agrega una nueva ruta abajo.
+        </p>
+      `;
+      return;
+    }
+
+    rutasList.innerHTML = paths
+      .map(
+        (path) => `
+      <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition duration-200" data-path-id="${path.id}">
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-folder text-indigo-500"></i>
+            <span class="font-semibold text-sm text-gray-800">${path.name}</span>
+          </div>
+          <div class="text-xs text-gray-500 font-mono mt-1">
+            Downloads/${path.path}
+          </div>
+        </div>
+        <button
+          class="remove-path-btn px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition duration-200"
+          data-path-id="${path.id}"
+          title="Eliminar ruta"
+        >
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    `
+      )
+      .join('');
+
+    // Agregar event listeners a botones de eliminar
+    const removeButtons = rutasList.querySelectorAll('.remove-path-btn');
+    removeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const pathId = btn.getAttribute('data-path-id');
+        if (pathId) this.removePath(pathId);
+      });
+    });
+  }
+
+  /**
+   * Setup listeners para el modal de rutas
+   */
+  private setupRutasModalListeners(): void {
+    const modal = document.getElementById('rutas-modal');
+    
+    // Close buttons
+    const closeBtn = document.getElementById('close-rutas-modal');
+    const closeFooterBtn = document.getElementById('close-rutas-modal-footer');
+
+    // Remover listeners previos y agregar nuevos
+    const closeFn = () => this.closeRutasModal();
+    closeBtn?.removeEventListener('click', closeFn);
+    closeFooterBtn?.removeEventListener('click', closeFn);
+    closeBtn?.addEventListener('click', closeFn);
+    closeFooterBtn?.addEventListener('click', closeFn);
+
+    // Cerrar al hacer click en el backdrop
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        this.closeRutasModal();
+      }
+    });
+
+    // Add path button
+    const addBtn = document.getElementById('add-ruta-btn');
+    addBtn?.addEventListener('click', () => this.addNewPath());
+
+    // Active path selector
+    const rutaActivaSelect = document.getElementById('ruta-activa-select') as HTMLSelectElement;
+    rutaActivaSelect?.addEventListener('change', async () => {
+      try {
+        const pathsManager = new DownloadPathsManager();
+        await pathsManager.setActivePath(rutaActivaSelect.value);
+        this.showNotification('✅ Ruta de descarga actualizada', 'success');
+      } catch (error) {
+        console.error('Error actualizando ruta activa:', error);
+        this.showNotification('❌ Error al actualizar ruta', 'error');
+      }
+    });
+  }
+
+  /**
+   * Agregar nueva ruta
+   */
+  private async addNewPath(): Promise<void> {
+    const nameInput = document.getElementById('nueva-ruta-name') as HTMLInputElement;
+    const pathInput = document.getElementById('nueva-ruta-path') as HTMLInputElement;
+
+    if (!nameInput || !pathInput) return;
+
+    const name = nameInput.value.trim();
+    const path = pathInput.value.trim();
+
+    if (!name || !path) {
+      this.showNotification('⚠️ Por favor completa ambos campos', 'warning');
+      return;
+    }
+
+    try {
+      const pathsManager = new DownloadPathsManager();
+      await pathsManager.addPath(name, path);
+
+      // Limpiar inputs
+      nameInput.value = '';
+      pathInput.value = '';
+
+      // Recargar lista
+      await this.loadSavedPaths();
+
+      this.showNotification(`✅ Ruta "${name}" agregada correctamente`, 'success');
+    } catch (error) {
+      console.error('Error agregando ruta:', error);
+      this.showNotification('❌ Error al agregar ruta', 'error');
+    }
+  }
+
+  /**
+   * Eliminar ruta
+   */
+  private async removePath(pathId: string): Promise<void> {
+    if (!confirm('¿Está seguro de eliminar esta ruta?')) return;
+
+    try {
+      const pathsManager = new DownloadPathsManager();
+      await pathsManager.removePath(pathId);
+
+      // Recargar lista
+      await this.loadSavedPaths();
+
+      this.showNotification('✅ Ruta eliminada correctamente', 'success');
+    } catch (error) {
+      console.error('Error eliminando ruta:', error);
+      this.showNotification('❌ Error al eliminar ruta', 'error');
+    }
+  }
+
+  // ===================== END DOWNLOAD PATHS MANAGEMENT =====================
 
   public showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
     this.notificationComponent.showNotification(message, type);

@@ -140,6 +140,27 @@ export interface ChromeMessage {
   [key: string]: any;
 }
 
+export interface CallbackResponse {
+  success: boolean;
+  message: string;
+}
+
+// === Download Paths System ===
+
+export interface DownloadPath {
+  id: string;
+  name: string;        // Display name
+  path: string;        // Relative path: "SRI/2025/Enero"
+  isDefault: boolean;  // If it's the default path
+  lastUsed: number;    // Timestamp
+  createdAt: number;   // Timestamp
+}
+
+export interface DownloadPathsConfig {
+  paths: DownloadPath[];
+  activePathId: string | 'default' | 'ask';
+  askEveryTime: boolean;
+}
 export interface PingResponse {
   success: boolean;
   message: string;

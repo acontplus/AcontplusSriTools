@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   DOWNLOAD_SESSION: 'downloadSession',
   DOWNLOAD_CONFIG: 'downloadConfig',
   BATCH_PROGRESS: 'batchProgress',
+  DOWNLOAD_PATHS: 'download_paths_config',
 } as const;
 
 export const SELECTORS = {

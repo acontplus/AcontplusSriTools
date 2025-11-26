@@ -10,7 +10,7 @@ import { DownloadQueue } from './download-queue';
 export class SRIDownloader {
   private downloadCancelled = false;
 
-  constructor(private extractor: SRIDocumentosExtractor) {}
+  constructor(private extractor: SRIDocumentosExtractor) { }
 
   /**
    * Incrementa el contador de descargas y muestra modal si es necesario
@@ -79,32 +79,32 @@ export class SRIDownloader {
       const downloadQueue = new DownloadQueue(userConfig || {});
 
       // Obtener archivos ya descargados para evitar duplicados
-    const archivosExistentes = await this.obtenerArchivosExistentes();
+      const archivosExistentes = await this.obtenerArchivosExistentes();
 
-    // Filtrar documentos que ya existen
-    const facturasParaDescargar = facturas.filter((factura) => {
-      const baseFileName = factura.numero.replace(/ /g, '_');
-      
-      if (formato === 'both') {
-        // Para 'both', verificar si AMBOS archivos ya existen
-        const xmlExists = archivosExistentes.has(`${baseFileName}.xml`);
-        const pdfExists = archivosExistentes.has(`${baseFileName}.pdf`);
-        
-        // Solo descargar si al menos uno NO existe
-        return !(xmlExists && pdfExists);
-      } else {
-        // Para formato único, verificar solo ese formato
-        const fileName = `${baseFileName}.${formato}`;
-        return !archivosExistentes.has(fileName);
-      }
-    });
+      // Filtrar documentos que ya existen
+      const facturasParaDescargar = facturas.filter((factura) => {
+        const baseFileName = factura.numero.replace(/ /g, '_');
+
+        if (formato === 'both') {
+          // Para 'both', verificar si AMBOS archivos ya existen
+          const xmlExists = archivosExistentes.has(`${baseFileName}.xml`);
+          const pdfExists = archivosExistentes.has(`${baseFileName}.pdf`);
+
+          // Solo descargar si al menos uno NO existe
+          return !(xmlExists && pdfExists);
+        } else {
+          // Para formato único, verificar solo ese formato
+          const fileName = `${baseFileName}.${formato}`;
+          return !archivosExistentes.has(fileName);
+        }
+      });
 
       console.log(`📥 Descargando ${facturasParaDescargar.length} documentos (${facturas.length - facturasParaDescargar.length} ya existen)`);
 
       if (facturasParaDescargar.length === 0) {
         chrome.runtime.sendMessage({
           action: 'descargaFinalizada',
-          exitosos: facturas.length,
+          exitosos: 0,
           fallidos: 0,
           saltados: facturas.length,
           total: facturas.length,
@@ -216,33 +216,17 @@ export class SRIDownloader {
 
   private async obtenerArchivosExistentes(): Promise<Set<string>> {
     try {
-      // Validar que chrome.downloads API esté disponible
-      if (!chrome || !chrome.downloads || typeof chrome.downloads.search !== 'function') {
-        console.warn('⚠️ chrome.downloads API no disponible en este contexto');
-        return new Set();
+      // Solicitar al background que busque archivos existentes
+      const response = await chrome.runtime.sendMessage({
+        action: 'getExistingFiles',
+      });
+
+      if (response && response.success && response.files) {
+        console.log(`✅ ${response.files.length} archivos existentes encontrados`);
+        return new Set(response.files);
       }
 
-      const downloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
-        chrome.downloads.search(
-          {
-            state: 'complete',
-            exists: true, // Solo archivos que existen
-          },
-          (results) => {
-            resolve(results || []);
-          }
-        );
-      });
-
-      const archivos = new Set<string>();
-      downloads.forEach((download) => {
-        const fileName = download.filename.split(/[/\\]/).pop();
-        if (fileName) {
-          archivos.add(fileName);
-        }
-      });
-
-      return archivos;
+      return new Set();
     } catch (error) {
       console.error('Error obteniendo archivos existentes:', error);
       return new Set();
@@ -277,9 +261,8 @@ export class SRIDownloader {
 
     if (this.extractor.tipo_emisi === 'CompRecibidos') {
       const fecha = new Date(factura.fechaEmision);
-      text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3Aano=${fecha.getFullYear()}&frmPrincipal%3Ames=${
-        fecha.getMonth() + 1
-      }&frmPrincipal%3Adia=${fecha.getDate()}`;
+      text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3Aano=${fecha.getFullYear()}&frmPrincipal%3Ames=${fecha.getMonth() + 1
+        }&frmPrincipal%3Adia=${fecha.getDate()}`;
     } else {
       text_body += `&frmPrincipal%3Aopciones=ruc&frmPrincipal%3AcalendarFechaDesde_input=${new Date(
         factura.fechaEmision
@@ -335,7 +318,7 @@ export class SRIDownloader {
         // Leer el contenido HTML para análisis
         const htmlText = await blob.text();
         const htmlLower = htmlText.toLowerCase();
-        
+
         // 1. PRIORIDAD ALTA: Indicadores específicos de sesión expirada del SRI
         const sessionExpiredIndicators = [
           'sesión ha expirado',
@@ -346,11 +329,11 @@ export class SRIDownloader {
           'debe autenticarse nuevamente',
           'volver a iniciar sesión'
         ];
-        
-        const isSessionExpired = sessionExpiredIndicators.some(indicator => 
+
+        const isSessionExpired = sessionExpiredIndicators.some(indicator =>
           htmlLower.includes(indicator.toLowerCase())
         );
-        
+
         if (isSessionExpired) {
           console.error('🔒 SESIÓN SRI EXPIRADA - Cancelando todas las descargas');
           chrome.runtime.sendMessage({
@@ -360,13 +343,13 @@ export class SRIDownloader {
           this.downloadCancelled = true;
           return false;
         }
-        
+
         // 2. Detectar página de login (sin sesión activa)
         const loginIndicators = ['login', 'iniciar sesión', 'usuario', 'contraseña', 'autenticación'];
-        const hasLoginForm = loginIndicators.filter(indicator => 
+        const hasLoginForm = loginIndicators.filter(indicator =>
           htmlLower.includes(indicator)
         ).length >= 2; // Al menos 2 indicadores de login
-        
+
         if (hasLoginForm && blob.size < 50000) { // Páginas de login suelen ser < 50KB
           console.error('🔐 Página de LOGIN detectada - Sin sesión activa');
           chrome.runtime.sendMessage({
@@ -376,7 +359,7 @@ export class SRIDownloader {
           this.downloadCancelled = true;
           return false;
         }
-        
+
         // 3. Documento no existe en servidor (pero sí en localStorage)
         const notFoundIndicators = [
           'no se encuentra',
@@ -387,16 +370,16 @@ export class SRIDownloader {
           'no se pudo obtener',
           'error 404'
         ];
-        
-        const isDocumentNotFound = notFoundIndicators.some(indicator => 
+
+        const isDocumentNotFound = notFoundIndicators.some(indicator =>
           htmlLower.includes(indicator)
         );
-        
+
         if (isDocumentNotFound) {
           console.warn(`⚠️ Documento ${nameFile} no existe en servidor SRI (solo en localStorage) - Saltando...`);
           return false; // Saltar este documento, continuar con los demás
         }
-        
+
         // 4. Otros errores del servidor (500, mantenimiento, etc.)
         const serverErrorIndicators = [
           'error del servidor',
@@ -408,16 +391,16 @@ export class SRIDownloader {
           'maintenance',
           'temporalmente no disponible'
         ];
-        
-        const isServerError = serverErrorIndicators.some(indicator => 
+
+        const isServerError = serverErrorIndicators.some(indicator =>
           htmlLower.includes(indicator)
         );
-        
+
         if (isServerError) {
           console.warn(`🔧 Error del servidor SRI para ${nameFile} - Saltando...`);
           return false; // Saltar este documento
         }
-        
+
         // 5. Si es HTML pero no coincide con ningún patrón conocido
         // Probablemente un documento que no existe o página de error genérica
         if (blob.size > 100000) {

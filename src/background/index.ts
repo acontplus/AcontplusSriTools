@@ -4,6 +4,7 @@ import { VERSION, STORAGE_KEYS, LIMITS } from '@shared/constants';
 import { StorageManager } from '@shared/storage';
 import { MessageListener, updateBadge } from '@shared/messaging';
 import { sanitizePath } from '@shared/utils';
+import { DownloadPathsManager } from '@services/download-paths';
 import type { Statistics, ExtractionInfo } from '@shared/types';
 
 // Estado de la extensión
@@ -236,10 +237,37 @@ messageListener.on('batchDownloadProgress', async (message) => {
   return { success: true };
 });
 
+messageListener.on('getExistingFiles', async () => {
+  try {
+    const downloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
+      chrome.downloads.search(
+        {
+          state: 'complete',
+          exists: true,
+        },
+        (results) => {
+          resolve(results || []);
+        }
+      );
+    });
+
+    const archivos = new Set<string>();
+    downloads.forEach((download) => {
+      const fileName = download.filename.split(/[/\\]/).pop();
+      if (fileName) {
+        archivos.add(fileName);
+      }
+    });
+
+    return { success: true, files: Array.from(archivos) };
+  } catch (error) {
+    console.error('Error obteniendo archivos existentes:', error);
+    return { success: false, files: [] };
+  }
+});
+
 messageListener.on('downloadFile', async (message) => {
   try {
-    // Importar DownloadPathsManager
-    const { DownloadPathsManager } = await import('../services/download-paths');
     const pathsManager = new DownloadPathsManager();
     
     // Obtener configuración de rutas
@@ -278,7 +306,7 @@ messageListener.on('downloadFile', async (message) => {
     );
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error procesando descarga:', error);
     chrome.downloads.download({
       url: message.payload.url,

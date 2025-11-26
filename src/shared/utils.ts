@@ -198,6 +198,7 @@ export function safeSetText(element: HTMLElement | null, text: string): void {
  * Safe element getter
  */
 export function safeGetElement<T extends HTMLElement = HTMLElement>(id: string): T | null {
+  if (typeof document === 'undefined') return null;
   return document.getElementById(id) as T | null;
 }
 

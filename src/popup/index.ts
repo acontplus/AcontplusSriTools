@@ -1469,5 +1469,5 @@ document.head.appendChild(style);
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
-  (window as unknown).facturasManager = new FacturasManager();
+  (window as any).facturasManager = new FacturasManager();
 });

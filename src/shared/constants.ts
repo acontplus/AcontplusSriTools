@@ -47,7 +47,7 @@ export const DELAYS = {
 } as const;
 
 export const LIMITS = {
-  MAX_ROWS_PER_PAGE: 300,
+  MAX_ROWS_PER_PAGE: 10000, // Aumentado para permitir "Single List"
   MAX_RETRIES: 3,
   PROGRESS_UPDATE_INTERVAL: 10,
   MAX_METRICS: 100,
@@ -55,16 +55,18 @@ export const LIMITS = {
 } as const;
 
 export const DOWNLOAD_CONFIG = {
-  DEFAULT_BATCH_SIZE: 10, // Reducido para mayor estabilidad
-  DEFAULT_CONCURRENCY: 3, // Reducido para no saturar el SRI
+  DEFAULT_BATCH_SIZE: 10,
+  DEFAULT_CONCURRENCY: 1, // Reducido a 1 para máxima estabilidad con ViewState
   MIN_BATCH_SIZE: 5,
-  MAX_BATCH_SIZE: 30,
+  MAX_BATCH_SIZE: 50,
   MIN_CONCURRENCY: 1,
-  MAX_CONCURRENCY: 10,
-  DELAY_BETWEEN_BATCHES: 3000, // Aumentado a 3s entre lotes
+  MAX_CONCURRENCY: 5,
+  DELAY_BETWEEN_BATCHES: 3000, // 3 segundos entre lotes normales
+  LONG_PAUSE_INTERVAL: 100, // Pausa larga cada 100 documentos
+  LONG_PAUSE_DURATION: 20000, // 20 segundos de pausa larga
   PROGRESS_SAVE_INTERVAL: 5,
-  RETRY_BACKOFF_BASE: 2000, // Aumentado para dar más tiempo al SRI
-  MAX_CONSECUTIVE_FAILURES: 5, // Pausar si hay 5 fallos seguidos
+  RETRY_BACKOFF_BASE: 2000,
+  MAX_CONSECUTIVE_FAILURES: 5,
 } as const;
 
 export const URLS = {

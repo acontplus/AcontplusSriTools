@@ -32,6 +32,8 @@ export class DownloadQueue {
       maxRetries: config?.maxRetries || LIMITS.MAX_RETRIES,
       retryDelay: config?.retryDelay || DOWNLOAD_CONFIG.RETRY_BACKOFF_BASE,
       enableNotifications: config?.enableNotifications ?? true,
+      longPauseInterval: config?.longPauseInterval || DOWNLOAD_CONFIG.LONG_PAUSE_INTERVAL,
+      longPauseDuration: config?.longPauseDuration || DOWNLOAD_CONFIG.LONG_PAUSE_DURATION,
     };
     this.sessionId = this.generateSessionId();
   }
@@ -98,6 +100,27 @@ export class DownloadQueue {
     console.log(`🚀 Iniciando procesamiento por lotes...`);
 
     while (this.queue.length > 0 && !this.isPaused) {
+      // Verificar si toca pausa larga
+      if (
+        this.config.longPauseInterval &&
+        this.completed.size > 0 &&
+        this.completed.size % this.config.longPauseInterval === 0
+      ) {
+        const duration = this.config.longPauseDuration || 20000;
+        console.log(`☕ Pausa larga preventiva de ${duration / 1000}s para evitar bloqueo del SRI...`);
+        
+        chrome.runtime.sendMessage({
+          action: 'longPauseStarted',
+          duration: duration,
+          message: `Pausando ${duration / 1000}s para proteger la conexión con el SRI...`
+        });
+
+        await this.sleep(duration);
+        
+        chrome.runtime.sendMessage({ action: 'longPauseEnded' });
+        console.log('▶️ Reanudando después de pausa larga');
+      }
+
       const batch = this.getNextBatch();
       if (batch.length === 0) break;
 

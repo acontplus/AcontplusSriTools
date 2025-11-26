@@ -263,6 +263,8 @@ export interface BatchConfig {
   maxRetries: number;        // (default: 3)
   retryDelay: number;        // ms inicial (default: 1000)
   enableNotifications: boolean; // Notificaciones del navegador
+  longPauseInterval?: number; // Intervalo para pausa larga (opcional)
+  longPauseDuration?: number; // Duración de pausa larga (opcional)
 }
 
 export interface BatchProgress {

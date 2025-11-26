@@ -227,6 +227,15 @@ messageListener.on('storeData', async (message) => {
   }
 });
 
+messageListener.on('batchDownloadProgress', async (message) => {
+  // Reenviar progreso de lote al popup
+  chrome.runtime.sendMessage({
+    action: 'batchDownloadProgress',
+    progress: message.progress,
+  });
+  return { success: true };
+});
+
 messageListener.on('downloadFile', async (message) => {
   try {
     const downloadPath = await StorageManager.getDownloadPath();

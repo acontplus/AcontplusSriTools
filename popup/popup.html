@@ -1,849 +1,1619 @@
 <!DOCTYPE html>
 <html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del Servicio de Rentas Internas (SRI) de Ecuador. Facilita la descarga de XML y PDF de facturas electrónicas.">
-    <meta name="keywords" content="SRI, Ecuador, comprobantes electrónicos, facturas electrónicas, XML, PDF, ACONTPLUS, descarga automática, gestión tributaria">
-    <meta name="author" content="ACONTPLUS">
-    <meta name="robots" content="noindex, nofollow">
-    <meta property="og:title" content="ACONTPLUS SRI Tools - Extracción de Comprobantes Electrónicos">
-    <meta property="og:description" content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del SRI de Ecuador.">
-    <meta property="og:type" content="website">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del Servicio de Rentas Internas (SRI) de Ecuador. Facilita la descarga de XML y PDF de facturas electrónicas."
+    />
+    <meta
+      name="keywords"
+      content="SRI, Ecuador, comprobantes electrónicos, facturas electrónicas, XML, PDF, ACONTPLUS, descarga automática, gestión tributaria"
+    />
+    <meta name="author" content="ACONTPLUS" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      property="og:title"
+      content="ACONTPLUS SRI Tools - Extracción de Comprobantes Electrónicos"
+    />
+    <meta
+      property="og:description"
+      content="Herramienta gratuita para extraer y gestionar comprobantes electrónicos del SRI de Ecuador."
+    />
+    <meta property="og:type" content="website" />
     <title>Acontplus SRI Tools</title>
-    <link rel="stylesheet" href="../assets/css/popup.css">
-    <link rel="stylesheet" href="../assets/css/feedback-modal.css">
+    <link rel="stylesheet" href="../assets/css/popup.css" />
+    <link rel="stylesheet" href="../assets/css/feedback-modal.css" />
     <!-- Tailwind CSS for responsiveness - LOCAL -->
-    <link href="../assets/css/tailwind.min.css" rel="stylesheet">
+    <link href="../assets/css/tailwind.min.css" rel="stylesheet" />
     <!-- FontAwesome for icons - LOCAL -->
-    <link rel="stylesheet" href="../assets/css/fontawesome-all.min.css">
+    <link rel="stylesheet" href="../assets/css/fontawesome-all.min.css" />
     <!-- Google Fonts LOCAL -->
-    <link href="../assets/css/local-fonts.css" rel="stylesheet">
+    <link href="../assets/css/local-fonts.css" rel="stylesheet" />
     <!-- SheetJS LOCAL - Solucion CSP -->
     <script src="../assets/js/xlsx.full.min.js"></script>
-</head>
+  </head>
 
-<body class="p-4 md:p-6 min-w-[600px]" role="main">
+  <body class="p-4 md:p-6 min-w-[600px]" role="main">
     <div class="max-w-7xl mx-auto">
-        <!-- 1. Cabecera con Logo y Título -->
-        <header class="flex items-center justify-between mb-4" role="banner">
-            <div class="flex items-center gap-2" aria-label="Información de la aplicación">
-                <img src="../icons/logo_app.png" alt="Acontplus Logo" class="w-10 h-10 brand-logo object-contain"
-                    aria-hidden="true">
-                <div>
-                    <h1 class="text-xl font-bold brand-logo" style="font-family: 'Arial Rounded MT Bold', sans-serif;">
-                        ACONTPLUS</h1>
-                    <p class="text-xs text-gray-500" aria-label="Descripción de la aplicación">Facturar nunca fue tan
-                        fácil</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <nav class="tab-nav">
-                    <button class="tab-button active" data-tab="principal">Principal</button>
-                    <button class="tab-button" data-tab="ayuda">Ayuda / Tutorial</button>
-                    <button class="tab-button" data-tab="conocenos">Conoce ACONTPLUS</button>
-                </nav>
+      <!-- 1. Cabecera con Logo y Título -->
+      <header class="flex items-center justify-between mb-4" role="banner">
+        <div
+          class="flex items-center gap-2"
+          aria-label="Información de la aplicación"
+        >
+          <img
+            src="../icons/logo_app.png"
+            alt="Acontplus Logo"
+            class="w-10 h-10 brand-logo object-contain"
+            aria-hidden="true"
+          />
+          <div>
+            <h1
+              class="text-xl font-bold brand-logo"
+              style="font-family: 'Arial Rounded MT Bold', sans-serif"
+            >
+              ACONTPLUS
+            </h1>
+            <p
+              class="text-xs text-gray-500"
+              aria-label="Descripción de la aplicación"
+            >
+              Facturar nunca fue tan fácil
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <nav class="tab-nav">
+            <button class="tab-button active" data-tab="principal">
+              Principal
+            </button>
+            <button class="tab-button" data-tab="ayuda">
+              Ayuda / Tutorial
+            </button>
+            <button class="tab-button" data-tab="conocenos">
+              Conoce ACONTPLUS
+            </button>
+          </nav>
 
-                <button id="close-panel-btn" type="button"
-                    class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
-                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18"
-                        aria-hidden="true">
-                        <path fill-rule="evenodd"
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    <span class="sr-only">Close button</span>
+          <button
+            id="close-panel-btn"
+            type="button"
+            class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500"
+          >
+            <svg
+              class="w-4 h-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 18 18"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <span class="sr-only">Close button</span>
+          </button>
+        </div>
+      </header>
+
+      <div id="main">
+        <div id="principal" class="tab-panel active">
+          <section
+            class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 mt-5"
+            aria-label="Estadísticas de documentos"
+          >
+            <div
+              class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
+              aria-label="Contador de documentos totales"
+            >
+              <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                Total Documentos
+              </p>
+              <div class="flex justify-between items-center">
+                <p
+                  id="total-docs"
+                  class="text-2xl font-extrabold"
+                  aria-label="Total de documentos"
+                >
+                  0
+                </p>
+                <i data-lucide="file-text" class="h-4 w-4 opacity-70"></i>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
+              aria-label="Contador de documentos seleccionados"
+            >
+              <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                Seleccionados
+              </p>
+              <div class="flex justify-between items-center">
+                <p
+                  id="selected-docs"
+                  class="text-2xl font-extrabold"
+                  style="color: var(--brand-pink)"
+                  aria-label="Documentos seleccionados"
+                >
+                  0
+                </p>
+                <i data-lucide="check-square" class="h-4 w-4 opacity-70"></i>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
+              aria-label="Contador de documentos descargados"
+            >
+              <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                Descargados
+              </p>
+              <div class="flex justify-between items-center">
+                <p
+                  id="downloaded-docs"
+                  class="text-2xl font-extrabold text-green-600"
+                  aria-label="Documentos descargados"
+                >
+                  0
+                </p>
+                <i data-lucide="download" class="h-4 w-4 opacity-70"></i>
+              </div>
+            </div>
+
+            <div
+              class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
+              aria-label="Suma total de documentos"
+            >
+              <p class="text-xs font-medium text-gray-500 uppercase mb-1">
+                Suma Total
+              </p>
+              <div class="flex justify-between items-center">
+                <p
+                  id="total-sum"
+                  class="text-2xl font-extrabold"
+                  style="color: var(--brand-pink)"
+                  aria-label="Suma Total"
+                >
+                  0
+                </p>
+                <i data-lucide="credit-card" class="h-4 w-4 opacity-70"></i>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. Panel de Acciones -->
+          <div
+            class="flex items-center justify-between gap-4 flex-wrap"
+            aria-label="Formulario de acciones"
+          >
+            <div class="flex items-center justify-start space-x-3">
+              <!-- Search input - hidden by default, shown when data exists -->
+              <div
+                id="search-container"
+                class="relative max-w-sm"
+                style="display: none; width: 300px"
+              >
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <i
+                    data-lucide="search"
+                    class="h-4 w-4 text-gray-400 transition-colors duration-200"
+                  ></i>
+                </div>
+                <input
+                  type="text"
+                  id="search-input"
+                  placeholder="Buscar..."
+                  class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 hover:bg-white hover:border-gray-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm transition-all duration-200 outline-none"
+                />
+              </div>
+              <!-- Cancel download button - only shown during downloads -->
+              <button
+                id="cancel-download-btn"
+                style="display: none"
+                class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
+                aria-label="Cancelar descarga"
+              >
+                <i class="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-end space-x-3">
+              <!-- Botón de Analizar (Menos prominente) -->
+              <button
+                id="start-process"
+                class="flex items-center px-4 py-1.5 rounded-lg text-white font-semibold text-xs transition duration-150 shadow-md border-2 justify-center"
+                style="background-color: #d61672; border-color: #d61672"
+              >
+                <i
+                  data-lucide="search"
+                  aria-hidden="true"
+                  class="h-3 w-3 mr-2"
+                ></i>
+                <span>Escanear</span>
+              </button>
+
+              <!-- Botón/Dropdown de Descarga Masiva (Color primario de acción) -->
+              <div
+                class="flex items-center"
+                role="group"
+                aria-labelledby="download-group-label"
+              >
+                <span id="download-group-label" class="sr-only"
+                  >Opciones de descarga</span
+                >
+                <label for="doc-type" class="sr-only"
+                  >Tipo de documento a descargar</label
+                >
+                <select
+                  id="doc-type"
+                  class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
+                  aria-label="Seleccionar tipo de archivo para descargar"
+                >
+                  <option value="xml">Descargar XML</option>
+                  <option value="pdf">Descargar PDF</option>
+                  <option value="both">Descargar XML y PDF</option>
+                </select>
+                <button
+                  id="download-btn"
+                  disabled
+                  class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1 disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:hover:from-gray-400 disabled:hover:to-gray-400"
+                  aria-label="Iniciar descarga de documentos seleccionados"
+                >
+                  <i class="fa-solid fa-download" aria-hidden="true"></i>
                 </button>
-            </div>
-        </header>
+              </div>
 
-        <div id="main">
-            <div id="principal" class="tab-panel active">
+              <!-- Botón de Popover de Opciones Adicionales (Color más sutil) -->
+              <div class="relative">
+                <button
+                  id="options-toggle-popover"
+                  class="flex items-center px-4 py-2 bg-gray-900 text-white font-semibold text-xs rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md"
+                  title="Opciones adicionales"
+                >
+                  <i data-lucide="more-horizontal" class="h-3 w-3 mr-2"></i>
+                  Opciones
+                </button>
 
-                <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 mt-5"
-                    aria-label="Estadísticas de documentos">
-                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
-                        aria-label="Contador de documentos totales">
-                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Total Documentos</p>
-                        <div class="flex justify-between items-center">
-                            <p id="total-docs" class="text-2xl font-extrabold" aria-label="Total de documentos">0</p>
-                            <i data-lucide="file-text" class="h-4 w-4 opacity-70"></i>
+                <!-- Popover (Despleg able) -->
+                <div
+                  id="options-popover"
+                  class="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 z-40 transform origin-top-right transition ease-out duration-100 opacity-0 scale-95 translate-y-2 hidden"
+                >
+                  <div
+                    class="py-2"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="options-menu"
+                  >
+                    <button
+                      data-action="export_excel"
+                      class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
+                      role="menuitem"
+                    >
+                      <i data-lucide="table" class="mr-3 h-3 w-3"></i>
+                      Exportar en Excel
+                    </button>
+                    <button
+                      data-action="config_ruta"
+                      class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
+                      role="menuitem"
+                    >
+                      <i data-lucide="settings" class="mr-3 h-3 w-3"></i>
+                      Configurar Ruta
+                    </button>
+                    <button
+                      data-action="config_batch"
+                      class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
+                      role="menuitem"
+                    >
+                      <i data-lucide="sliders" class="mr-3 h-3 w-3"></i>
+                      Config. Avanzada
+                    </button>
+                    <button
+                      data-action="verificar_descargas"
+                      class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
+                      role="menuitem"
+                    >
+                      <i data-lucide="check-check" class="mr-3 h-3 w-3"></i>
+                      Verificar Descargas
+                    </button>
+                    <button
+                      data-action="export_errors"
+                      id="export-errors-btn"
+                      style="display: none"
+                      class="flex items-center w-full px-4 py-2 text-xs text-red-700 hover:bg-red-50 hover:text-red-800 transition duration-150"
+                      role="menuitem"
+                    >
+                      <i data-lucide="alert-circle" class="mr-3 h-3 w-3"></i>
+                      Exportar Errores
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Modal de Configuración de Descarga (con diseño de popover) -->
+                <div
+                  id="download-settings-modal"
+                  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden opacity-0 transition-opacity duration-300 ease-out"
+                  role="dialog"
+                  aria-label="Configuración de ubicación de descarga"
+                >
+                  <div
+                    id="modal-backdrop"
+                    class="flex items-center justify-center min-h-screen p-4"
+                  >
+                    <div
+                      id="download-settings-content"
+                      class="w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 transform scale-95 transition-transform duration-300 ease-out"
+                    >
+                      <div class="flex items-center justify-between mb-4">
+                        <h3
+                          class="text-lg font-semibold text-gray-800 flex items-center gap-2"
+                        >
+                          <i
+                            class="fa-solid fa-folder-open text-pink-500"
+                            aria-hidden="true"
+                          ></i>
+                          Ubicación de guardado:
+                        </h3>
+                        <button
+                          id="close-download-settings"
+                          class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100"
+                        >
+                          <i
+                            class="fa-solid fa-times text-sm"
+                            aria-hidden="true"
+                          ></i>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <div class="flex flex-1">
+                          <input
+                            id="download-location"
+                            type="text"
+                            placeholder="Si está vacío, se usará la carpeta de Descargas predeterminada"
+                            class="bg-gray-100 text-gray-800 text-sm px-3 py-2 rounded-l-md border border-r-0 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 flex-1 outline-none transition-all duration-200"
+                          />
+                          <button
+                            id="save-download-path"
+                            class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white text-sm font-medium px-4 py-2 rounded-r-md border border-pink-500 transition-all duration-200 flex items-center gap-2 hover:shadow-lg transform hover:scale-105"
+                          >
+                            <i
+                              class="fa-solid fa-save text-xs"
+                              aria-hidden="true"
+                            ></i>
+                            Guardar
+                          </button>
                         </div>
+                      </div>
                     </div>
+                  </div>
+                </div>
 
-                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
-                        aria-label="Contador de documentos seleccionados">
-                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Seleccionados</p>
-                        <div class="flex justify-between items-center">
-                            <p id="selected-docs" class="text-2xl font-extrabold" style="color: var(--brand-pink);"
-                                aria-label="Documentos seleccionados">0</p>
-                            <i data-lucide="check-square" class="h-4 w-4 opacity-70"></i>
-                        </div>
-                    </div>
+                <!-- Modal de Configuración Avanzada de Descargas por Lotes -->
+                <div
+                  id="batch-config-modal"
+                  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden opacity-0 transition-opacity duration-300 ease-out"
+                  role="dialog"
+                  aria-label="Configuración avanzada de descargas"
+                >
+                  <div
+                    id="batch-modal-backdrop"
+                    class="flex items-center justify-center min-h-screen p-4"
+                  >
+                    <div
+                      id="batch-config-content"
+                      class="w-[500px] bg-white border border-gray-200 rounded-xl shadow-2xl p-6 transform scale-95 transition-transform duration-300 ease-out max-h-[90vh] overflow-y-auto"
+                    >
+                      <!-- Header -->
+                      <div class="flex items-center justify-between mb-6">
+                        <h3
+                          class="text-lg font-semibold text-gray-800 flex items-center gap-2"
+                        >
+                          <i
+                            class="fa-solid fa-sliders text-indigo-500"
+                            aria-hidden="true"
+                          ></i>
+                          Configuración Avanzada
+                        </h3>
+                        <button
+                          id="close-batch-config"
+                          class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100"
+                        >
+                          <i
+                            class="fa-solid fa-times text-sm"
+                            aria-hidden="true"
+                          ></i>
+                        </button>
+                      </div>
 
-                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
-                        aria-label="Contador de documentos descargados">
-                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Descargados</p>
-                        <div class="flex justify-between items-center">
-                            <p id="downloaded-docs" class="text-2xl font-extrabold text-green-600"
-                                aria-label="Documentos descargados">0</p>
-                            <i data-lucide="download" class="h-4 w-4 opacity-70"></i>
-                        </div>
-                    </div>
+                      <!-- Descripción -->
+                      <div
+                        class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6"
+                      >
+                        <p class="text-xs text-blue-800">
+                          <i class="fa-solid fa-info-circle mr-1"></i>
+                          Optimiza las descargas masivas ajustando el tamaño de
+                          lote, concurrencia y reintentos.
+                        </p>
+                      </div>
 
-                    <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 transition duration-300 hover:shadow-lg"
-                        aria-label="Suma total de documentos">
-                        <p class="text-xs font-medium text-gray-500 uppercase mb-1">Suma Total</p>
-                        <div class="flex justify-between items-center">
-                            <p id="total-sum" class="text-2xl font-extrabold" style="color: var(--brand-pink);"
-                                aria-label="Suma Total">0</p>
-                            <i data-lucide="credit-card" class="h-4 w-4 opacity-70"></i>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 3. Panel de Acciones -->
-                <div class="flex items-center justify-between gap-4 flex-wrap" aria-label="Formulario de acciones">
-                    <div class="flex items-center justify-start space-x-3">
-                        <!-- Search input - hidden by default, shown when data exists -->
-                        <div id="search-container" class="relative max-w-sm" style="display: none; width: 300px">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i data-lucide="search" class="h-4 w-4 text-gray-400 transition-colors duration-200"></i>
-                            </div>
+                      <!-- Configuraciones -->
+                      <div class="space-y-4">
+                        <!-- Batch Size -->
+                        <div>
+                          <label
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Tamaño de Lote
+                            <span class="text-xs text-gray-500 font-normal"
+                              >(docs/lote)</span
+                            >
+                          </label>
+                          <div class="flex items-center gap-3">
                             <input
-                                type="text"
-                                id="search-input"
-                                placeholder="Buscar..."
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 hover:bg-white hover:border-gray-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm transition-all duration-200 outline-none"
+                              type="range"
+                              id="batch-size-slider"
+                              min="5"
+                              max="30"
+                              value="15"
+                              step="5"
+                              class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                             />
+                            <span
+                              id="batch-size-value"
+                              class="text-sm font-semibold text-indigo-600 w-10 text-right"
+                              >15</span
+                            >
+                          </div>
+                          <p class="text-xs text-gray-500 mt-1">
+                            Documentos procesados por lote (5-30)
+                          </p>
                         </div>
-                        <!-- Cancel download button - only shown during downloads -->
-                        <button id="cancel-download-btn"
-                            style="display: none;"
-                            class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                            aria-label="Cancelar descarga">
-                            <i class="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+
+                        <!-- Concurrency -->
+                        <div>
+                          <label
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Descargas Paralelas
+                            <span class="text-xs text-gray-500 font-normal"
+                              >(concurrencia)</span
+                            >
+                          </label>
+                          <div class="flex items-center gap-3">
+                            <input
+                              type="range"
+                              id="concurrency-slider"
+                              min="1"
+                              max="10"
+                              value="5"
+                              step="1"
+                              class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500"
+                            />
+                            <span
+                              id="concurrency-value"
+                              class="text-sm font-semibold text-green-600 w-10 text-right"
+                              >5</span
+                            >
+                          </div>
+                          <p class="text-xs text-gray-500 mt-1">
+                            Descargas simultáneas (1-10)
+                          </p>
+                        </div>
+
+                        <!-- Delay Between Batches -->
+                        <div>
+                          <label
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Pausa Entre Lotes
+                            <span class="text-xs text-gray-500 font-normal"
+                              >(ms)</span
+                            >
+                          </label>
+                          <div class="flex items-center gap-3">
+                            <input
+                              type="range"
+                              id="batch-delay-slider"
+                              min="1000"
+                              max="5000"
+                              value="2000"
+                              step="500"
+                              class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                            />
+                            <span
+                              id="batch-delay-value"
+                              class="text-sm font-semibold text-purple-600 w-16 text-right"
+                              >2000ms</span
+                            >
+                          </div>
+                          <p class="text-xs text-gray-500 mt-1">
+                            Tiempo de espera entre lotes (1s-5s)
+                          </p>
+                        </div>
+
+                        <!-- Max Retries -->
+                        <div>
+                          <label
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Reintentos Máximos
+                            <span class="text-xs text-gray-500 font-normal"
+                              >(por documento)</span
+                            >
+                          </label>
+                          <div class="flex items-center gap-3">
+                            <input
+                              type="range"
+                              id="max-retries-slider"
+                              min="0"
+                              max="5"
+                              value="3"
+                              step="1"
+                              class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                            />
+                            <span
+                              id="max-retries-value"
+                              class="text-sm font-semibold text-orange-600 w-10 text-right"
+                              >3</span
+                            >
+                          </div>
+                          <p class="text-xs text-gray-500 mt-1">
+                            Intentos ante errores (0-5)
+                          </p>
+                        </div>
+
+                        <!-- Notificaciones -->
+                        <div class="pt-2 border-t border-gray-200">
+                          <label class="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              id="enable-notifications"
+                              checked
+                              class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500"
+                            />
+                            <span class="ml-2 text-sm text-gray-700"
+                              >Notificaciones del navegador</span
+                            >
+                          </label>
+                          <p class="text-xs text-gray-500 ml-6 mt-1">
+                            Recibe alertas al completar lotes
+                          </p>
+                        </div>
+                      </div>
+
+                      <!-- Footer Actions -->
+                      <div
+                        class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200"
+                      >
+                        <button
+                          id="reset-batch-config"
+                          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200"
+                        >
+                          Restablecer
                         </button>
-
-                    </div>
-
-                    <div class="flex items-center justify-end space-x-3">
-                        <!-- Botón de Analizar (Menos prominente) -->
-                        <button id="start-process"
-                            class="flex items-center px-4 py-1.5 rounded-lg text-white font-semibold text-xs transition duration-150 shadow-md border-2 justify-center"
-                            style="background-color: #D61672; border-color: #D61672;">
-                            <i data-lucide="search" aria-hidden="true" class="h-3 w-3 mr-2"></i>
-                            <span>Escanear</span>
+                        <button
+                          id="save-batch-config"
+                          class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 rounded-lg transition duration-200 flex items-center gap-2"
+                        >
+                          <i class="fa-solid fa-check text-xs"></i>
+                          Guardar Cambios
                         </button>
-
-                        <!-- Botón/Dropdown de Descarga Masiva (Color primario de acción) -->
-                        <div class="flex items-center" role="group" aria-labelledby="download-group-label">
-                            <span id="download-group-label" class="sr-only">Opciones de descarga</span>
-                            <label for="doc-type" class="sr-only">Tipo de documento a descargar</label>
-                            <select id="doc-type"
-                                class="h-full py-2 pl-3 pr-8 rounded-l-md border-gray-300 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
-                                aria-label="Seleccionar tipo de archivo para descargar">
-                                <option value="xml">Descargar XML</option>
-                                <option value="pdf">Descargar PDF</option>
-                                <option value="both">Descargar XML y PDF</option>
-                            </select>
-                            <button id="download-btn" disabled
-                                class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-2 px-5 rounded-r-md transition-all duration-300 flex items-center gap-2 -ml-1 disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:hover:from-gray-400 disabled:hover:to-gray-400"
-                                aria-label="Iniciar descarga de documentos seleccionados">
-                                <i class="fa-solid fa-download" aria-hidden="true"></i>
-                            </button>
-                        </div>
-
-                        <!-- Botón de Popover de Opciones Adicionales (Color más sutil) -->
-                        <div class="relative">
-                            <button id="options-toggle-popover"
-                                class="flex items-center px-4 py-2 bg-gray-900 text-white font-semibold text-xs rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md"
-                                title="Opciones adicionales">
-                                <i data-lucide="more-horizontal" class="h-3 w-3 mr-2"></i>
-                                Opciones
-                            </button>
-
-                            <!-- Popover (Desplegable) -->
-                            <div id="options-popover"
-                                class="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 z-40 transform origin-top-right transition ease-out duration-100 opacity-0 scale-95 translate-y-2 hidden">
-                                <div class="py-2" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                                    <button data-action="export_excel"
-                                        class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                        role="menuitem">
-                                        <i data-lucide="table" class="mr-3 h-3 w-3"></i>
-                                        Exportar en Excel
-                                    </button>
-                                    <button data-action="config_ruta"
-                                        class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                        role="menuitem">
-                                        <i data-lucide="settings" class="mr-3 h-3 w-3"></i>
-                                        Configurar Ruta
-                                    </button>
-                                    <button data-action="verificar_descargas"
-                                        class="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition duration-150"
-                                        role="menuitem">
-                                        <i data-lucide="check-check" class="mr-3 h-3 w-3"></i>
-                                        Verificar Descargas
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Modal de Configuración de Descarga (con diseño de popover) -->
-                            <div id="download-settings-modal"
-                                class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden opacity-0 transition-opacity duration-300 ease-out"
-                                role="dialog" aria-label="Configuración de ubicación de descarga">
-                                <div id="modal-backdrop" class="flex items-center justify-center min-h-screen p-4">
-                                    <div id="download-settings-content"
-                                        class="w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 transform scale-95 transition-transform duration-300 ease-out">
-                                        <div class="flex items-center justify-between mb-4">
-                                            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                                <i class="fa-solid fa-folder-open text-pink-500" aria-hidden="true"></i>
-                                                Ubicación de guardado:
-                                            </h3>
-                                            <button id="close-download-settings"
-                                                class="text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-100">
-                                                <i class="fa-solid fa-times text-sm" aria-hidden="true"></i>
-                                            </button>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <div class="flex flex-1">
-                                                <input id="download-location" type="text"
-                                                    placeholder="Si está vacío, se usará la carpeta de Descargas predeterminada"
-                                                    class="bg-gray-100 text-gray-800 text-sm px-3 py-2 rounded-l-md border border-r-0 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 flex-1 outline-none transition-all duration-200">
-                                                <button id="save-download-path"
-                                                    class="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white text-sm font-medium px-4 py-2 rounded-r-md border border-pink-500 transition-all duration-200 flex items-center gap-2 hover:shadow-lg transform hover:scale-105">
-                                                    <i class="fa-solid fa-save text-xs" aria-hidden="true"></i>
-                                                    Guardar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                      </div>
                     </div>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
 
-                <!-- Loading State -->
-                <section id="loading" class="loading" style="display: none;" aria-live="polite"
-                    aria-label="Indicador de carga" role="status">
-                    <div class="spinner" aria-hidden="true"></div>
-                    <p aria-label="Mensaje de carga">Cargando comprobantes electronicos...</p>
-                    <div id="pagination-progress" class="pagination-progress" style="display: none;"
-                        aria-label="Progreso de paginación">
-                        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
-                            aria-valuemax="100" aria-label="Barra de progreso">
-                            <div id="progress-fill" class="progress-fill"></div>
-                        </div>
-                        <div class="progress-text">
-                            Procesando p&aacute;gina <span id="current-page">1</span> de <span id="total-pages">1</span>
-                            <br>
-                            <small style="color: #6c757d;" aria-label="Mensaje de optimización">Aplicando optimizaciones
-                                automaticas...</small>
-                        </div>
-                    </div>
-                </section>
+          <!-- Loading State -->
+          <section
+            id="loading"
+            class="loading"
+            style="display: none"
+            aria-live="polite"
+            aria-label="Indicador de carga"
+            role="status"
+          >
+            <div class="spinner" aria-hidden="true"></div>
+            <p aria-label="Mensaje de carga">
+              Cargando comprobantes electronicos...
+            </p>
+            <div
+              id="pagination-progress"
+              class="pagination-progress"
+              style="display: none"
+              aria-label="Progreso de paginación"
+            >
+              <div
+                class="progress-bar"
+                role="progressbar"
+                aria-valuenow="0"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label="Barra de progreso"
+              >
+                <div id="progress-fill" class="progress-fill"></div>
+              </div>
+              <div class="progress-text">
+                Procesando p&aacute;gina <span id="current-page">1</span> de
+                <span id="total-pages">1</span>
+                <br />
+                <small
+                  style="color: #6c757d"
+                  aria-label="Mensaje de optimización"
+                  >Aplicando optimizaciones automaticas...</small
+                >
+              </div>
+            </div>
+          </section>
 
-                <!-- 4. Tabla de Documentos -->
-                <section id="table-container" class="bg-white rounded-lg shadow-md overflow-hidden mt-3"
-                    aria-label="Tabla de documentos electrónicos del SRI">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-600" role="table"
-                            aria-label="Documentos electrónicos del SRI" aria-describedby="docs-table-body">
-                            <caption class="sr-only">Documentos electrónicos del Servicio de Rentas Internas</caption>
-                            <thead class="text-xs uppercase table-sm table-header">
-                                <tr role="row">
-                                    <th scope="col" class="p-4">
-                                        <input type="checkbox" id="select-all" class="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500" aria-label="Seleccionar/deseleccionar todos los documentos">
-                                    </th>
-                                    <th scope="col" class="px-6 py-3" role="columnheader">Nro</th>
-                                    <th scope="col" class="px-6 py-3" role="columnheader">Nro Comprobante</th>
-                                    <th scope="col" class="px-6 py-3" role="columnheader">RUC</th>
-                                    <th scope="col" class="px-6 py-3" role="columnheader">Razón Social</th>
-                                    <th scope="col" class="px-6 py-3" role="columnheader">Fecha Emisión</th>
-                                    <th scope="col" class="px-6 py-3 text-right" role="columnheader">Total ($)</th>
-                                    <th scope="col" class="px-6 py-3 text-center" role="columnheader">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="docs-table-body" role="rowgroup">
-                                <!-- Las filas se insertarán aquí dinámicamente -->
-                                <tr class="text-center" role="row">
-                                    <td colspan="8" class="p-8 text-gray-500" role="gridcell"
-                                        aria-label="Mensaje indicando que aún no se han analizado comprobantes">
-                                        Aún no se han analizado los comprobantes. Presione 'Analizar'.
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot id="docs-table-footer" class="bg-gray-50 font-bold" role="rowgroup">
-                                <!-- Totales se insertarán aquí -->
-                            </tfoot>
-                        </table>
-                    </div>
-                </section>
+          <!-- 4. Tabla de Documentos -->
+          <section
+            id="table-container"
+            class="bg-white rounded-lg shadow-md overflow-hidden mt-3"
+            aria-label="Tabla de documentos electrónicos del SRI"
+          >
+            <div class="overflow-x-auto">
+              <table
+                class="w-full text-sm text-left text-gray-600"
+                role="table"
+                aria-label="Documentos electrónicos del SRI"
+                aria-describedby="docs-table-body"
+              >
+                <caption class="sr-only">
+                  Documentos electrónicos del Servicio de Rentas Internas
+                </caption>
+                <thead class="text-xs uppercase table-sm table-header">
+                  <tr role="row">
+                    <th scope="col" class="p-4">
+                      <input
+                        type="checkbox"
+                        id="select-all"
+                        class="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500"
+                        aria-label="Seleccionar/deseleccionar todos los documentos"
+                      />
+                    </th>
+                    <th scope="col" class="px-6 py-3" role="columnheader">
+                      Nro
+                    </th>
+                    <th scope="col" class="px-6 py-3" role="columnheader">
+                      Nro Comprobante
+                    </th>
+                    <th scope="col" class="px-6 py-3" role="columnheader">
+                      RUC
+                    </th>
+                    <th scope="col" class="px-6 py-3" role="columnheader">
+                      Razón Social
+                    </th>
+                    <th scope="col" class="px-6 py-3" role="columnheader">
+                      Fecha Emisión
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-6 py-3 text-right"
+                      role="columnheader"
+                    >
+                      Total ($)
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-6 py-3 text-center"
+                      role="columnheader"
+                    >
+                      Estado
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="docs-table-body" role="rowgroup">
+                  <!-- Las filas se insertarán aquí dinámicamente -->
+                  <tr class="text-center" role="row">
+                    <td
+                      colspan="8"
+                      class="p-8 text-gray-500"
+                      role="gridcell"
+                      aria-label="Mensaje indicando que aún no se han analizado comprobantes"
+                    >
+                      Aún no se han analizado los comprobantes. Presione
+                      'Analizar'.
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot
+                  id="docs-table-footer"
+                  class="bg-gray-50 font-bold"
+                  role="rowgroup"
+                >
+                  <!-- Totales se insertarán aquí -->
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div id="ayuda" class="tab-panel">
+          <!-- Hero Section Mejorado -->
+          <div
+            class="help-hero bg-gradient-to-br from-pink-50 via-orange-50 to-yellow-50 rounded-2xl p-8 mb-8 border border-pink-100"
+          >
+            <div class="text-center">
+              <h2
+                class="text-3xl font-bold bg-gradient-to-r from-pink-600 to-orange-500 bg-clip-text text-transparent mb-4"
+              >
+                Centro de Ayuda ACONTPLUS SRI Tools
+              </h2>
+              <p
+                class="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed"
+              >
+                Domina la extracción de comprobantes electrónicos del SRI con
+                nuestras guías paso a paso, videos tutoriales y respuestas a las
+                preguntas más frecuentes.
+              </p>
+              <div class="flex justify-center gap-4 mt-6">
+                <span
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+                >
+                  <i class="fa-solid fa-check-circle mr-2"></i>
+                  100% Gratuito
+                </span>
+                <span
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                >
+                  <i class="fa-solid fa-shield-check mr-2"></i>
+                  Seguro y Confiable
+                </span>
+                <span
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800"
+                >
+                  <i class="fa-solid fa-bolt mr-2"></i>
+                  Súper Rápido
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Tutorial Mejorado -->
+          <div class="video-section mb-10">
+            <div class="flex items-center justify-center mb-6">
+              <div
+                class="flex items-center bg-white rounded-full px-6 py-3 shadow-lg border border-gray-200"
+              >
+                <i
+                  class="fa-solid fa-play-circle text-red-500 text-xl mr-3"
+                ></i>
+                <h3 class="text-xl font-bold text-gray-800">
+                  Video Tutorial Completo
+                </h3>
+              </div>
             </div>
 
-            <div id="ayuda" class="tab-panel">
-                <!-- Hero Section Mejorado -->
-                <div class="help-hero bg-gradient-to-br from-pink-50 via-orange-50 to-yellow-50 rounded-2xl p-8 mb-8 border border-pink-100">
-                    <div class="text-center">
-                        <h2 class="text-3xl font-bold bg-gradient-to-r from-pink-600 to-orange-500 bg-clip-text text-transparent mb-4">
-                            Centro de Ayuda ACONTPLUS SRI Tools
-                        </h2>
-                        <p class="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
-                            Domina la extracción de comprobantes electrónicos del SRI con nuestras guías paso a paso, 
-                            videos tutoriales y respuestas a las preguntas más frecuentes.
-                        </p>
-                        <div class="flex justify-center gap-4 mt-6">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                <i class="fa-solid fa-check-circle mr-2"></i>
-                                100% Gratuito
-                            </span>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                <i class="fa-solid fa-shield-check mr-2"></i>
-                                Seguro y Confiable
-                            </span>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                                <i class="fa-solid fa-bolt mr-2"></i>
-                                Súper Rápido
-                            </span>
-                        </div>
+            <div class="video-container relative max-w-4xl mx-auto">
+              <div
+                id="youtube-video-link"
+                class="relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-200 cursor-pointer hover:scale-105 transition-transform duration-300"
+              >
+                <div
+                  class="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-blue-500/10"
+                ></div>
+
+                <!-- Video Thumbnail -->
+                <div
+                  class="relative z-10 flex items-center justify-center h-96 bg-gradient-to-br from-gray-800 to-gray-900"
+                >
+                  <div class="text-center text-white">
+                    <div
+                      class="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4 hover:bg-red-700 transition-colors duration-300"
+                    >
+                      <i class="fa-solid fa-play text-3xl ml-1"></i>
                     </div>
+                    <h4 class="text-xl font-bold mb-2">
+                      Tutorial Completo ACONTPLUS SRI Tools
+                    </h4>
+                    <p class="text-gray-300 mb-4">
+                      Aprende a usar la extensión paso a paso
+                    </p>
+                    <div
+                      class="inline-flex items-center px-4 py-2 bg-white/10 rounded-full text-sm"
+                    >
+                      <i class="fa-solid fa-external-link-alt mr-2"></i>
+                      Haz clic para ver en YouTube
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                <!-- Video Tutorial Mejorado -->
-                <div class="video-section mb-10">
-                    <div class="flex items-center justify-center mb-6">
-                        <div class="flex items-center bg-white rounded-full px-6 py-3 shadow-lg border border-gray-200">
-                            <i class="fa-solid fa-play-circle text-red-500 text-xl mr-3"></i>
-                            <h3 class="text-xl font-bold text-gray-800">Video Tutorial Completo</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="video-container relative max-w-4xl mx-auto">
-                        <div id="youtube-video-link" class="relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-200 cursor-pointer hover:scale-105 transition-transform duration-300">
-                            <div class="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-blue-500/10"></div>
-                            
-                            <!-- Video Thumbnail -->
-                            <div class="relative z-10 flex items-center justify-center h-96 bg-gradient-to-br from-gray-800 to-gray-900">
-                                <div class="text-center text-white">
-                                    <div class="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4 hover:bg-red-700 transition-colors duration-300">
-                                        <i class="fa-solid fa-play text-3xl ml-1"></i>
-                                    </div>
-                                    <h4 class="text-xl font-bold mb-2">Tutorial Completo ACONTPLUS SRI Tools</h4>
-                                    <p class="text-gray-300 mb-4">Aprende a usar la extensión paso a paso</p>
-                                    <div class="inline-flex items-center px-4 py-2 bg-white/10 rounded-full text-sm">
-                                        <i class="fa-solid fa-external-link-alt mr-2"></i>
-                                        Haz clic para ver en YouTube
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center justify-center mt-4 space-x-6">
-                            <div class="flex items-center text-sm text-gray-600">
-                                <i class="fa-solid fa-clock mr-2 text-blue-500"></i>
-                                <span>Duración: 5 minutos</span>
-                            </div>
-                            <div class="flex items-center text-sm text-gray-600">
-                                <i class="fa-solid fa-eye mr-2 text-green-500"></i>
-                                <span>Tutorial paso a paso</span>
-                            </div>
-                            <div class="flex items-center text-sm text-gray-600">
-                                <i class="fa-solid fa-star mr-2 text-yellow-500"></i>
-                                <span>Recomendado para principiantes</span>
-                            </div>
-                        </div>
-                    </div>
+              <div class="flex items-center justify-center mt-4 space-x-6">
+                <div class="flex items-center text-sm text-gray-600">
+                  <i class="fa-solid fa-clock mr-2 text-blue-500"></i>
+                  <span>Duración: 5 minutos</span>
                 </div>
-
-                <!-- Guía Rápida Mejorada -->
-                <div class="quick-guide mb-12">
-                    <div class="text-center mb-8">
-                        <div class="inline-flex items-center bg-gradient-to-r from-pink-100 to-orange-100 rounded-full px-6 py-3 shadow-lg border border-pink-200">
-                            <i class="fa-solid fa-rocket text-pink-600 text-xl mr-3"></i>
-                            <h3 class="text-2xl font-bold bg-gradient-to-r from-pink-600 to-orange-500 bg-clip-text text-transparent">
-                                Guía Rápida - 4 Pasos Simples
-                            </h3>
-                        </div>
-                        <p class="text-gray-600 mt-3 max-w-2xl mx-auto">
-                            Sigue estos pasos y tendrás todos tus comprobantes descargados en menos de 2 minutos
-                        </p>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <!-- Paso 1 -->
-                        <div class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-blue-100 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 hover:-translate-y-1">
-                            <div class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                1
-                            </div>
-                            <div class="ml-4">
-                                <div class="flex items-center mb-3">
-                                    <i class="fa-solid fa-globe text-blue-500 text-2xl mr-3"></i>
-                                    <h4 class="font-bold text-gray-800 text-lg">Navega al Portal SRI</h4>
-                                </div>
-                                <p class="text-gray-600 leading-relaxed">
-                                    Ingresa a <strong>srienlinea.sri.gob.ec</strong> y ve a la sección de 
-                                    <span class="bg-blue-50 px-2 py-1 rounded text-blue-700 font-medium">Comprobantes Electrónicos</span>
-                                </p>
-                                <div class="mt-3 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-                                    💡 <strong>Tip:</strong> Asegúrate de haber iniciado sesión en el SRI
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Paso 2 -->
-                        <div class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-2xl hover:border-green-200 transition-all duration-300 hover:-translate-y-1">
-                            <div class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                2
-                            </div>
-                            <div class="ml-4">
-                                <div class="flex items-center mb-3">
-                                    <i class="fa-solid fa-search text-green-500 text-2xl mr-3"></i>
-                                    <h4 class="font-bold text-gray-800 text-lg">Haz Clic en "Escanear"</h4>
-                                </div>
-                                <p class="text-gray-600 leading-relaxed">
-                                    La extensión analizará automáticamente la página y detectará todos los 
-                                    <span class="bg-green-50 px-2 py-1 rounded text-green-700 font-medium">documentos disponibles</span>
-                                </p>
-                                <div class="mt-3 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-                                    ⚡ <strong>Súper rápido:</strong> El análisis toma solo unos segundos
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Paso 3 -->
-                        <div class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-2xl hover:border-purple-200 transition-all duration-300 hover:-translate-y-1">
-                            <div class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                3
-                            </div>
-                            <div class="ml-4">
-                                <div class="flex items-center mb-3">
-                                    <i class="fa-solid fa-check-square text-purple-500 text-2xl mr-3"></i>
-                                    <h4 class="font-bold text-gray-800 text-lg">Selecciona Documentos</h4>
-                                </div>
-                                <p class="text-gray-600 leading-relaxed">
-                                    Marca los comprobantes que necesitas o usa 
-                                    <span class="bg-purple-50 px-2 py-1 rounded text-purple-700 font-medium">"Seleccionar Todos"</span> 
-                                    para elegir todos a la vez
-                                </p>
-                                <div class="mt-3 text-xs text-purple-600 bg-purple-50 px-3 py-2 rounded-lg">
-                                    🎯 <strong>Inteligente:</strong> Puedes filtrar por fecha, RUC o monto
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Paso 4 -->
-                        <div class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-pink-100 hover:shadow-2xl hover:border-pink-200 transition-all duration-300 hover:-translate-y-1">
-                            <div class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                4
-                            </div>
-                            <div class="ml-4">
-                                <div class="flex items-center mb-3">
-                                    <i class="fa-solid fa-download text-pink-500 text-2xl mr-3"></i>
-                                    <h4 class="font-bold text-gray-800 text-lg">Descarga o Exporta</h4>
-                                </div>
-                                <p class="text-gray-600 leading-relaxed">
-                                    Elige entre <span class="bg-pink-50 px-2 py-1 rounded text-pink-700 font-medium">XML, PDF</span> 
-                                    o exporta a <span class="bg-green-50 px-2 py-1 rounded text-green-700 font-medium">Excel/CSV</span> 
-                                    para tu contabilidad
-                                </p>
-                                <div class="mt-3 text-xs text-pink-600 bg-pink-50 px-3 py-2 rounded-lg">
-                                    📊 <strong>Versátil:</strong> Compatible con todos los sistemas contables
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex items-center text-sm text-gray-600">
+                  <i class="fa-solid fa-eye mr-2 text-green-500"></i>
+                  <span>Tutorial paso a paso</span>
                 </div>
-
-                <!-- Preguntas Frecuentes Mejoradas -->
-                <div class="faq-section mb-12">
-                    <div class="text-center mb-8">
-                        <div class="inline-flex items-center bg-gradient-to-r from-pink-100 to-orange-100 rounded-full px-6 py-3 shadow-lg border border-pink-200">
-                            <i class="fa-solid fa-lightbulb text-pink-600 text-xl mr-3"></i>
-                            <h3 class="text-2xl font-bold bg-gradient-to-r from-pink-600 to-orange-500 bg-clip-text text-transparent">
-                                Preguntas Frecuentes
-                            </h3>
-                        </div>
-                        <p class="text-gray-600 mt-3 max-w-2xl mx-auto">
-                            Encuentra respuestas rápidas a las dudas más comunes sobre ACONTPLUS SRI Tools
-                        </p>
-                    </div>
-
-                    <div class="max-w-4xl mx-auto space-y-4">
-                        <!-- FAQ 1 -->
-                        <div class="faq-item-modern group">
-                            <div class="bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                                <button class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-blue-50 transition-colors duration-200">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                                            <i class="fa-solid fa-folder-open text-white text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800 text-lg">¿Dónde se guardan mis archivos?</h4>
-                                            <p class="text-sm text-gray-500">Ubicación y configuración de descargas</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
-                                </button>
-                                <div class="faq-content hidden px-6 pb-6">
-                                    <div class="ml-16 p-4">
-                                        <p class="text-gray-700 mb-3">
-                                            Por defecto, los archivos se guardan en la carpeta "Descargas" de tu navegador. 
-                                            Sin embargo, puedes personalizar la ubicación:
-                                        </p>
-                                        <ul class="list-disc list-inside text-gray-600 space-y-1 ml-4">
-                                            <li>Ve a Opciones → Configurar Ruta</li>
-                                            <li>Especifica tu carpeta preferida (ej: "Contabilidad/SRI")</li>
-                                            <li>Los archivos se organizarán automáticamente</li>
-                                        </ul>
-                                        <p class="text-sm text-gray-600 mt-3">
-                                            Tip: Usa nombres como "SRI_2024" para mejor organización
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- FAQ 2 -->
-                        <div class="faq-item-modern group">
-                            <div class="bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                                <button class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-green-50 transition-colors duration-200">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                                            <i class="fa-solid fa-file-excel text-white text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800 text-lg">¿Puedo exportar a Excel?</h4>
-                                            <p class="text-sm text-gray-500">Formatos de exportación disponibles</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
-                                </button>
-                                <div class="faq-content hidden px-6 pb-6">
-                                    <div class="ml-16 p-4">
-                                        <p class="text-gray-700 mb-3">
-                                            ¡Por supuesto! Ofrecemos múltiples formatos de exportación:
-                                        </p>
-                                        <ul class="list-disc list-inside text-gray-600 space-y-1 ml-4">
-                                            <li>CSV para Excel - Perfecto para análisis y reportes</li>
-                                            <li>JSON para APIs - Integración con sistemas contables</li>
-                                        </ul>
-                                        <p class="text-sm text-gray-600 mt-3">
-                                            Los datos se formatean automáticamente para Excel
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- FAQ 3 -->
-                        <div class="faq-item-modern group">
-                            <div class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                                <button class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-purple-50 transition-colors duration-200">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                                            <i class="fa-solid fa-shield-check text-white text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800 text-lg">¿Es seguro usar la extensión?</h4>
-                                            <p class="text-sm text-gray-500">Privacidad y seguridad de datos</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
-                                </button>
-                                <div class="faq-content hidden px-6 pb-6">
-                                    <div class="ml-16 p-4">
-                                        <p class="text-gray-700 mb-3">
-                                            Absolutamente seguro. Nuestra extensión cumple con los más altos estándares de seguridad:
-                                        </p>
-                                        <ul class="list-disc list-inside text-gray-600 space-y-1 ml-4">
-                                            <li>Solo funciona en páginas oficiales del SRI</li>
-                                            <li>Todo el procesamiento es local en tu navegador</li>
-                                            <li>No almacenamos ni transmitimos datos personales</li>
-                                        </ul>
-                                        <p class="text-sm text-gray-600 mt-3">
-                                            Código auditado y aprobado por Chrome Web Store
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- FAQ 4 -->
-                        <div class="faq-item-modern group">
-                            <div class="bg-white rounded-2xl shadow-lg border border-orange-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                                <button class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-orange-50 transition-colors duration-200">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                                            <i class="fa-solid fa-stopwatch text-white text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800 text-lg">¿Cuánto tiempo toma el proceso?</h4>
-                                            <p class="text-sm text-gray-500">Velocidad de análisis y descarga</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
-                                </button>
-                                <div class="faq-content hidden px-6 pb-6">
-                                    <div class="ml-16 p-4">
-                                        <p class="text-gray-700 mb-3">
-                                            Súper rápido: Optimizado para máxima velocidad
-                                        </p>
-                                        <ul class="list-disc list-inside text-gray-600 space-y-1 ml-4">
-                                            <li>Análisis: 2-5 segundos promedio</li>
-                                            <li>Descarga: Depende de tu conexión</li>
-                                        </ul>
-                                        <p class="text-gray-700 mt-3 mb-2">Ejemplos de rendimiento:</p>
-                                        <ul class="list-disc list-inside text-gray-600 space-y-1 ml-8">
-                                            <li>50 documentos: ~30 segundos</li>
-                                            <li>200 documentos: ~2 minutos</li>
-                                            <li>1000+ documentos: ~8 minutos</li>
-                                        </ul>
-                                        <p class="text-sm text-gray-600 mt-3">
-                                            Procesamiento en paralelo para máxima velocidad
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- FAQ 5 - Nueva -->
-                        <div class="faq-item-modern group">
-                            <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                                <button class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-indigo-50 transition-colors duration-200">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                                            <i class="fa-solid fa-headset text-white text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800 text-lg">¿Necesito soporte técnico?</h4>
-                                            <p class="text-sm text-gray-500">Ayuda y asistencia disponible</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
-                                </button>
-                                <div class="faq-content hidden px-6 pb-6">
-                                    <div class="ml-16 p-4">
-                                        <p class="text-gray-700 mb-3">
-                                            ¡Estamos aquí para ayudarte! Ofrecemos múltiples canales de soporte:
-                                        </p>
-                                        <ul class="list-disc list-inside text-gray-600 space-y-1 ml-4">
-                                            <li>Video tutoriales paso a paso</li>
-                                            <li>Soporte por email: soporte@acontplus.com</li>
-                                            <li>Chat en vivo en nuestro sitio web</li>
-                                        </ul>
-                                        <p class="text-sm text-gray-600 mt-3">
-                                            Respuesta rápida: Contestamos en menos de 24 horas
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex items-center text-sm text-gray-600">
+                  <i class="fa-solid fa-star mr-2 text-yellow-500"></i>
+                  <span>Recomendado para principiantes</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guía Rápida Mejorada -->
+          <div class="quick-guide mb-12">
+            <div class="text-center mb-8">
+              <div
+                class="inline-flex items-center bg-gradient-to-r from-pink-100 to-orange-100 rounded-full px-6 py-3 shadow-lg border border-pink-200"
+              >
+                <i class="fa-solid fa-rocket text-pink-600 text-xl mr-3"></i>
+                <h3
+                  class="text-2xl font-bold bg-gradient-to-r from-pink-600 to-orange-500 bg-clip-text text-transparent"
+                >
+                  Guía Rápida - 4 Pasos Simples
+                </h3>
+              </div>
+              <p class="text-gray-600 mt-3 max-w-2xl mx-auto">
+                Sigue estos pasos y tendrás todos tus comprobantes descargados
+                en menos de 2 minutos
+              </p>
             </div>
 
-            <div id="conocenos" class="tab-panel">
-                <!-- Hero Section Mejorado -->
-                <div class="conocenos-hero bg-gradient-to-br from-pink-50 via-orange-50 to-yellow-50 rounded-2xl p-8 mb-10 border border-pink-100 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-200/30 to-purple-200/30 rounded-full -translate-y-16 translate-x-16"></div>
-                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-blue-200/30 to-indigo-200/30 rounded-full translate-y-12 -translate-x-12"></div>
-                    
-                    <div class="text-center relative z-10">
-                        <h2 class="text-4xl font-bold bg-gradient-to-r from-pink-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent mb-4">
-                            Potencia tu Contabilidad con ACONTPLUS
-                        </h2>
-                        <p class="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed mb-6">
-                            La plataforma contable más completa de Ecuador. Simplifica tu gestión tributaria, 
-                            cumple con todas las normativas del SRI y factura electrónicamente sin complicaciones.
-                        </p>
-                        
-                        <!-- Badges de beneficios -->
-                        <div class="flex flex-wrap justify-center gap-3 mb-6">
-                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800 shadow-sm">
-                                <i class="fa-solid fa-gift mr-2"></i>
-                                Demo Gratuita 30 días
-                            </span>
-                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 shadow-sm">
-                                <i class="fa-solid fa-shield-check mr-2"></i>
-                                100% Legal SRI
-                            </span>
-                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-purple-100 text-purple-800 shadow-sm">
-                                <i class="fa-solid fa-users mr-2"></i>
-                                +300 Empresas
-                            </span>
-                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-orange-100 text-orange-800 shadow-sm">
-                                <i class="fa-solid fa-headset mr-2"></i>
-                                Soporte 24/7
-                            </span>
-                        </div>
-
-                        <!-- Estadísticas impresionantes -->
-                        <div class="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-pink-600">99.9%</div>
-                                <div class="text-sm text-gray-600">Uptime</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-blue-600">24h</div>
-                                <div class="text-sm text-gray-600">Implementación</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-purple-600">5★</div>
-                                <div class="text-sm text-gray-600">Calificación</div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="grid md:grid-cols-2 gap-8">
+              <!-- Paso 1 -->
+              <div
+                class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-blue-100 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div
+                  class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300"
+                >
+                  1
                 </div>
-
-                <!-- Características Principales -->
-                <div class="features-section mb-12">
-                    <div class="text-center mb-8">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-3">¿Por qué elegir ACONTPLUS?</h3>
-                        <p class="text-gray-600 max-w-2xl mx-auto">
-                            Más que un software contable, es tu socio estratégico para el crecimiento empresarial
-                        </p>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Característica 1 -->
-                        <div class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-2xl hover:border-green-200 transition-all duration-300 hover:-translate-y-2">
-                            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fa-solid fa-bolt text-white text-2xl"></i>
-                            </div>
-                            <h4 class="text-xl font-bold text-gray-800 mb-3">Implementación Express</h4>
-                            <p class="text-gray-600 leading-relaxed mb-4">
-                                Tu sistema estará funcionando en menos de 24 horas. Sin complicaciones, sin esperas.
-                            </p>
-                            <ul class="text-sm text-gray-600 space-y-1">
-                                <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>Configuración automática</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>Migración de datos incluida</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i>Capacitación personalizada</li>
-                            </ul>
-                        </div>
-
-                        <!-- Característica 2 -->
-                        <div class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-blue-100 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 hover:-translate-y-2">
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fa-solid fa-file-invoice text-white text-2xl"></i>
-                            </div>
-                            <h4 class="text-xl font-bold text-gray-800 mb-3">Facturación Inteligente</h4>
-                            <p class="text-gray-600 leading-relaxed mb-4">
-                                Genera facturas electrónicas válidas automáticamente. Cumple con todas las normativas del SRI.
-                            </p>
-                            <ul class="text-sm text-gray-600 space-y-1">
-                                <li class="flex items-center"><i class="fa-solid fa-check text-blue-500 mr-2"></i>Autorización automática SRI</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-blue-500 mr-2"></i>Envío por email/WhatsApp</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-blue-500 mr-2"></i>Plantillas personalizables</li>
-                            </ul>
-                        </div>
-
-                        <!-- Característica 5 -->
-                        <div class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-indigo-100 hover:shadow-2xl hover:border-indigo-200 transition-all duration-300 hover:-translate-y-2">
-                            <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fa-solid fa-mobile-alt text-white text-2xl"></i>
-                            </div>
-                            <h4 class="text-xl font-bold text-gray-800 mb-3">App Móvil</h4>
-                            <p class="text-gray-600 leading-relaxed mb-4">
-                                Gestiona tu negocio desde cualquier lugar con nuestra app móvil nativa.
-                            </p>
-                            <ul class="text-sm text-gray-600 space-y-1">
-                                <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-2"></i>Facturación móvil</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-2"></i>Consultas en tiempo real</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-indigo-500 mr-2"></i>Notificaciones push</li>
-                            </ul>
-                        </div>
-
-                        <!-- Característica 6 -->
-                        <div class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-pink-100 hover:shadow-2xl hover:border-pink-200 transition-all duration-300 hover:-translate-y-2">
-                            <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fa-solid fa-headset text-white text-2xl"></i>
-                            </div>
-                            <h4 class="text-xl font-bold text-gray-800 mb-3">Soporte Premium</h4>
-                            <p class="text-gray-600 leading-relaxed mb-4">
-                                Equipo de expertos contables disponible 24/7 para resolver cualquier duda.
-                            </p>
-                            <ul class="text-sm text-gray-600 space-y-1">
-                                <li class="flex items-center"><i class="fa-solid fa-check text-pink-500 mr-2"></i>Chat en vivo</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-pink-500 mr-2"></i>Videollamadas</li>
-                                <li class="flex items-center"><i class="fa-solid fa-check text-pink-500 mr-2"></i>Capacitación continua</li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="ml-4">
+                  <div class="flex items-center mb-3">
+                    <i
+                      class="fa-solid fa-globe text-blue-500 text-2xl mr-3"
+                    ></i>
+                    <h4 class="font-bold text-gray-800 text-lg">
+                      Navega al Portal SRI
+                    </h4>
+                  </div>
+                  <p class="text-gray-600 leading-relaxed">
+                    Ingresa a <strong>srienlinea.sri.gob.ec</strong> y ve a la
+                    sección de
+                    <span
+                      class="bg-blue-50 px-2 py-1 rounded text-blue-700 font-medium"
+                      >Comprobantes Electrónicos</span
+                    >
+                  </p>
+                  <div
+                    class="mt-3 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg"
+                  >
+                    💡 <strong>Tip:</strong> Asegúrate de haber iniciado sesión
+                    en el SRI
+                  </div>
                 </div>
+              </div>
 
-                <!-- Call to Action Final -->
-                <div class="cta-final bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 rounded-2xl p-8 text-center text-white relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20"></div>
-                    <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16"></div>
-                    
-                    <div class="relative z-10">
-                        <h3 class="text-3xl font-bold mb-4">¿Listo para revolucionar tu contabilidad?</h3>
-                        <p class="text-xl mb-6 opacity-90 max-w-2xl mx-auto">
-                            Únete a más de 300 empresas que ya optimizaron sus procesos contables con ACONTPLUS
+              <!-- Paso 2 -->
+              <div
+                class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-2xl hover:border-green-200 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div
+                  class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300"
+                >
+                  2
+                </div>
+                <div class="ml-4">
+                  <div class="flex items-center mb-3">
+                    <i
+                      class="fa-solid fa-search text-green-500 text-2xl mr-3"
+                    ></i>
+                    <h4 class="font-bold text-gray-800 text-lg">
+                      Haz Clic en "Escanear"
+                    </h4>
+                  </div>
+                  <p class="text-gray-600 leading-relaxed">
+                    La extensión analizará automáticamente la página y detectará
+                    todos los
+                    <span
+                      class="bg-green-50 px-2 py-1 rounded text-green-700 font-medium"
+                      >documentos disponibles</span
+                    >
+                  </p>
+                  <div
+                    class="mt-3 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg"
+                  >
+                    ⚡ <strong>Súper rápido:</strong> El análisis toma solo unos
+                    segundos
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 3 -->
+              <div
+                class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-2xl hover:border-purple-200 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div
+                  class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300"
+                >
+                  3
+                </div>
+                <div class="ml-4">
+                  <div class="flex items-center mb-3">
+                    <i
+                      class="fa-solid fa-check-square text-purple-500 text-2xl mr-3"
+                    ></i>
+                    <h4 class="font-bold text-gray-800 text-lg">
+                      Selecciona Documentos
+                    </h4>
+                  </div>
+                  <p class="text-gray-600 leading-relaxed">
+                    Marca los comprobantes que necesitas o usa
+                    <span
+                      class="bg-purple-50 px-2 py-1 rounded text-purple-700 font-medium"
+                      >"Seleccionar Todos"</span
+                    >
+                    para elegir todos a la vez
+                  </p>
+                  <div
+                    class="mt-3 text-xs text-purple-600 bg-purple-50 px-3 py-2 rounded-lg"
+                  >
+                    🎯 <strong>Inteligente:</strong> Puedes filtrar por fecha,
+                    RUC o monto
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 4 -->
+              <div
+                class="guide-step-card group relative bg-white rounded-2xl p-6 shadow-lg border border-pink-100 hover:shadow-2xl hover:border-pink-200 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div
+                  class="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300"
+                >
+                  4
+                </div>
+                <div class="ml-4">
+                  <div class="flex items-center mb-3">
+                    <i
+                      class="fa-solid fa-download text-pink-500 text-2xl mr-3"
+                    ></i>
+                    <h4 class="font-bold text-gray-800 text-lg">
+                      Descarga o Exporta
+                    </h4>
+                  </div>
+                  <p class="text-gray-600 leading-relaxed">
+                    Elige entre
+                    <span
+                      class="bg-pink-50 px-2 py-1 rounded text-pink-700 font-medium"
+                      >XML, PDF</span
+                    >
+                    o exporta a
+                    <span
+                      class="bg-green-50 px-2 py-1 rounded text-green-700 font-medium"
+                      >Excel/CSV</span
+                    >
+                    para tu contabilidad
+                  </p>
+                  <div
+                    class="mt-3 text-xs text-pink-600 bg-pink-50 px-3 py-2 rounded-lg"
+                  >
+                    📊 <strong>Versátil:</strong> Compatible con todos los
+                    sistemas contables
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preguntas Frecuentes Mejoradas -->
+          <div class="faq-section mb-12">
+            <div class="text-center mb-8">
+              <div
+                class="inline-flex items-center bg-gradient-to-r from-pink-100 to-orange-100 rounded-full px-6 py-3 shadow-lg border border-pink-200"
+              >
+                <i class="fa-solid fa-lightbulb text-pink-600 text-xl mr-3"></i>
+                <h3
+                  class="text-2xl font-bold bg-gradient-to-r from-pink-600 to-orange-500 bg-clip-text text-transparent"
+                >
+                  Preguntas Frecuentes
+                </h3>
+              </div>
+              <p class="text-gray-600 mt-3 max-w-2xl mx-auto">
+                Encuentra respuestas rápidas a las dudas más comunes sobre
+                ACONTPLUS SRI Tools
+              </p>
+            </div>
+
+            <div class="max-w-4xl mx-auto space-y-4">
+              <!-- FAQ 1 -->
+              <div class="faq-item-modern group">
+                <div
+                  class="bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden hover:shadow-xl transition-all duration-300"
+                >
+                  <button
+                    class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-blue-50 transition-colors duration-200"
+                  >
+                    <div class="flex items-center">
+                      <div
+                        class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300"
+                      >
+                        <i
+                          class="fa-solid fa-folder-open text-white text-lg"
+                        ></i>
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-gray-800 text-lg">
+                          ¿Dónde se guardan mis archivos?
+                        </h4>
+                        <p class="text-sm text-gray-500">
+                          Ubicación y configuración de descargas
                         </p>
-                        
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-                            <!-- <button id="demo-btn"
+                      </div>
+                    </div>
+                    <i
+                      class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"
+                    ></i>
+                  </button>
+                  <div class="faq-content hidden px-6 pb-6">
+                    <div class="ml-16 p-4">
+                      <p class="text-gray-700 mb-3">
+                        Por defecto, los archivos se guardan en la carpeta
+                        "Descargas" de tu navegador. Sin embargo, puedes
+                        personalizar la ubicación:
+                      </p>
+                      <ul
+                        class="list-disc list-inside text-gray-600 space-y-1 ml-4"
+                      >
+                        <li>Ve a Opciones → Configurar Ruta</li>
+                        <li>
+                          Especifica tu carpeta preferida (ej:
+                          "Contabilidad/SRI")
+                        </li>
+                        <li>Los archivos se organizarán automáticamente</li>
+                      </ul>
+                      <p class="text-sm text-gray-600 mt-3">
+                        Tip: Usa nombres como "SRI_2024" para mejor organización
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FAQ 2 -->
+              <div class="faq-item-modern group">
+                <div
+                  class="bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden hover:shadow-xl transition-all duration-300"
+                >
+                  <button
+                    class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-green-50 transition-colors duration-200"
+                  >
+                    <div class="flex items-center">
+                      <div
+                        class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300"
+                      >
+                        <i
+                          class="fa-solid fa-file-excel text-white text-lg"
+                        ></i>
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-gray-800 text-lg">
+                          ¿Puedo exportar a Excel?
+                        </h4>
+                        <p class="text-sm text-gray-500">
+                          Formatos de exportación disponibles
+                        </p>
+                      </div>
+                    </div>
+                    <i
+                      class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"
+                    ></i>
+                  </button>
+                  <div class="faq-content hidden px-6 pb-6">
+                    <div class="ml-16 p-4">
+                      <p class="text-gray-700 mb-3">
+                        ¡Por supuesto! Ofrecemos múltiples formatos de
+                        exportación:
+                      </p>
+                      <ul
+                        class="list-disc list-inside text-gray-600 space-y-1 ml-4"
+                      >
+                        <li>
+                          CSV para Excel - Perfecto para análisis y reportes
+                        </li>
+                        <li>
+                          JSON para APIs - Integración con sistemas contables
+                        </li>
+                      </ul>
+                      <p class="text-sm text-gray-600 mt-3">
+                        Los datos se formatean automáticamente para Excel
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FAQ 3 -->
+              <div class="faq-item-modern group">
+                <div
+                  class="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden hover:shadow-xl transition-all duration-300"
+                >
+                  <button
+                    class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-purple-50 transition-colors duration-200"
+                  >
+                    <div class="flex items-center">
+                      <div
+                        class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300"
+                      >
+                        <i
+                          class="fa-solid fa-shield-check text-white text-lg"
+                        ></i>
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-gray-800 text-lg">
+                          ¿Es seguro usar la extensión?
+                        </h4>
+                        <p class="text-sm text-gray-500">
+                          Privacidad y seguridad de datos
+                        </p>
+                      </div>
+                    </div>
+                    <i
+                      class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"
+                    ></i>
+                  </button>
+                  <div class="faq-content hidden px-6 pb-6">
+                    <div class="ml-16 p-4">
+                      <p class="text-gray-700 mb-3">
+                        Absolutamente seguro. Nuestra extensión cumple con los
+                        más altos estándares de seguridad:
+                      </p>
+                      <ul
+                        class="list-disc list-inside text-gray-600 space-y-1 ml-4"
+                      >
+                        <li>Solo funciona en páginas oficiales del SRI</li>
+                        <li>Todo el procesamiento es local en tu navegador</li>
+                        <li>No almacenamos ni transmitimos datos personales</li>
+                      </ul>
+                      <p class="text-sm text-gray-600 mt-3">
+                        Código auditado y aprobado por Chrome Web Store
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FAQ 4 -->
+              <div class="faq-item-modern group">
+                <div
+                  class="bg-white rounded-2xl shadow-lg border border-orange-100 overflow-hidden hover:shadow-xl transition-all duration-300"
+                >
+                  <button
+                    class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-orange-50 transition-colors duration-200"
+                  >
+                    <div class="flex items-center">
+                      <div
+                        class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300"
+                      >
+                        <i class="fa-solid fa-stopwatch text-white text-lg"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-gray-800 text-lg">
+                          ¿Cuánto tiempo toma el proceso?
+                        </h4>
+                        <p class="text-sm text-gray-500">
+                          Velocidad de análisis y descarga
+                        </p>
+                      </div>
+                    </div>
+                    <i
+                      class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"
+                    ></i>
+                  </button>
+                  <div class="faq-content hidden px-6 pb-6">
+                    <div class="ml-16 p-4">
+                      <p class="text-gray-700 mb-3">
+                        Súper rápido: Optimizado para máxima velocidad
+                      </p>
+                      <ul
+                        class="list-disc list-inside text-gray-600 space-y-1 ml-4"
+                      >
+                        <li>Análisis: 2-5 segundos promedio</li>
+                        <li>Descarga: Depende de tu conexión</li>
+                      </ul>
+                      <p class="text-gray-700 mt-3 mb-2">
+                        Ejemplos de rendimiento:
+                      </p>
+                      <ul
+                        class="list-disc list-inside text-gray-600 space-y-1 ml-8"
+                      >
+                        <li>50 documentos: ~30 segundos</li>
+                        <li>200 documentos: ~2 minutos</li>
+                        <li>1000+ documentos: ~8 minutos</li>
+                      </ul>
+                      <p class="text-sm text-gray-600 mt-3">
+                        Procesamiento en paralelo para máxima velocidad
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FAQ 5 - Nueva -->
+              <div class="faq-item-modern group">
+                <div
+                  class="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden hover:shadow-xl transition-all duration-300"
+                >
+                  <button
+                    class="faq-toggle w-full p-6 text-left flex items-center justify-between hover:bg-indigo-50 transition-colors duration-200"
+                  >
+                    <div class="flex items-center">
+                      <div
+                        class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300"
+                      >
+                        <i class="fa-solid fa-headset text-white text-lg"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-gray-800 text-lg">
+                          ¿Necesito soporte técnico?
+                        </h4>
+                        <p class="text-sm text-gray-500">
+                          Ayuda y asistencia disponible
+                        </p>
+                      </div>
+                    </div>
+                    <i
+                      class="fa-solid fa-chevron-down text-gray-400 transform transition-transform duration-300"
+                    ></i>
+                  </button>
+                  <div class="faq-content hidden px-6 pb-6">
+                    <div class="ml-16 p-4">
+                      <p class="text-gray-700 mb-3">
+                        ¡Estamos aquí para ayudarte! Ofrecemos múltiples canales
+                        de soporte:
+                      </p>
+                      <ul
+                        class="list-disc list-inside text-gray-600 space-y-1 ml-4"
+                      >
+                        <li>Video tutoriales paso a paso</li>
+                        <li>Soporte por email: soporte@acontplus.com</li>
+                        <li>Chat en vivo en nuestro sitio web</li>
+                      </ul>
+                      <p class="text-sm text-gray-600 mt-3">
+                        Respuesta rápida: Contestamos en menos de 24 horas
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="conocenos" class="tab-panel">
+          <!-- Hero Section Mejorado -->
+          <div
+            class="conocenos-hero bg-gradient-to-br from-pink-50 via-orange-50 to-yellow-50 rounded-2xl p-8 mb-10 border border-pink-100 relative overflow-hidden"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-200/30 to-purple-200/30 rounded-full -translate-y-16 translate-x-16"
+            ></div>
+            <div
+              class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-blue-200/30 to-indigo-200/30 rounded-full translate-y-12 -translate-x-12"
+            ></div>
+
+            <div class="text-center relative z-10">
+              <h2
+                class="text-4xl font-bold bg-gradient-to-r from-pink-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent mb-4"
+              >
+                Potencia tu Contabilidad con ACONTPLUS
+              </h2>
+              <p
+                class="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed mb-6"
+              >
+                La plataforma contable más completa de Ecuador. Simplifica tu
+                gestión tributaria, cumple con todas las normativas del SRI y
+                factura electrónicamente sin complicaciones.
+              </p>
+
+              <!-- Badges de beneficios -->
+              <div class="flex flex-wrap justify-center gap-3 mb-6">
+                <span
+                  class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800 shadow-sm"
+                >
+                  <i class="fa-solid fa-gift mr-2"></i>
+                  Demo Gratuita 30 días
+                </span>
+                <span
+                  class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 shadow-sm"
+                >
+                  <i class="fa-solid fa-shield-check mr-2"></i>
+                  100% Legal SRI
+                </span>
+                <span
+                  class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-purple-100 text-purple-800 shadow-sm"
+                >
+                  <i class="fa-solid fa-users mr-2"></i>
+                  +300 Empresas
+                </span>
+                <span
+                  class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-orange-100 text-orange-800 shadow-sm"
+                >
+                  <i class="fa-solid fa-headset mr-2"></i>
+                  Soporte 24/7
+                </span>
+              </div>
+
+              <!-- Estadísticas impresionantes -->
+              <div class="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-pink-600">99.9%</div>
+                  <div class="text-sm text-gray-600">Uptime</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-blue-600">24h</div>
+                  <div class="text-sm text-gray-600">Implementación</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-purple-600">5★</div>
+                  <div class="text-sm text-gray-600">Calificación</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Características Principales -->
+          <div class="features-section mb-12">
+            <div class="text-center mb-8">
+              <h3 class="text-2xl font-bold text-gray-800 mb-3">
+                ¿Por qué elegir ACONTPLUS?
+              </h3>
+              <p class="text-gray-600 max-w-2xl mx-auto">
+                Más que un software contable, es tu socio estratégico para el
+                crecimiento empresarial
+              </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <!-- Característica 1 -->
+              <div
+                class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-2xl hover:border-green-200 transition-all duration-300 hover:-translate-y-2"
+              >
+                <div
+                  class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
+                >
+                  <i class="fa-solid fa-bolt text-white text-2xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800 mb-3">
+                  Implementación Express
+                </h4>
+                <p class="text-gray-600 leading-relaxed mb-4">
+                  Tu sistema estará funcionando en menos de 24 horas. Sin
+                  complicaciones, sin esperas.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-green-500 mr-2"></i
+                    >Configuración automática
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-green-500 mr-2"></i
+                    >Migración de datos incluida
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-green-500 mr-2"></i
+                    >Capacitación personalizada
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Característica 2 -->
+              <div
+                class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-blue-100 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 hover:-translate-y-2"
+              >
+                <div
+                  class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
+                >
+                  <i class="fa-solid fa-file-invoice text-white text-2xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800 mb-3">
+                  Facturación Inteligente
+                </h4>
+                <p class="text-gray-600 leading-relaxed mb-4">
+                  Genera facturas electrónicas válidas automáticamente. Cumple
+                  con todas las normativas del SRI.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-blue-500 mr-2"></i
+                    >Autorización automática SRI
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-blue-500 mr-2"></i>Envío
+                    por email/WhatsApp
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-blue-500 mr-2"></i
+                    >Plantillas personalizables
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Característica 5 -->
+              <div
+                class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-indigo-100 hover:shadow-2xl hover:border-indigo-200 transition-all duration-300 hover:-translate-y-2"
+              >
+                <div
+                  class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
+                >
+                  <i class="fa-solid fa-mobile-alt text-white text-2xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800 mb-3">App Móvil</h4>
+                <p class="text-gray-600 leading-relaxed mb-4">
+                  Gestiona tu negocio desde cualquier lugar con nuestra app
+                  móvil nativa.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-indigo-500 mr-2"></i
+                    >Facturación móvil
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-indigo-500 mr-2"></i
+                    >Consultas en tiempo real
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-indigo-500 mr-2"></i
+                    >Notificaciones push
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Característica 6 -->
+              <div
+                class="feature-card group bg-white rounded-2xl p-6 shadow-lg border border-pink-100 hover:shadow-2xl hover:border-pink-200 transition-all duration-300 hover:-translate-y-2"
+              >
+                <div
+                  class="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
+                >
+                  <i class="fa-solid fa-headset text-white text-2xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800 mb-3">
+                  Soporte Premium
+                </h4>
+                <p class="text-gray-600 leading-relaxed mb-4">
+                  Equipo de expertos contables disponible 24/7 para resolver
+                  cualquier duda.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-pink-500 mr-2"></i>Chat en
+                    vivo
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-pink-500 mr-2"></i
+                    >Videollamadas
+                  </li>
+                  <li class="flex items-center">
+                    <i class="fa-solid fa-check text-pink-500 mr-2"></i
+                    >Capacitación continua
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call to Action Final -->
+          <div
+            class="cta-final bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 rounded-2xl p-8 text-center text-white relative overflow-hidden"
+          >
+            <div
+              class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20"
+            ></div>
+            <div
+              class="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 -translate-x-16"
+            ></div>
+
+            <div class="relative z-10">
+              <h3 class="text-3xl font-bold mb-4">
+                ¿Listo para revolucionar tu contabilidad?
+              </h3>
+              <p class="text-xl mb-6 opacity-90 max-w-2xl mx-auto">
+                Únete a más de 300 empresas que ya optimizaron sus procesos
+                contables con ACONTPLUS
+              </p>
+
+              <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+                <!-- <button id="demo-btn"
                                 class="inline-flex items-center px-8 py-4 bg-white text-purple-600 font-bold text-lg rounded-full hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl">
                                 <i class="fa-solid fa-rocket mr-3"></i>
                                 SOLICITAR DEMO GRATUITA
                             </button> -->
-                            <a href="https://www.acontplus.com" target="_blank"
-                               class="inline-flex items-center px-8 py-4 border-2 border-white text-white font-bold text-lg rounded-full hover:bg-white hover:text-purple-600 transition-all duration-300 transform hover:scale-105">
-                                <i class="fa-solid fa-globe mr-3"></i>
-                                Visitar Sitio Web
-                            </a>
-                        </div>
+                <a
+                  href="https://www.acontplus.com"
+                  target="_blank"
+                  class="inline-flex items-center px-8 py-4 border-2 border-white text-white font-bold text-lg rounded-full hover:bg-white hover:text-purple-600 transition-all duration-300 transform hover:scale-105"
+                >
+                  <i class="fa-solid fa-globe mr-3"></i>
+                  Visitar Sitio Web
+                </a>
+              </div>
 
-                        <div class="flex flex-wrap justify-center gap-6 text-sm opacity-90">
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-check-circle mr-2"></i>
-                                Sin compromiso
-                            </span>
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-clock mr-2"></i>
-                                Configuración en minutos
-                            </span>
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-headset mr-2"></i>
-                                Soporte incluido
-                            </span>
-                            <span class="flex items-center">
-                                <i class="fa-solid fa-shield-check mr-2"></i>
-                                100% Seguro
-                            </span>
-                        </div>
+              <div
+                class="flex flex-wrap justify-center gap-6 text-sm opacity-90"
+              >
+                <span class="flex items-center">
+                  <i class="fa-solid fa-check-circle mr-2"></i>
+                  Sin compromiso
+                </span>
+                <span class="flex items-center">
+                  <i class="fa-solid fa-clock mr-2"></i>
+                  Configuración en minutos
+                </span>
+                <span class="flex items-center">
+                  <i class="fa-solid fa-headset mr-2"></i>
+                  Soporte incluido
+                </span>
+                <span class="flex items-center">
+                  <i class="fa-solid fa-shield-check mr-2"></i>
+                  100% Seguro
+                </span>
+              </div>
 
-                        <div class="mt-6 pt-6 border-t border-white/20">
-                            <p class="text-xs opacity-75">
-                                <a href="https://www.acontplus.com/privacy/#extractorsri" target="_blank"
-                                    class="hover:text-gray-200 transition-colors underline">Política de Privacidad</a>
-                                •
-                                <a href="https://www.acontplus.com/terms" target="_blank"
-                                    class="hover:text-gray-200 transition-colors underline">Términos de Servicio</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
+              <div class="mt-6 pt-6 border-t border-white/20">
+                <p class="text-xs opacity-75">
+                  <a
+                    href="https://www.acontplus.com/privacy/#extractorsri"
+                    target="_blank"
+                    class="hover:text-gray-200 transition-colors underline"
+                    >Política de Privacidad</a
+                  >
+                  •
+                  <a
+                    href="https://www.acontplus.com/terms"
+                    target="_blank"
+                    class="hover:text-gray-200 transition-colors underline"
+                    >Términos de Servicio</a
+                  >
+                </p>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast bg-green-500 text-white" role="alert" aria-live="assertive" aria-atomic="true"
-        style="display: none;">
-        <p id="toast-message" aria-label="Mensaje de notificación"></p>
+    <div
+      id="toast"
+      class="toast bg-green-500 text-white"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+      style="display: none"
+    >
+      <p id="toast-message" aria-label="Mensaje de notificación"></p>
     </div>
+
+    <!-- Services -->
+    <script src="../services/supabase-client.js"></script>
+    <script src="../services/download-counter.js"></script>
+    <script src="../services/feedback-modal.js"></script>
 
     <!-- Scripts compilados con Webpack -->
     <script src="../runtime.js"></script>
     <script src="../shared.js"></script>
     <script src="../popup/index.js"></script>
+    
     <!-- Lucide Icons LOCAL -->
     <script src="../assets/js/lucide.min.js"></script>
     <script src="../assets/js/lucide-init.js"></script>
-</body>
-
+  </body>
 </html>

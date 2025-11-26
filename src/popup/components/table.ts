@@ -13,7 +13,7 @@ export class TableComponent {
     this.tbodyEl = tbodyEl;
   }
 
-  updateCounts(): void {
+  async updateCounts(): Promise<void> {
     const totalCountEl = document.getElementById('total-docs');
     const selectedCountEl = document.getElementById('selected-docs');
     const downloadedCountEl = document.getElementById('downloaded-docs');
@@ -43,7 +43,21 @@ export class TableComponent {
 
     if (totalCountEl) safeSetText(totalCountEl, facturasToCount.length.toString());
     if (selectedCountEl) safeSetText(selectedCountEl, selectedVisibleCount.toString());
-    if (downloadedCountEl) safeSetText(downloadedCountEl, '0');
+    
+    // Obtener contador real de descargas del downloadCounter
+    if (downloadedCountEl) {
+      try {
+        if (typeof (window as any).downloadCounter !== 'undefined') {
+          const stats = await (window as any).downloadCounter.getStats();
+          safeSetText(downloadedCountEl, stats.count.toString());
+        } else {
+          safeSetText(downloadedCountEl, '0');
+        }
+      } catch (error) {
+        console.warn('Error obteniendo contador de descargas:', error);
+        safeSetText(downloadedCountEl, '0');
+      }
+    }
 
     if (totalSumEl) {
       const totalAmount = facturasToCount.reduce((sum, f) => sum + (f.importeTotal || 0), 0);

@@ -93,15 +93,21 @@ export interface DownloadResult {
   total: number;
 }
 
+export type FileStatus = 'exists' | 'deleted' | 'never_downloaded' | 'downloading';
+
+export interface FileDetail {
+  downloadId?: number;
+  path?: string;
+  status: FileStatus;  // Estado preciso del archivo
+  exists: boolean;     // ¿Existe físicamente?
+  wasDownloaded: boolean;  // ¿Alguna vez fue descargado?
+  fileSize?: number;   // Tamaño del archivo (si existe)
+  lastModified?: number; // Última modificación (timestamp)
+}
+
 export interface FileInfo {
-  xml?: {
-    downloadId?: number;
-    path?: string;
-  };
-  pdf?: {
-    downloadId?: number;
-    path?: string;
-  };
+  xml?: FileDetail;
+  pdf?: FileDetail;
 }
 
 export interface VerificationResult {
@@ -200,4 +206,49 @@ export interface FeedbackData {
   telefono?: string;
   ruc?: string;
   metadata?: Record<string, any>;
+}
+
+// Batch Download System Types
+export type DownloadStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'retrying';
+
+export interface DownloadJob {
+  id: string;
+  documento: Documento;
+  formato: FormatoDescarga;
+  status: DownloadStatus;
+  retryCount: number;
+  error?: string;
+  startTime?: number;
+  endTime?: number;
+}
+
+export interface DownloadSession {
+  sessionId: string;
+  totalDocuments: number;
+  completed: string[];
+  failed: DownloadJob[];
+  pending: string[];
+  timestamp: number;
+  isPaused: boolean;
+  startTime: number;
+  lastUpdateTime: number;
+}
+
+export interface BatchConfig {
+  batchSize: number;         // Documentos por lote (default: 15)
+  concurrency: number;       // Descargas paralelas (default: 5)
+  delayBetweenBatches: number; // ms (default: 2000)
+  maxRetries: number;        // (default: 3)
+  retryDelay: number;        // ms inicial (default: 1000)
+  enableNotifications: boolean; // Notificaciones del navegador
+}
+
+export interface BatchProgress {
+  currentBatch: number;
+  totalBatches: number;
+  completedDocs: number;
+  failedDocs: number;
+  pendingDocs: number;
+  currentSpeed: number; // docs/min
+  estimatedTimeRemaining: number; // segundos
 }

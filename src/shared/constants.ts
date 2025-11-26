@@ -18,6 +18,9 @@ export const STORAGE_KEYS = {
   PRIMERA_INSTALACION: 'primeraInstalacion',
   FECHA_INSTALACION: 'fechaInstalacion',
   VERSION: 'version',
+  DOWNLOAD_SESSION: 'downloadSession',
+  DOWNLOAD_CONFIG: 'downloadConfig',
+  BATCH_PROGRESS: 'batchProgress',
 } as const;
 
 export const SELECTORS = {
@@ -48,6 +51,18 @@ export const LIMITS = {
   PROGRESS_UPDATE_INTERVAL: 10,
   MAX_METRICS: 100,
   METRICS_RETENTION_DAYS: 7,
+} as const;
+
+export const DOWNLOAD_CONFIG = {
+  DEFAULT_BATCH_SIZE: 15,
+  DEFAULT_CONCURRENCY: 5,
+  MIN_BATCH_SIZE: 5,
+  MAX_BATCH_SIZE: 30,
+  MIN_CONCURRENCY: 1,
+  MAX_CONCURRENCY: 10,
+  DELAY_BETWEEN_BATCHES: 2000,
+  PROGRESS_SAVE_INTERVAL: 5, // Guardar cada 5 documentos
+  RETRY_BACKOFF_BASE: 1000, // Base para backoff exponencial
 } as const;
 
 export const URLS = {

@@ -1,9 +1,11 @@
 // Módulo de descarga - Migrado a TypeScript
 
-import { DELAYS, MESSAGES } from '@shared/constants';
+import { DELAYS, MESSAGES, STORAGE_KEYS } from '@shared/constants';
 import { SRIUtils, isExtensionContextValid } from '@shared/utils';
-import type { Documento, FormatoDescarga } from '@shared/types';
+import { StorageManager } from '@shared/storage';
+import type { Documento, FormatoDescarga, DownloadJob, BatchConfig } from '@shared/types';
 import type { SRIDocumentosExtractor } from './extractor';
+import { DownloadQueue } from './download-queue';
 
 export class SRIDownloader {
   private downloadCancelled = false;
@@ -69,126 +71,157 @@ export class SRIDownloader {
     facturas: Documento[],
     formato: FormatoDescarga
   ): Promise<void> {
-    let descargados = 0;
-    let fallidos = 0;
-    let saltados = 0;
     this.downloadCancelled = false;
 
-    // Obtener archivos ya descargados
+    try {
+      // Cargar configuración de usuario
+      const userConfig = await StorageManager.get<BatchConfig>(STORAGE_KEYS.DOWNLOAD_CONFIG);
+      const downloadQueue = new DownloadQueue(userConfig || {});
+
+      // Obtener archivos ya descargados para evitar duplicados
     const archivosExistentes = await this.obtenerArchivosExistentes();
 
-    for (let i = 0; i < facturas.length; i++) {
-      if (this.downloadCancelled) {
-        break;
+    // Filtrar documentos que ya existen
+    const facturasParaDescargar = facturas.filter((factura) => {
+      const baseFileName = factura.numero.replace(/ /g, '_');
+      
+      if (formato === 'both') {
+        // Para 'both', verificar si AMBOS archivos ya existen
+        const xmlExists = archivosExistentes.has(`${baseFileName}.xml`);
+        const pdfExists = archivosExistentes.has(`${baseFileName}.pdf`);
+        
+        // Solo descargar si al menos uno NO existe
+        return !(xmlExists && pdfExists);
+      } else {
+        // Para formato único, verificar solo ese formato
+        const fileName = `${baseFileName}.${formato}`;
+        return !archivosExistentes.has(fileName);
       }
+    });
 
-      // Actualizar ViewState
-      const viewStateEl = document.querySelector<HTMLInputElement>('#javax\\.faces\\.ViewState');
-      if (viewStateEl) {
-        this.extractor.view_state = viewStateEl.value;
-      }
+      console.log(`📥 Descargando ${facturasParaDescargar.length} documentos (${facturas.length - facturasParaDescargar.length} ya existen)`);
 
-      const factura = facturas[i];
-
-      try {
-        if (!isExtensionContextValid()) {
-          console.warn('Contexto de extensión invalidado');
-          break;
-        }
-
+      if (facturasParaDescargar.length === 0) {
         chrome.runtime.sendMessage({
-          action: 'updateDownloadProgress',
-          current: i + 1,
+          action: 'descargaFinalizada',
+          exitosos: facturas.length,
+          fallidos: 0,
+          saltados: facturas.length,
           total: facturas.length,
         });
-      } catch (error: any) {
-        if (error.message.includes('Extension context invalidated')) {
-          console.warn('Extensión recargada durante descarga');
-          break;
-        }
+        return;
       }
 
-      try {
-        const originalIndex = factura.rowIndex;
-        if (originalIndex === undefined || originalIndex < 0) {
-          fallidos++;
-          continue;
+      // Inicializar cola
+      downloadQueue.initializeQueue(facturasParaDescargar, formato);
+
+      // Función de descarga que se pasa a la cola
+      const downloadFunction = async (job: DownloadJob): Promise<boolean> => {
+        if (this.downloadCancelled) {
+          downloadQueue.pauseQueue();
+          return false;
         }
 
-        if (formato === 'both') {
-          const xmlFileName = `${factura.numero.replace(/ /g, '_')}.xml`;
-          const pdfFileName = `${factura.numero.replace(/ /g, '_')}.pdf`;
-          
-          let exitoXml = false;
-          let exitoPdf = false;
-          
-          // Descargar XML solo si no existe
-          if (!archivosExistentes.has(xmlFileName)) {
-            exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex);
+        // Actualizar ViewState antes de cada descarga
+        const viewStateEl = document.querySelector<HTMLInputElement>('#javax\\.faces\\.ViewState');
+        if (viewStateEl) {
+          this.extractor.view_state = viewStateEl.value;
+        }
+
+        const factura = job.documento;
+        const originalIndex = factura.rowIndex;
+
+        if (originalIndex === undefined || originalIndex < 0) {
+          return false;
+        }
+
+        try {
+          if (!isExtensionContextValid()) {
+            console.warn('Contexto de extensión invalidado');
+            downloadQueue.pauseQueue();
+            return false;
+          }
+
+          // Procesar según formato
+          if (job.formato === 'both') {
+            const exitoXml = await this.descargarUnicoDocumento(factura, 'xml', originalIndex);
             if (exitoXml) {
               await this.incrementarContadorDescarga();
             }
             await SRIUtils.esperar(DELAYS.DOWNLOAD_FORMAT);
-          } else {
-            console.log(`⏭️ Saltando ${xmlFileName} - ya existe`);
-            exitoXml = true; // Contar como exitoso porque ya existe
-          }
-          
-          // Descargar PDF solo si no existe
-          if (!archivosExistentes.has(pdfFileName)) {
-            exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex);
+
+            const exitoPdf = await this.descargarUnicoDocumento(factura, 'pdf', originalIndex);
             if (exitoPdf) {
               await this.incrementarContadorDescarga();
             }
-          } else {
-            console.log(`⏭️ Saltando ${pdfFileName} - ya existe`);
-            exitoPdf = true; // Contar como exitoso porque ya existe
-          }
 
-          if (exitoXml && exitoPdf) {
-            descargados++;
+            return exitoXml && exitoPdf;
           } else {
-            fallidos++;
-          }
-        } else {
-          const fileName = `${factura.numero.replace(/ /g, '_')}.${formato}`;
-          
-          // Verificar si el archivo ya existe
-          if (archivosExistentes.has(fileName)) {
-            console.log(`⏭️ Saltando ${fileName} - ya existe`);
-            saltados++;
-            descargados++; // Contar como exitoso porque ya existe
-          } else {
-            const exito = await this.descargarUnicoDocumento(factura, formato, originalIndex);
+            const exito = await this.descargarUnicoDocumento(factura, job.formato, originalIndex);
             if (exito) {
-              descargados++;
               await this.incrementarContadorDescarga();
-            } else {
-              fallidos++;
             }
+            return exito;
           }
+        } catch (error) {
+          console.error(`Error descargando ${factura.claveAcceso}:`, error);
+          return false;
         }
+      };
 
-        await SRIUtils.esperar(DELAYS.DOWNLOAD_BETWEEN);
-      } catch (error) {
-        console.error(`Error descargando ${factura.claveAcceso}:`, error);
-        fallidos++;
-      }
+      // Listener para cancelación
+      const cancelListener = (message: any) => {
+        if (message.action === 'cancelDownload') {
+          this.downloadCancelled = true;
+          downloadQueue.pauseQueue();
+        }
+      };
+      chrome.runtime.onMessage.addListener(cancelListener);
+
+      // Procesar cola
+      await downloadQueue.processQueue(downloadFunction);
+
+      // Cleanup
+      chrome.runtime.onMessage.removeListener(cancelListener);
+
+      // Obtener resultados
+      const failedJobs = downloadQueue.getFailedDocuments();
+      const exitosos = facturasParaDescargar.length - failedJobs.length;
+      const saltados = facturas.length - facturasParaDescargar.length;
+
+      chrome.runtime.sendMessage({
+        action: 'descargaFinalizada',
+        exitosos,
+        fallidos: failedJobs.length,
+        saltados,
+        total: facturas.length,
+      });
+
+      // Limpiar sesión
+      await downloadQueue.clearSession();
+
+    } catch (error: any) {
+      console.error('Error en sistema de descargas por lotes:', error);
+      chrome.runtime.sendMessage({
+        action: 'descargaFinalizada',
+        exitosos: 0,
+        fallidos: facturas.length,
+        saltados: 0,
+        total: facturas.length,
+      });
     }
-
-    chrome.runtime.sendMessage({
-      action: 'descargaFinalizada',
-      exitosos: descargados,
-      fallidos: fallidos,
-      saltados: saltados,
-      total: facturas.length,
-    });
 
     chrome.runtime.sendMessage({ action: 'hideCancel' });
   }
 
   private async obtenerArchivosExistentes(): Promise<Set<string>> {
     try {
+      // Validar que chrome.downloads API esté disponible
+      if (!chrome || !chrome.downloads || typeof chrome.downloads.search !== 'function') {
+        console.warn('⚠️ chrome.downloads API no disponible en este contexto');
+        return new Set();
+      }
+
       const downloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
         chrome.downloads.search(
           {
@@ -282,19 +315,119 @@ export class SRIDownloader {
       });
 
       if (!response.ok) {
-        throw new Error(`Error en la respuesta del servidor: ${response.statusText}`);
+        // Errores HTTP específicos
+        if (response.status === 401 || response.status === 403) {
+          console.warn('🔒 Error de autenticación detectado (401/403)');
+          chrome.runtime.sendMessage({
+            action: 'sessionLost',
+            message: MESSAGES.SESSION_LOST,
+          });
+          this.downloadCancelled = true;
+          return false;
+        }
+        throw new Error(`Error en la respuesta del servidor: ${response.status} ${response.statusText}`);
       }
 
       const blob = await response.blob();
 
-      // Validar si es HTML (sesión perdida)
+      // Validar si es HTML (posible sesión perdida, documento no existe, o error del servidor)
       if (blob.type.includes('text/html')) {
-        chrome.runtime.sendMessage({
-          action: 'sessionLost',
-          message: MESSAGES.SESSION_LOST,
-        });
-        this.downloadCancelled = true;
-        return false;
+        // Leer el contenido HTML para análisis
+        const htmlText = await blob.text();
+        const htmlLower = htmlText.toLowerCase();
+        
+        // 1. PRIORIDAD ALTA: Indicadores específicos de sesión expirada del SRI
+        const sessionExpiredIndicators = [
+          'sesión ha expirado',
+          'session has expired',
+          'el tiempo asignado a la transacción se ha extinguido',
+          'su sesión ha caducado',
+          'session timeout',
+          'debe autenticarse nuevamente',
+          'volver a iniciar sesión'
+        ];
+        
+        const isSessionExpired = sessionExpiredIndicators.some(indicator => 
+          htmlLower.includes(indicator.toLowerCase())
+        );
+        
+        if (isSessionExpired) {
+          console.error('🔒 SESIÓN SRI EXPIRADA - Cancelando todas las descargas');
+          chrome.runtime.sendMessage({
+            action: 'sessionLost',
+            message: MESSAGES.SESSION_LOST,
+          });
+          this.downloadCancelled = true;
+          return false;
+        }
+        
+        // 2. Detectar página de login (sin sesión activa)
+        const loginIndicators = ['login', 'iniciar sesión', 'usuario', 'contraseña', 'autenticación'];
+        const hasLoginForm = loginIndicators.filter(indicator => 
+          htmlLower.includes(indicator)
+        ).length >= 2; // Al menos 2 indicadores de login
+        
+        if (hasLoginForm && blob.size < 50000) { // Páginas de login suelen ser < 50KB
+          console.error('🔐 Página de LOGIN detectada - Sin sesión activa');
+          chrome.runtime.sendMessage({
+            action: 'sessionLost',
+            message: 'Debe iniciar sesión en el portal del SRI para continuar',
+          });
+          this.downloadCancelled = true;
+          return false;
+        }
+        
+        // 3. Documento no existe en servidor (pero sí en localStorage)
+        const notFoundIndicators = [
+          'no se encuentra',
+          'not found',
+          'no existe',
+          'documento no disponible',
+          'comprobante no encontrado',
+          'no se pudo obtener',
+          'error 404'
+        ];
+        
+        const isDocumentNotFound = notFoundIndicators.some(indicator => 
+          htmlLower.includes(indicator)
+        );
+        
+        if (isDocumentNotFound) {
+          console.warn(`⚠️ Documento ${nameFile} no existe en servidor SRI (solo en localStorage) - Saltando...`);
+          return false; // Saltar este documento, continuar con los demás
+        }
+        
+        // 4. Otros errores del servidor (500, mantenimiento, etc.)
+        const serverErrorIndicators = [
+          'error del servidor',
+          'server error',
+          'error 500',
+          'error 502',
+          'error 503',
+          'mantenimiento',
+          'maintenance',
+          'temporalmente no disponible'
+        ];
+        
+        const isServerError = serverErrorIndicators.some(indicator => 
+          htmlLower.includes(indicator)
+        );
+        
+        if (isServerError) {
+          console.warn(`🔧 Error del servidor SRI para ${nameFile} - Saltando...`);
+          return false; // Saltar este documento
+        }
+        
+        // 5. Si es HTML pero no coincide con ningún patrón conocido
+        // Probablemente un documento que no existe o página de error genérica
+        if (blob.size > 100000) {
+          // HTML muy grande (>100KB) - probablemente página completa de error
+          console.warn(`⚠️ Documento ${nameFile} devolvió HTML grande (${Math.round(blob.size / 1024)}KB) - posiblemente no existe en servidor`);
+        } else {
+          console.warn(`⚠️ Respuesta HTML inesperada para ${nameFile} (${blob.size} bytes)`);
+          console.log('Primeras 200 caracteres:', htmlText.substring(0, 200));
+        }
+        return false; // Por seguridad, saltar el documento
       }
 
       // Convertir blob a data URL

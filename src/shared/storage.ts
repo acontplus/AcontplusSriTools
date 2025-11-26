@@ -145,6 +145,21 @@ export class StorageManager {
   }
 
   /**
+   * Método genérico para obtener un valor del storage
+   */
+  static async get<T>(key: string): Promise<T | null> {
+    const result = await chrome.storage.local.get(key);
+    return result[key] || null;
+  }
+
+  /**
+   * Método genérico para guardar un valor en el storage
+   */
+  static async set<T>(key: string, value: T): Promise<void> {
+    await chrome.storage.local.set({ [key]: value });
+  }
+
+  /**
    * Limpia todos los datos
    */
   static async clearAll(): Promise<void> {

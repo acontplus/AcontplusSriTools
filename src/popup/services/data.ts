@@ -22,7 +22,7 @@ export class DataManager {
     if (result.facturasData && result.facturasData.length > 0) {
       this.facturas = result.facturasData;
       this.manager.facturas = this.facturas;
-      this.manager.updateDisplay();
+      await this.manager.updateDisplay();
 
       if (result.lastExtraction) {
         const extractionDate = new Date(result.lastExtraction);
@@ -42,7 +42,7 @@ export class DataManager {
         chrome.storage.local.remove('lastVerification');
       }
     } else {
-      this.manager.updateDisplay();
+      await this.manager.updateDisplay();
     }
   }
 
@@ -66,8 +66,8 @@ export class DataManager {
     this.manager.renderTable();
   }
 
-  updateSelectionCount(): void {
-    this.manager.updateCounts();
+  async updateSelectionCount(): Promise<void> {
+    await this.manager.updateCounts();
 
     const hasSelection = this.selectedFacturas.size > 0;
 
@@ -140,7 +140,7 @@ export class DataManager {
     this.manager.updatePopoverButtonStates();
   }
 
-  handleSearchComplete(progress: ProgressStatus): void {
+  async handleSearchComplete(progress: ProgressStatus): Promise<void> {
     this.facturas = progress.allDocuments || [];
     this.manager.facturas = this.facturas;
     this.paginationInfo = progress.paginationInfo || {
@@ -148,9 +148,9 @@ export class DataManager {
       total: progress.totalPages || 1,
     };
 
-    this.manager.updateDisplay();
+    await this.manager.updateDisplay();
     this.selectedFacturas.clear();
-    this.updateSelectionCount();
+    await this.updateSelectionCount();
     this.manager.updatePopoverButtonStates();
 
     const totalDocuments = this.facturas.length;

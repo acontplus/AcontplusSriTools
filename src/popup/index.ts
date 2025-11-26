@@ -1,10 +1,10 @@
 // Popup principal - Migrado a TypeScript completamente
 
-import { VERSION, DELAYS } from '@shared/constants';
+import { VERSION, DELAYS, STORAGE_KEYS } from '@shared/constants';
 import { StorageManager, onStorageChange } from '@shared/storage';
 import { sendMessageWithRetry, updateBadge } from '@shared/messaging';
 import { isDomainValid, esperar } from '@shared/utils';
-import type { Documento, FormatoDescarga, ProgressStatus, FileInfo } from '@shared/types';
+import type { Documento, FormatoDescarga, ProgressStatus } from '@shared/types';
 
 import { DataManager } from './services/data';
 import { PopupUI } from './services/ui';
@@ -162,6 +162,9 @@ export class FacturasManager {
     chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
       if (message.action === 'updateDownloadProgress') {
         this.updateDownloadButtonProgress(message.current, message.total);
+      } else if (message.action === 'batchDownloadProgress') {
+        // Progreso de descarga por lotes
+        this.updateBatchDownloadProgress(message.progress);
       } else if (message.action === 'descargaFinalizada') {
         this.handleDownloadComplete(message.exitosos, message.fallidos, message.total, message.saltados);
       } else if (message.action === 'hideCancelButton') {
@@ -282,7 +285,9 @@ export class FacturasManager {
   private setupPopoverButtons(): void {
     const exportExcelBtn = document.querySelector('[data-action="export_excel"]');
     const configRutaBtn = document.querySelector('[data-action="config_ruta"]');
+    const configBatchBtn = document.querySelector('[data-action="config_batch"]');
     const verificarDescargasBtn = document.querySelector('[data-action="verificar_descargas"]');
+    const exportErrorsBtn = document.querySelector('[data-action="export_errors"]');
 
     if (exportExcelBtn) {
       exportExcelBtn.addEventListener('click', (e) => {
@@ -302,6 +307,14 @@ export class FacturasManager {
       });
     }
 
+    if (configBatchBtn) {
+      configBatchBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openBatchConfigModal();
+        this.hideOptionsPopover();
+      });
+    }
+
     if (verificarDescargasBtn) {
       verificarDescargasBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -309,6 +322,14 @@ export class FacturasManager {
           this.verifyDownloadsManual(true);
           this.hideOptionsPopover();
         }
+      });
+    }
+
+    if (exportErrorsBtn) {
+      exportErrorsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.exportFailedDownloads();
+        this.hideOptionsPopover();
       });
     }
   }
@@ -365,20 +386,236 @@ export class FacturasManager {
     }
   }
 
+  /**
+   * Abre el modal de configuración avanzada de descargas por lotes
+   */
+  private async openBatchConfigModal(): Promise<void> {
+    const modal = document.getElementById('batch-config-modal');
+    const content = document.getElementById('batch-config-content');
+    
+    if (!modal || !content) return;
+
+    //  Cargar configuración actual
+    await this.loadBatchConfig();
+
+    // Configurar sliders interactivos
+    this.setupBatchConfigSliders();
+
+    // Mostrar modal
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      modal.classList.remove('opacity-0');
+      content.classList.remove('scale-95');
+      content.classList.add('scale-100');
+    });
+
+    // Event listeners
+    const closeBtn = document.getElementById('close-batch-config');
+    const saveBtn = document.getElementById('save-batch-config');
+    const resetBtn = document.getElementById('reset-batch-config');
+
+    const closeBatchModal = () => {
+      modal.classList.add('opacity-0');
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+
+    closeBtn?.addEventListener('click', closeBatchModal, { once: true });
+    saveBtn?.addEventListener('click', async () => {
+      await this.saveBatchConfig();
+      closeBatchModal();
+    }, { once: true });
+    resetBtn?.addEventListener('click', () => {
+      this.resetBatchConfig();
+    }, { once: true });
+
+    // Cerrar con ESC o click fuera
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeBatchModal();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeBatchModal();
+      }
+    }, { once: true });
+  }
+
+  private setupBatchConfigSliders(): void {
+    // Batch Size
+    const batchSizeSlider = document.getElementById('batch-size-slider') as HTMLInputElement;
+    const batchSizeValue = document.getElementById('batch-size-value');
+    if (batchSizeSlider && batchSizeValue) {
+      batchSizeSlider.addEventListener('input', () => {
+        batchSizeValue.textContent = batchSizeSlider.value;
+      });
+    }
+
+    // Concurrency
+    const concurrencySlider = document.getElementById('concurrency-slider') as HTMLInputElement;
+    const concurrencyValue = document.getElementById('concurrency-value');
+    if (concurrencySlider && concurrencyValue) {
+      concurrencySlider.addEventListener('input', () => {
+        concurrencyValue.textContent = concurrencySlider.value;
+      });
+    }
+
+    // Batch Delay
+    const batchDelaySlider = document.getElementById('batch-delay-slider') as HTMLInputElement;
+    const batchDelayValue = document.getElementById('batch-delay-value');
+    if (batchDelaySlider && batchDelayValue) {
+      batchDelaySlider.addEventListener('input', () => {
+        batchDelayValue.textContent = `${batchDelaySlider.value}ms`;
+      });
+    }
+
+    // Max Retries
+    const maxRetriesSlider = document.getElementById('max-retries-slider') as HTMLInputElement;
+    const maxRetriesValue = document.getElementById('max-retries-value');
+    if (maxRetriesSlider && maxRetriesValue) {
+      maxRetriesSlider.addEventListener('input', () => {
+        maxRetriesValue.textContent = maxRetriesSlider.value;
+      });
+    }
+  }
+
+  private async loadBatchConfig(): Promise<void> {
+    try {
+      const config = await StorageManager.get<any>(STORAGE_KEYS.DOWNLOAD_CONFIG);
+      
+      const batchSizeSlider = document.getElementById('batch-size-slider') as HTMLInputElement;
+      const concurrencySlider = document.getElementById('concurrency-slider') as HTMLInputElement;
+      const batchDelaySlider = document.getElementById('batch-delay-slider') as HTMLInputElement;
+      const maxRetriesSlider = document.getElementById('max-retries-slider') as HTMLInputElement;
+      const notificationsCheck = document.getElementById('enable-notifications') as HTMLInputElement;
+
+      if (config) {
+        if (batchSizeSlider) {
+          batchSizeSlider.value = config.batchSize?.toString() || '15';
+          document.getElementById('batch-size-value')!.textContent = batchSizeSlider.value;
+        }
+        if (concurrencySlider) {
+          concurrencySlider.value = config.concurrency?.toString() || '5';
+          document.getElementById('concurrency-value')!.textContent = concurrencySlider.value;
+        }
+        if (batchDelaySlider) {
+          batchDelaySlider.value = config.delayBetweenBatches?.toString() || '2000';
+          document.getElementById('batch-delay-value')!.textContent = `${batchDelaySlider.value}ms`;
+        }
+        if (maxRetriesSlider) {
+          maxRetriesSlider.value = config.maxRetries?.toString() || '3';
+          document.getElementById('max-retries-value')!.textContent = maxRetriesSlider.value;
+        }
+        if (notificationsCheck) {
+          notificationsCheck.checked = config.enableNotifications !== false;
+        }
+      }
+    } catch (error) {
+      console.error('Error cargando configuración de lotes:', error);
+    }
+  }
+
+  private async saveBatchConfig(): Promise<void> {
+    const batchSize = parseInt((document.getElementById('batch-size-slider') as HTMLInputElement).value);
+    const concurrency = parseInt((document.getElementById('concurrency-slider') as HTMLInputElement).value);
+    const delayBetweenBatches = parseInt((document.getElementById('batch-delay-slider') as HTMLInputElement).value);
+    const maxRetries = parseInt((document.getElementById('max-retries-slider') as HTMLInputElement).value);
+    const enableNotifications = (document.getElementById('enable-notifications') as HTMLInputElement).checked;
+
+    const config = {
+      batchSize,
+      concurrency,
+      delayBetweenBatches,
+      maxRetries,
+      retryDelay: 1000, // Fixed base retry delay
+      enableNotifications,
+    };
+
+    try {
+      await StorageManager.set(STORAGE_KEYS.DOWNLOAD_CONFIG, config);
+      this.showNotification('✅ Configuración guardada correctamente', 'success');
+    } catch (error) {
+      console.error('Error guardando configuración:', error);
+      this.showNotification('❌ Error guardando configuración', 'error');
+    }
+  }
+
+  private resetBatchConfig(): void {
+    (document.getElementById('batch-size-slider') as HTMLInputElement).value = '15';
+    (document.getElementById('concurrency-slider') as HTMLInputElement).value = '5';
+    (document.getElementById('batch-delay-slider') as HTMLInputElement).value = '2000';
+    (document.getElementById('max-retries-slider') as HTMLInputElement).value = '3';
+    (document.getElementById('enable-notifications') as HTMLInputElement).checked = true;
+
+    // Actualizar valores mostrados
+    document.getElementById('batch-size-value')!.textContent = '15';
+    document.getElementById('concurrency-value')!.textContent = '5';
+    document.getElementById('batch-delay-value')!.textContent = '2000ms';
+    document.getElementById('max-retries-value')!.textContent = '3';
+
+    this.showNotification('⚙️ Configuración restablecida a valores por defecto', 'info');
+  }
+
+  /**
+   * Exporta documentos fallidos a archivo JSON
+   */
+  private async exportFailedDownloads(): Promise<void> {
+    try {
+      const session = await StorageManager.get<any>(STORAGE_KEYS.DOWNLOAD_SESSION);
+      
+      if (!session || !session.failed || session.failed.length === 0) {
+        this.showNotification('No hay documentos fallidos para exportar', 'info');
+        return;
+      }
+
+      const failedDocs = session.failed.map((job: any) => ({
+        numero: job.documento.numero,
+        ruc: job.documento.ruc,
+        razonSocial: job.documento.razonSocial,
+        fecha: job.documento.fecha,
+        total: job.documento.total,
+        formato: job.formato,
+        intentos: job.retryCount,
+        error: job.error || 'Desconocido',
+      }));
+
+      const jsonContent = JSON.stringify(failedDocs, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `errores_descarga_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.showNotification(`✅ Exportados ${failedDocs.length} documentos fallidos`, 'success');
+    } catch (error) {
+      console.error('Error exportando errores:', error);
+      this.showNotification('❌ Error al exportar documentos fallidos', 'error');
+    }
+  }
+
   public showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
     this.notificationComponent.showNotification(message, type);
   }
 
-  public updateCounts(): void {
-    this.tableComponent.updateCounts();
+  public async updateCounts(): Promise<void> {
+    await this.tableComponent.updateCounts();
   }
 
   public renderTable(): void {
     this.tableComponent.renderTable();
   }
 
-  public updateDisplay(): void {
-    this.updateCounts();
+  public async updateDisplay(): Promise<void> {
+    await this.updateCounts();
     this.renderTable();
     this.updatePopoverButtonStates();
     this.updateSearchVisibility();
@@ -440,34 +677,51 @@ export class FacturasManager {
     try {
       this.dataManager.fileInfo.clear();
 
-      // Buscar descargas completadas que AÚN EXISTEN en el disco
-      const downloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve, reject) => {
-        chrome.downloads.search(
-          { 
-            state: 'complete',
-            exists: true  // Solo archivos que existen físicamente
-          }, 
-          (results) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else {
-              resolve(results);
+      // OPTIMIZACIÓN: Obtener TODOS los downloads una sola vez
+      const [existingDownloads, allDownloads] = await Promise.all([
+        // 1. Archivos que existen físicamente
+        new Promise<chrome.downloads.DownloadItem[]>((resolve, reject) => {
+          chrome.downloads.search(
+            { 
+              state: 'complete',
+              exists: true  // Solo archivos que existen físicamente
+            }, 
+            (results) => {
+              if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+              } else {
+                resolve(results || []);
+              }
             }
-          }
-        );
-      });
+          );
+        }),
+        // 2. Historial completo (para detectar eliminados)
+        new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
+          chrome.downloads.search({ state: 'complete' }, (results) => {
+            resolve(results || []);
+          });
+        })
+      ]);
 
-      if (downloads.length === 0) {
-        this.showNotification('❌ No se encontraron descargas existentes en el historial', 'warning');
+      if (existingDownloads.length === 0 && allDownloads.length === 0) {
+        this.showNotification('❌ No se encontraron descargas en el historial', 'warning');
         return;
       }
 
-      // Crear un mapa de archivos descargados con su información completa
-      const downloadMap = new Map<string, chrome.downloads.DownloadItem>();
-      downloads.forEach((download) => {
+      // Crear mapas para lookup rápido
+      const existingFilesMap = new Map<string, chrome.downloads.DownloadItem>();
+      existingDownloads.forEach((download) => {
         const fileName = download.filename.split(/[/\\]/).pop();
         if (fileName) {
-          downloadMap.set(fileName, download);
+          existingFilesMap.set(fileName, download);
+        }
+      });
+
+      const allFilesMap = new Map<string, chrome.downloads.DownloadItem>();
+      allDownloads.forEach((download) => {
+        const fileName = download.filename.split(/[/\\]/).pop();
+        if (fileName) {
+          allFilesMap.set(fileName, download);
         }
       });
 
@@ -476,55 +730,107 @@ export class FacturasManager {
       let xmlDeleted = 0;
       let pdfDeleted = 0;
 
-      // Verificar cada factura
+      // ALGORITMO SOFISTICADO: Verificar cada factura con detección precisa de estados
       for (const factura of facturasToCheck) {
         const baseFileName = factura.numero.replace(/ /g, '_');
         const xmlFileName = `${baseFileName}.xml`;
         const pdfFileName = `${baseFileName}.pdf`;
 
-        const xmlDownload = downloadMap.get(xmlFileName);
-        const pdfDownload = downloadMap.get(pdfFileName);
+        // === ANÁLISIS SOFISTICADO DE XML ===
+        const xmlInExisting = existingFilesMap.get(xmlFileName);
+        const xmlInHistory = allFilesMap.get(xmlFileName);
+        
+        let xmlStatus: import('@shared/types').FileStatus;
+        let xmlExists = false;
+        let xmlWasDownloaded = false;
 
-        // Verificar XML
-        if (xmlDownload && xmlDownload.exists !== false) {
+        if (xmlInExisting && xmlInExisting.exists !== false) {
+          // ✅ Archivo existe físicamente
+          xmlStatus = 'exists';
+          xmlExists = true;
+          xmlWasDownloaded = true;
           foundXmlIds.push(factura.id);
-        } else if (!xmlDownload) {
-          // Buscar en historial completo (incluyendo eliminados)
-          const allDownloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
-            chrome.downloads.search({ state: 'complete' }, (results) => {
-              resolve(results || []);
-            });
-          });
-          const wasDownloaded = allDownloads.some(
-            (d) => d.filename.split(/[/\\]/).pop() === xmlFileName
-          );
-          if (wasDownloaded) xmlDeleted++;
+        } else if (xmlInHistory && !xmlInExisting) {
+          // ❌ Fue descargado pero eliminado del disco
+          xmlStatus = 'deleted';
+          xmlExists = false;
+          xmlWasDownloaded = true;
+          xmlDeleted++;
+        } else if (xmlInHistory && xmlInHistory.exists === false) {
+          // ❌ Descargado pero marcado como no existente
+          xmlStatus = 'deleted';
+          xmlExists = false;
+          xmlWasDownloaded = true;
+          xmlDeleted++;
+        } else {
+          // ⚪ Nunca fue descargado
+          xmlStatus = 'never_downloaded';
+          xmlExists = false;
+          xmlWasDownloaded = false;
         }
 
-        // Verificar PDF
-        if (pdfDownload && pdfDownload.exists !== false) {
+        // === ANÁLISIS SOFISTICADO DE PDF ===
+        const pdfInExisting = existingFilesMap.get(pdfFileName);
+        const pdfInHistory = allFilesMap.get(pdfFileName);
+        
+        let pdfStatus: import('@shared/types').FileStatus;
+        let pdfExists = false;
+        let pdfWasDownloaded = false;
+
+        if (pdfInExisting && pdfInExisting.exists !== false) {
+          // ✅ Archivo existe físicamente
+          pdfStatus = 'exists';
+          pdfExists = true;
+          pdfWasDownloaded = true;
           foundPdfIds.push(factura.id);
-        } else if (!pdfDownload) {
-          const allDownloads = await new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
-            chrome.downloads.search({ state: 'complete' }, (results) => {
-              resolve(results || []);
-            });
-          });
-          const wasDownloaded = allDownloads.some(
-            (d) => d.filename.split(/[/\\]/).pop() === pdfFileName
-          );
-          if (wasDownloaded) pdfDeleted++;
+        } else if (pdfInHistory && !pdfInExisting) {
+          // ❌ Fue descargado pero eliminado del disco
+          pdfStatus = 'deleted';
+          pdfExists = false;
+          pdfWasDownloaded = true;
+          pdfDeleted++;
+        } else if (pdfInHistory && pdfInHistory.exists === false) {
+          // ❌ Descargado pero marcado como no existente
+          pdfStatus = 'deleted';
+          pdfExists = false;
+          pdfWasDownloaded = true;
+          pdfDeleted++;
+        } else {
+          // ⚪ Nunca fue descargado
+          pdfStatus = 'never_downloaded';
+          pdfExists = false;
+          pdfWasDownloaded = false;
         }
 
-        // Guardar información de archivos encontrados
-        const fileData: FileInfo = {};
-        if (xmlDownload) {
-          fileData.xml = { downloadId: xmlDownload.id };
+        // Guardar información DETALLADA de archivos
+        const fileData: import('@shared/types').FileInfo = {};
+        
+        if (xmlInExisting || xmlInHistory) {
+          fileData.xml = {
+            downloadId: xmlInExisting?.id || xmlInHistory?.id,
+            path: xmlInExisting?.filename || xmlInHistory?.filename,
+            status: xmlStatus,
+            exists: xmlExists,
+            wasDownloaded: xmlWasDownloaded,
+            fileSize: xmlInExisting?.fileSize,
+            lastModified: xmlInExisting?.startTime ? new Date(xmlInExisting.startTime).getTime() : undefined,
+          };
         }
-        if (pdfDownload) {
-          fileData.pdf = { downloadId: pdfDownload.id };
+
+        if (pdfInExisting || pdfInHistory) {
+          fileData.pdf = {
+            downloadId: pdfInExisting?.id || pdfInHistory?.id,
+            path: pdfInExisting?.filename || pdfInHistory?.filename,
+            status: pdfStatus,
+            exists: pdfExists,
+            wasDownloaded: pdfWasDownloaded,
+            fileSize: pdfInExisting?.fileSize,
+            lastModified: pdfInExisting?.startTime ? new Date(pdfInExisting.startTime).getTime() : undefined,
+          };
         }
-        if (xmlDownload || pdfDownload) {
+
+        // Solo guardar si hay información disponible
+        if (fileData.xml || fileData.pdf) {
           this.dataManager.fileInfo.set(factura.id, fileData);
         }
       }
@@ -537,14 +843,29 @@ export class FacturasManager {
         selectedOnly
       );
 
-      // Mensaje detallado
-      let mensaje = `✅ Verificación completada: ${foundXmlIds.length} XML, ${foundPdfIds.length} PDF encontrados`;
-      if (xmlDeleted > 0 || pdfDeleted > 0) {
-        mensaje += ` (${xmlDeleted + pdfDeleted} archivos fueron eliminados del disco)`;
+      // Mensaje detallado y sofisticado
+      const totalChecked = facturasToCheck.length;
+      const totalDeleted = xmlDeleted + pdfDeleted;
+      const totalExisting = foundXmlIds.length + foundPdfIds.length;
+      
+      let mensaje = `✅ Verificación completada:\n`;
+      mensaje += `  📊 ${totalChecked} documentos verificados\n`;
+      mensaje += `  ✅ ${foundXmlIds.length} XML existentes | ${foundPdfIds.length} PDF existentes\n`;
+      
+      if (totalDeleted > 0) {
+        mensaje += `  ❌ ${xmlDeleted} XML eliminados | ${pdfDeleted} PDF eliminados`;
       }
       
       const hasFiles = foundXmlIds.length > 0 || foundPdfIds.length > 0;
       this.showNotification(mensaje, hasFiles ? 'success' : 'warning');
+      
+      // Log detallado en consola para debugging
+      console.log('📋 Resumen de verificación:');
+      console.log(`   Total: ${totalChecked} documentos`);
+      console.log(`   ✅ Existentes: ${totalExisting} archivos (${foundXmlIds.length} XML, ${foundPdfIds.length} PDF)`);
+      console.log(`   ❌ Eliminados: ${totalDeleted} archivos (${xmlDeleted} XML, ${pdfDeleted} PDF)`);
+      console.log(`   ⚪ Nunca descargados: ${(totalChecked * 2) - totalExisting - totalDeleted} archivos`);
+      
     } catch (error: any) {
       console.error('Error al verificar descargas:', error);
       this.showNotification(`Error: ${error.message}`, 'error');
@@ -562,6 +883,34 @@ export class FacturasManager {
     const downloadedDocsEl = PopupUI.safeGetElement('downloaded-docs');
     if (downloadedDocsEl) {
       downloadedDocsEl.textContent = current.toString();
+    }
+  }
+
+  /**
+   * Actualiza progreso de descarga por lotes con información detallada
+   */
+  private updateBatchDownloadProgress(progress: any): void {
+    if (!progress) return;
+
+    // Actualizar botón con información de lote
+    if (this.downloadBtn) {
+      const { currentBatch, totalBatches, completedDocs, pendingDocs, currentSpeed, estimatedTimeRemaining } = progress;
+      
+      // Formatear tiempo restante
+      const formatTime = (seconds: number): string => {
+        if (seconds < 60) return `${Math.round(seconds)}s`;
+        const mins = Math.floor(seconds / 60);
+        return `~${mins} min`;
+      };
+
+      const speedText = currentSpeed > 0 ? ` | ${currentSpeed} docs/min` : '';
+      const etaText = estimatedTimeRemaining > 0 ? ` | ${formatTime(estimatedTimeRemaining)} restante` : '';
+      
+      this.downloadBtn.innerHTML = `<span class="btn-text">Lote ${currentBatch}/${totalBatches} | ${completedDocs}/${completedDocs + pendingDocs}${speedText}${etaText}</span>`;
+    }
+
+    if (this.cancelBtn && !this.downloadCancelled) {
+      this.cancelBtn.style.display = 'flex';
     }
   }
 

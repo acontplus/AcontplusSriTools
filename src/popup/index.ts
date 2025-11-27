@@ -674,7 +674,7 @@ export class FacturasManager {
         config.paths.forEach((path) => {
           const option = document.createElement('option');
           option.value = path.id;
-          option.textContent = `📁 ${path.name}`;
+          option.textContent = path.path;
           rutaActivaSelect.appendChild(option);
         });
 
@@ -712,10 +712,6 @@ export class FacturasManager {
         (path) => `
       <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition duration-200" data-path-id="${path.id}">
         <div class="flex-1">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-folder text-indigo-500"></i>
-            <span class="font-semibold text-sm text-gray-800">${path.name}</span>
-          </div>
           <div class="text-xs text-gray-500 font-mono mt-1">
             Downloads/${path.path}
           </div>
@@ -788,25 +784,22 @@ export class FacturasManager {
    * Agregar nueva ruta
    */
   private async addNewPath(): Promise<void> {
-    const nameInput = document.getElementById('nueva-ruta-name') as HTMLInputElement;
     const pathInput = document.getElementById('nueva-ruta-path') as HTMLInputElement;
 
-    if (!nameInput || !pathInput) return;
+    if (!pathInput) return;
 
-    const name = nameInput.value.trim();
     const path = pathInput.value.trim();
 
-    if (!name || !path) {
-      this.showNotification('⚠️ Por favor completa ambos campos', 'warning');
+    if (!path) {
+      this.showNotification('⚠️ Por favor completa el campo', 'warning');
       return;
     }
 
     try {
       const pathsManager = new DownloadPathsManager();
-      await pathsManager.addPath(name, path);
+      await pathsManager.addPath(path);
 
       // Limpiar inputs
-      nameInput.value = '';
       pathInput.value = '';
 
       // Recargar lista

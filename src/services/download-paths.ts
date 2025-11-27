@@ -42,12 +42,11 @@ export class DownloadPathsManager {
   /**
    * Add a new path
    */
-  async addPath(name: string, path: string): Promise<DownloadPath> {
+  async addPath(path: string): Promise<DownloadPath> {
     const config = await this.getConfig();
 
     const newPath: DownloadPath = {
       id: this.generateId(),
-      name: name.trim(),
       path: this.sanitizePath(path),
       isDefault: false,
       lastUsed: 0,
@@ -131,7 +130,7 @@ export class DownloadPathsManager {
   /**
    * Update path details
    */
-  async updatePath(id: string, updates: Partial<Pick<DownloadPath, 'name' | 'path'>>): Promise<void> {
+  async updatePath(id: string, updates: Partial<Pick<DownloadPath, 'path'>>): Promise<void> {
     const config = await this.getConfig();
     const path = config.paths.find((p) => p.id === id);
 
@@ -139,7 +138,6 @@ export class DownloadPathsManager {
       throw new Error('Path not found');
     }
 
-    if (updates.name) path.name = updates.name.trim();
     if (updates.path) path.path = this.sanitizePath(updates.path);
 
     await this.saveConfig(config);

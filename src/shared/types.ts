@@ -150,7 +150,6 @@ export interface CallbackResponse {
 
 export interface DownloadPath {
   id: string;
-  name: string;        // Display name
   path: string;        // Relative path: "SRI/2025/Enero"
   isDefault: boolean;  // If it's the default path
   lastUsed: number;    // Timestamp

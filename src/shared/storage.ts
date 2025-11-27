@@ -33,6 +33,13 @@ export class StorageManager {
   }
 
   /**
+   * Limpia documentos guardados
+   */
+  static async clearDocuments(): Promise<void> {
+    await chrome.storage.local.remove([STORAGE_KEYS.FACTURAS_DATA, STORAGE_KEYS.LAST_EXTRACTION]);
+  }
+
+  /**
    * Guarda estado de progreso
    */
   static async saveProgress(progress: ProgressStatus): Promise<void> {

@@ -1,6 +1,7 @@
 // Content Script principal - Migrado a TypeScript
 
 import { IFRAME_ID, DELAYS } from '@shared/constants';
+import { StorageManager } from '@shared/storage';
 import { SRIDocumentosExtractor } from './extractor';
 
 // Exportar la clase globalmente
@@ -12,13 +13,16 @@ import { SRIDocumentosExtractor } from './extractor';
 // Inicializar extensión
 async function initializeExtension(): Promise<void> {
   try {
+    // Limpiar cache al iniciar para evitar datos persistentes entre sesiones
+    await StorageManager.clearDocuments();
+    await StorageManager.clearProgress();
+    console.log('🧹 Cache limpiado al iniciar');
+
     (window as any).sriExtractorInstance = new SRIDocumentosExtractor();
-    console.log('✅ SRI Extractor inicializado correctamente');
     
     // Inicializar Supabase si está disponible
     if (typeof (window as any).initSupabase !== 'undefined') {
       await (window as any).initSupabase();
-      console.log('✅ Supabase inicializado');
     } else {
       console.warn('⚠️ initSupabase no está disponible');
     }
@@ -26,13 +30,11 @@ async function initializeExtension(): Promise<void> {
     // Inicializar FeedbackModal si está disponible
     if (typeof (window as any).FeedbackModal !== 'undefined' && !(window as any).feedbackModal) {
       (window as any).feedbackModal = new (window as any).FeedbackModal();
-      console.log('✅ FeedbackModal inicializado');
     }
     
     // Inicializar DownloadCounter si está disponible
     if (typeof (window as any).DownloadCounter !== 'undefined' && !(window as any).downloadCounter) {
       (window as any).downloadCounter = new (window as any).DownloadCounter();
-      console.log('✅ DownloadCounter inicializado');
     }
   } catch (error) {
     console.error('❌ Error inicializando extensión:', error);

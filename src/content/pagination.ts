@@ -27,6 +27,10 @@ export class SRIPagination {
 
     try {
       const resultadoInicial = this.detectarTablaRobusta();
+
+      console.log('No se encontró tabla de comprobantes en la página actual - Ignacio');
+
+
       if (!resultadoInicial.encontrada) {
         throw new Error('No se encontró tabla de comprobantes en la página actual');
       }

@@ -684,6 +684,7 @@ export class FacturasManager {
 
       // Renderizar lista de rutas
       this.renderPathsList(config.paths);
+      this.updatePathsCount(config.paths.length);
     } catch (error) {
       console.error('Error cargando rutas:', error);
       this.showNotification('❌ Error al cargar rutas guardadas', 'error');
@@ -736,6 +737,14 @@ export class FacturasManager {
         if (pathId) this.removePath(pathId);
       });
     });
+  }
+
+  /**
+   * Actualizar contador de rutas
+   */
+  private updatePathsCount(count: number): void {
+    const pathsCount = document.getElementById('paths-count');
+    if (pathsCount) pathsCount.textContent = `${count ?? 0}`;
   }
 
   /**

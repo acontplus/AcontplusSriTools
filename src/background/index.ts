@@ -266,6 +266,19 @@ messageListener.on('getExistingFiles', async () => {
   }
 });
 
+messageListener.on('checkCookies', async () => {
+  try {
+    const cookie = await chrome.cookies.get({
+      url: 'https://srienlinea.sri.gob.ec',
+      name: 'JSESSIONID',
+    });
+    return { success: true, cookieFound: !!cookie };
+  } catch (error) {
+    console.error('Error verificando cookies:', error);
+    return { success: false, error: 'Error verificando cookies' };
+  }
+});
+
 messageListener.on('downloadFile', async (message) => {
   try {
     const pathsManager = new DownloadPathsManager();

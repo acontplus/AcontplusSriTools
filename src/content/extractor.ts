@@ -292,9 +292,38 @@ export class SRIDocumentosExtractor {
     }
   }
 
-  public checkSessionStatus(): SessionStatus {
+  public async checkSessionStatus(): Promise<SessionStatus> {
     try {
-      // Verificar mensajes de sesión expirada
+      // 1. Verificar cookie JSESSIONID (La prueba más fiable)
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        try {
+          const cookieResult = await new Promise<{ success: boolean; cookieFound: boolean }>(
+            (resolve) => {
+              chrome.runtime.sendMessage({ action: 'checkCookies' }, (response) => {
+                if (chrome.runtime.lastError) {
+                  console.warn('Error verificando cookies:', chrome.runtime.lastError);
+                  resolve({ success: false, cookieFound: false });
+                } else {
+                  resolve(response);
+                }
+              });
+            }
+          );
+
+          if (cookieResult.success && !cookieResult.cookieFound) {
+            return {
+              success: true,
+              sessionActive: false,
+              message: 'Sesión expirada (Cookie no encontrada)',
+              details: 'La cookie de sesión JSESSIONID no existe',
+            };
+          }
+        } catch (e) {
+          console.warn('No se pudo verificar cookies, continuando con chequeo DOM', e);
+        }
+      }
+
+      // 2. Verificar mensajes de sesión expirada en el DOM
       const sessionExpiredSelectors = [
         '.ui-messages-error',
         '[id*="session"]',
@@ -320,7 +349,7 @@ export class SRIDocumentosExtractor {
         }
       }
 
-      // Verificar elementos que indican sesión activa
+      // 3. Verificar elementos que indican sesión activa
       const sessionActiveSelectors = [
         SELECTORS.TABLA_RECIBIDOS,
         SELECTORS.TABLA_EMITIDOS,
@@ -338,7 +367,7 @@ export class SRIDocumentosExtractor {
         }
       }
 
-      // Verificar si estamos en página de login
+      // 4. Verificar si estamos en página de login
       const loginSelectors = [
         'input[type="password"]',
         '#loginForm',
@@ -368,6 +397,8 @@ export class SRIDocumentosExtractor {
           details: `${activeIndicators} indicadores de sesión activa encontrados`,
         };
       } else {
+        // Si no hay indicadores claros pero tampoco errores, y la cookie existía (o no pudimos chequearla)
+        // asumimos que podría estar activa pero en una página desconocida
         return {
           success: true,
           sessionActive: false,

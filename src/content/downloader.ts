@@ -539,10 +539,21 @@ export class SRIDownloader {
       ).toLocaleDateString('es-EC')}`;
     }
 
+    // Agregar cmbTipoComprobante si existe (importante para mantener el contexto de la búsqueda)
+    const tipoComprobanteSelect = document.querySelector<HTMLSelectElement>('select[name="frmPrincipal:cmbTipoComprobante"]');
+    if (tipoComprobanteSelect && tipoComprobanteSelect.value) {
+      text_body += `&frmPrincipal%3AcmbTipoComprobante=${tipoComprobanteSelect.value}`;
+    }
+
     const formatoCapitalized = formato.charAt(0).toUpperCase() + formato.slice(1);
     text_body += `&frmPrincipal%3Atabla${this.extractor.tipo_emisi}%3A${originalIndex}%3Alnk${formatoCapitalized}=frmPrincipal%3Atabla${this.extractor.tipo_emisi}%3A${originalIndex}%3Alnk${formatoCapitalized}`;
 
-    const exito = await this.fetchParaDescarga(url_links, text_body, formato, name_files);
+    // Pequeña pausa extra para PDFs para evitar saturación
+    if (formato === 'pdf') {
+      await SRIUtils.esperar(500);
+    }
+
+    const exito = await this.fetchParaDescarga(url_links, text_body, formato, name_files, formato === 'pdf' ? 60000 : 30000);
     return exito;
   }
 
@@ -550,7 +561,8 @@ export class SRIDownloader {
     urlSRI: string,
     frmBody: string,
     _frmFile: string,
-    nameFile: string
+    nameFile: string,
+    timeoutMs: number = SRI_HEALTH_CONFIG.TIMEOUT_MS
   ): Promise<boolean> {
     try {
       if (this.downloadCancelled) {
@@ -561,7 +573,7 @@ export class SRIDownloader {
       
       // Crear AbortController para timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), SRI_HEALTH_CONFIG.TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       let response: Response;
       try {
@@ -580,13 +592,13 @@ export class SRIDownloader {
         
         // Detectar si fue un timeout (abort)
         if (fetchError.name === 'AbortError') {
-          console.error(`⏱️ Timeout descargando ${nameFile} (>${SRI_HEALTH_CONFIG.TIMEOUT_MS / 1000}s)`);
+          console.error(`⏱️ Timeout descargando ${nameFile} (>${timeoutMs / 1000}s)`);
           const canContinue = await this.handleTimeout();
           if (!canContinue) {
             return false;
           }
           // Reintentar será manejado por el sistema de reintentos
-          throw new Error(`Timeout: El SRI no respondió en ${SRI_HEALTH_CONFIG.TIMEOUT_MS / 1000} segundos`);
+          throw new Error(`Timeout: El SRI no respondió en ${timeoutMs / 1000} segundos`);
         }
         
         // Error de red (SRI caído, sin conexión, etc.)

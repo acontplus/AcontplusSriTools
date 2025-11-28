@@ -906,9 +906,10 @@ export class FacturasManager {
   }
 
   private async verifyDownloadsManual(selectedOnly: boolean = false): Promise<void> {
-    const facturasToCheck = selectedOnly
-      ? this.dataManager.facturas.filter((f) => this.dataManager.selectedFacturas.has(f.id))
-      : this.dataManager.facturas;
+    const facturasToCheck = selectedOnly ? this.dataManager.facturas.filter((f) => this.dataManager.selectedFacturas.has(f.id)) : this.dataManager.facturas;
+
+    console.log('Debug: selectedOnly', selectedOnly);
+    console.log('facturasToCheck', facturasToCheck);
 
     if (facturasToCheck.length === 0) {
       this.showNotification('No hay documentos para verificar.', 'warning');

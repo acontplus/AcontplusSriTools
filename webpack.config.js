@@ -103,5 +103,10 @@ module.exports = (env, argv) => {
         },
       },
     },
+    performance: {
+      hints: false,
+      maxEntrypointSize: 3000000,
+      maxAssetSize: 3000000,
+    },
   };
 };

@@ -919,6 +919,15 @@ export class FacturasManager {
     try {
       this.dataManager.fileInfo.clear();
 
+      // FIX: Force Chrome to update file existence cache
+      // The 'exists' property is often stale. The first search triggers a background check.
+      // We perform a "warm-up" search and wait a bit to ensure the cache is updated.
+      await new Promise<void>((resolve) => {
+        chrome.downloads.search({ state: 'complete', exists: true }, () => resolve());
+      });
+      
+      await esperar(200);
+
       // OPTIMIZACIÓN: Obtener TODOS los downloads una sola vez
       const [existingDownloads, allDownloads] = await Promise.all([
         // 1. Archivos que existen físicamente

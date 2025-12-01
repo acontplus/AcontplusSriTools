@@ -184,6 +184,12 @@ export class FacturasManager {
       } else if (message.action === 'sriNetworkError') {
         // Error de red con el SRI
         this.showNotification(`🌐 ${message.message}`, 'error');
+      } else if (message.action === 'longPauseStarted') {
+        // Pausa larga
+        this.showNotification(`☕ ${message.message}`, 'info', message.duration || 5000);
+      } else if (message.action === 'longPauseEnded') {
+        // Fin de pausa larga
+        this.showNotification('▶️ Reanudando descargas...', 'success');
       }
     });
 
@@ -832,8 +838,8 @@ export class FacturasManager {
 
   // ===================== END DOWNLOAD PATHS MANAGEMENT =====================
 
-  public showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
-    this.notificationComponent.showNotification(message, type);
+  public showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info', duration?: number): void {
+    this.notificationComponent.showNotification(message, type, duration);
   }
 
   public async updateCounts(): Promise<void> {

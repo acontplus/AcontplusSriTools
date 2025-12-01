@@ -107,26 +107,20 @@ export class DownloadQueue {
         this.completed.size % this.config.longPauseInterval === 0
       ) {
         const duration = this.config.longPauseDuration || 20000;
-        console.log(`☕ Pausa larga preventiva de ${duration / 1000}s para evitar bloqueo del SRI...`);
         
         chrome.runtime.sendMessage({
           action: 'longPauseStarted',
           duration: duration,
-          message: `Pausando ${duration / 1000}s para proteger la conexión con el SRI...`
+          message: `Estamos pausando para luego seguir. Por favor, no cierres la ventana...`
         });
 
         await this.sleep(duration);
         
         chrome.runtime.sendMessage({ action: 'longPauseEnded' });
-        console.log('▶️ Reanudando después de pausa larga');
       }
 
       const batch = this.getNextBatch();
       if (batch.length === 0) break;
-
-      console.log(
-        `📦 Procesando lote de ${batch.length} documentos (${this.completed.size}/${this.queue.length + this.completed.size} totales)`
-      );
 
       await this.processBatch(batch, downloadFunction);
 
@@ -143,7 +137,6 @@ export class DownloadQueue {
 
     // Guardar progreso final
     await this.saveProgress();
-    console.log(`✅ Procesamiento completado: ${this.completed.size} exitosos, ${this.failed.length} fallidos`);
   }
 
   /**
@@ -215,7 +208,7 @@ export class DownloadQueue {
         
         // Si hay muchos fallos consecutivos, pausar y notificar
         if (this.consecutiveFailures >= (DOWNLOAD_CONFIG.MAX_CONSECUTIVE_FAILURES || 5)) {
-          console.warn(`⚠️ ${this.consecutiveFailures} fallos consecutivos - El SRI puede estar bloqueando. Pausando 10 segundos...`);
+          // console.warn(`⚠️ ${this.consecutiveFailures} fallos consecutivos - El SRI puede estar bloqueando. Pausando 10 segundos...`);
           await this.sleep(10000); // Pausa de 10 segundos
           this.consecutiveFailures = 0; // Reset después de la pausa
         }
@@ -242,7 +235,7 @@ export class DownloadQueue {
 
       // Backoff exponencial: 1s, 2s, 4s
       const delay = this.config.retryDelay * Math.pow(2, job.retryCount - 1);
-      console.log(`🔄 Reintentando ${job.documento.numero} (intento ${job.retryCount}/${this.config.maxRetries}) en ${delay}ms`);
+      // console.log(`🔄 Reintentando ${job.documento.numero} (intento ${job.retryCount}/${this.config.maxRetries}) en ${delay}ms`);
 
       await this.sleep(delay);
 
@@ -254,7 +247,7 @@ export class DownloadQueue {
       job.endTime = Date.now();
       this.failed.push(job);
       this.removeFromQueue(job.id);
-      console.error(`❌ Documento ${job.documento.numero} falló después de ${this.config.maxRetries} intentos`);
+      // console.error(`❌ Documento ${job.documento.numero} falló después de ${this.config.maxRetries} intentos`);
     }
   }
 
@@ -270,7 +263,7 @@ export class DownloadQueue {
    */
   public pauseQueue(): void {
     this.isPaused = true;
-    console.log('⏸️ Cola de descargas pausada');
+    // console.log('⏸️ Cola de descargas pausada');
   }
 
   /**
@@ -278,7 +271,7 @@ export class DownloadQueue {
    */
   public resumeQueue(): void {
     this.isPaused = false;
-    console.log('▶️ Cola de descargas reanudada');
+    // console.log('▶️ Cola de descargas reanudada');
   }
 
   /**
@@ -311,7 +304,7 @@ export class DownloadQueue {
       this.failed = session.failed;
       this.isPaused = session.isPaused;
       this.startTime = session.startTime;
-      console.log(`📂 Sesión cargada: ${session.completed.length} completados, ${session.pending.length} pendientes`);
+      // console.log(`📂 Sesión cargada: ${session.completed.length} completados, ${session.pending.length} pendientes`);
     }
     return session;
   }
@@ -325,7 +318,7 @@ export class DownloadQueue {
     this.completed.clear();
     this.failed = [];
     this.processing.clear();
-    console.log('🧹 Sesión de descarga limpiada');
+    // console.log('🧹 Sesión de descarga limpiada');
   }
 
   /**

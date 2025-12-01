@@ -31,7 +31,7 @@ export class NotificationComponent {
     }
   }
 
-  showNotification(message: string, type: NotificationType = 'info'): void {
+  showNotification(message: string, type: NotificationType = 'info', duration: number = NOTIFICATION_DURATION): void {
     if (!this.container) this.createContainer();
     if (!this.container) return;
 
@@ -79,9 +79,11 @@ export class NotificationComponent {
     });
     
     // Auto-cerrar después de la duración
-    setTimeout(() => {
-      this.removeNotification(notification);
-    }, NOTIFICATION_DURATION);
+    if (duration > 0) {
+      setTimeout(() => {
+        this.removeNotification(notification);
+      }, duration);
+    }
   }
 
   private removeNotification(notification: HTMLElement): void {

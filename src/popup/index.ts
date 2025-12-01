@@ -296,7 +296,6 @@ export class FacturasManager {
     const exportExcelBtn = document.querySelector('[data-action="export_excel"]');
     const configurarRutasBtn = document.querySelector('[data-action="configurar_rutas"]');
     const configBatchBtn = document.querySelector('[data-action="config_batch"]');
-    const verificarDescargasBtn = document.querySelector('[data-action="verificar_descargas"]');
     const exportErrorsBtn = document.querySelector('[data-action="export_errors"]');
 
     if (exportExcelBtn) {
@@ -324,17 +323,7 @@ export class FacturasManager {
         this.hideOptionsPopover();
       });
     }
-
-    if (verificarDescargasBtn) {
-      verificarDescargasBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (this.dataManager.selectedFacturas.size > 0) {
-          this.verifyDownloadsManual(true);
-          this.hideOptionsPopover();
-        }
-      });
-    }
-
+  
     if (exportErrorsBtn) {
       exportErrorsBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -905,224 +894,6 @@ export class FacturasManager {
     this.tableComponent.renderTotals();
   }
 
-  private async verifyDownloadsManual(selectedOnly: boolean = false): Promise<void> {
-    const facturasToCheck = selectedOnly ? this.dataManager.facturas.filter((f) => this.dataManager.selectedFacturas.has(f.id)) : this.dataManager.facturas;
-
-    console.log('Debug: selectedOnly', selectedOnly);
-    console.log('facturasToCheck', facturasToCheck);
-
-    if (facturasToCheck.length === 0) {
-      this.showNotification('No hay documentos para verificar.', 'warning');
-      return;
-    }
-
-    try {
-      this.dataManager.fileInfo.clear();
-
-      // FIX: Force Chrome to update file existence cache
-      // The 'exists' property is often stale. The first search triggers a background check.
-      // We perform a "warm-up" search and wait a bit to ensure the cache is updated.
-      await new Promise<void>((resolve) => {
-        chrome.downloads.search({ state: 'complete', exists: true }, () => resolve());
-      });
-      
-      await esperar(200);
-
-      // OPTIMIZACIÓN: Obtener TODOS los downloads una sola vez
-      const [existingDownloads, allDownloads] = await Promise.all([
-        // 1. Archivos que existen físicamente
-        new Promise<chrome.downloads.DownloadItem[]>((resolve, reject) => {
-          chrome.downloads.search(
-            { 
-              state: 'complete',
-              exists: true  // Solo archivos que existen físicamente
-            }, 
-            (results) => {
-              if (chrome.runtime.lastError) {
-                reject(new Error(chrome.runtime.lastError.message));
-              } else {
-                resolve(results || []);
-              }
-            }
-          );
-        }),
-        // 2. Historial completo (para detectar eliminados)
-        new Promise<chrome.downloads.DownloadItem[]>((resolve) => {
-          chrome.downloads.search({ state: 'complete' }, (results) => {
-            resolve(results || []);
-          });
-        })
-      ]);
-
-      if (existingDownloads.length === 0 && allDownloads.length === 0) {
-        this.showNotification('❌ No se encontraron descargas en el historial', 'warning');
-        return;
-      }
-
-      // Crear mapas para lookup rápido
-      const existingFilesMap = new Map<string, chrome.downloads.DownloadItem>();
-      existingDownloads.forEach((download) => {
-        const fileName = download.filename.split(/[/\\]/).pop();
-        if (fileName) {
-          existingFilesMap.set(fileName, download);
-        }
-      });
-
-      const allFilesMap = new Map<string, chrome.downloads.DownloadItem>();
-      allDownloads.forEach((download) => {
-        const fileName = download.filename.split(/[/\\]/).pop();
-        if (fileName) {
-          allFilesMap.set(fileName, download);
-        }
-      });
-
-      const foundXmlIds: string[] = [];
-      const foundPdfIds: string[] = [];
-      let xmlDeleted = 0;
-      let pdfDeleted = 0;
-
-      // ALGORITMO SOFISTICADO: Verificar cada factura con detección precisa de estados
-      for (const factura of facturasToCheck) {
-        const baseFileName = factura.numero.replace(/ /g, '_');
-        const xmlFileName = `${baseFileName}.xml`;
-        const pdfFileName = `${baseFileName}.pdf`;
-
-        // === ANÁLISIS SOFISTICADO DE XML ===
-        const xmlInExisting = existingFilesMap.get(xmlFileName);
-        const xmlInHistory = allFilesMap.get(xmlFileName);
-        
-        let xmlStatus: import('@shared/types').FileStatus;
-        let xmlExists = false;
-        let xmlWasDownloaded = false;
-
-        if (xmlInExisting && xmlInExisting.exists !== false) {
-          // ✅ Archivo existe físicamente
-          xmlStatus = 'exists';
-          xmlExists = true;
-          xmlWasDownloaded = true;
-          foundXmlIds.push(factura.id);
-        } else if (xmlInHistory && !xmlInExisting) {
-          // ❌ Fue descargado pero eliminado del disco
-          xmlStatus = 'deleted';
-          xmlExists = false;
-          xmlWasDownloaded = true;
-          xmlDeleted++;
-        } else if (xmlInHistory && xmlInHistory.exists === false) {
-          // ❌ Descargado pero marcado como no existente
-          xmlStatus = 'deleted';
-          xmlExists = false;
-          xmlWasDownloaded = true;
-          xmlDeleted++;
-        } else {
-          // ⚪ Nunca fue descargado
-          xmlStatus = 'never_downloaded';
-          xmlExists = false;
-          xmlWasDownloaded = false;
-        }
-
-        // === ANÁLISIS SOFISTICADO DE PDF ===
-        const pdfInExisting = existingFilesMap.get(pdfFileName);
-        const pdfInHistory = allFilesMap.get(pdfFileName);
-        
-        let pdfStatus: import('@shared/types').FileStatus;
-        let pdfExists = false;
-        let pdfWasDownloaded = false;
-
-        if (pdfInExisting && pdfInExisting.exists !== false) {
-          // ✅ Archivo existe físicamente
-          pdfStatus = 'exists';
-          pdfExists = true;
-          pdfWasDownloaded = true;
-          foundPdfIds.push(factura.id);
-        } else if (pdfInHistory && !pdfInExisting) {
-          // ❌ Fue descargado pero eliminado del disco
-          pdfStatus = 'deleted';
-          pdfExists = false;
-          pdfWasDownloaded = true;
-          pdfDeleted++;
-        } else if (pdfInHistory && pdfInHistory.exists === false) {
-          // ❌ Descargado pero marcado como no existente
-          pdfStatus = 'deleted';
-          pdfExists = false;
-          pdfWasDownloaded = true;
-          pdfDeleted++;
-        } else {
-          // ⚪ Nunca fue descargado
-          pdfStatus = 'never_downloaded';
-          pdfExists = false;
-          pdfWasDownloaded = false;
-        }
-
-        // Guardar información DETALLADA de archivos
-        const fileData: import('@shared/types').FileInfo = {};
-        
-        if (xmlInExisting || xmlInHistory) {
-          fileData.xml = {
-            downloadId: xmlInExisting?.id || xmlInHistory?.id,
-            path: xmlInExisting?.filename || xmlInHistory?.filename,
-            status: xmlStatus,
-            exists: xmlExists,
-            wasDownloaded: xmlWasDownloaded,
-            fileSize: xmlInExisting?.fileSize,
-            lastModified: xmlInExisting?.startTime ? new Date(xmlInExisting.startTime).getTime() : undefined,
-          };
-        }
-
-        if (pdfInExisting || pdfInHistory) {
-          fileData.pdf = {
-            downloadId: pdfInExisting?.id || pdfInHistory?.id,
-            path: pdfInExisting?.filename || pdfInHistory?.filename,
-            status: pdfStatus,
-            exists: pdfExists,
-            wasDownloaded: pdfWasDownloaded,
-            fileSize: pdfInExisting?.fileSize,
-            lastModified: pdfInExisting?.startTime ? new Date(pdfInExisting.startTime).getTime() : undefined,
-          };
-        }
-
-        // Solo guardar si hay información disponible
-        if (fileData.xml || fileData.pdf) {
-          this.dataManager.fileInfo.set(factura.id, fileData);
-        }
-      }
-
-      // Actualizar la UI con los resultados
-      this.dataManager.handleVerificationComplete(
-        foundXmlIds,
-        foundPdfIds,
-        facturasToCheck.length,
-        selectedOnly
-      );
-
-      // Mensaje detallado y sofisticado
-      const totalChecked = facturasToCheck.length;
-      const totalDeleted = xmlDeleted + pdfDeleted;
-      const totalExisting = foundXmlIds.length + foundPdfIds.length;
-      
-      let mensaje = `✅ Verificación completada:\n`;
-      mensaje += `  📊 ${totalChecked} documentos verificados\n`;
-      mensaje += `  ✅ ${foundXmlIds.length} XML existentes | ${foundPdfIds.length} PDF existentes\n`;
-      
-      if (totalDeleted > 0) {
-        mensaje += `  ❌ ${xmlDeleted} XML eliminados | ${pdfDeleted} PDF eliminados`;
-      }
-      
-      const hasFiles = foundXmlIds.length > 0 || foundPdfIds.length > 0;
-      this.showNotification(mensaje, hasFiles ? 'success' : 'warning');
-      
-      // Log detallado en consola para debugging
-      console.log('📋 Resumen de verificación:');
-      console.log(`   Total: ${totalChecked} documentos`);
-      console.log(`   ✅ Existentes: ${totalExisting} archivos (${foundXmlIds.length} XML, ${foundPdfIds.length} PDF)`);
-      console.log(`   ❌ Eliminados: ${totalDeleted} archivos (${xmlDeleted} XML, ${pdfDeleted} PDF)`);
-      console.log(`   ⚪ Nunca descargados: ${(totalChecked * 2) - totalExisting - totalDeleted} archivos`);
-      
-    } catch (error: any) {
-      console.error('Error al verificar descargas:', error);
-      this.showNotification(`Error: ${error.message}`, 'error');
-    }
-  }
-
   private updateDownloadButtonProgress(current: number, total: number): void {
     if (this.downloadBtn) {
       this.downloadBtn.innerHTML = `<span class="btn-text">${current}/${total}...</span>`;
@@ -1196,9 +967,9 @@ export class FacturasManager {
 
     this.hideCancelButton();
 
-    if (exitosos > 0) {
-      setTimeout(() => this.verifyDownloadsManual(true), 1000);
-    }
+    // if (exitosos > 0) {
+    //   setTimeout(() => this.verifyDownloadsManual(true), 1000);
+    // }
   }
 
   private hideCancelButton(): void {

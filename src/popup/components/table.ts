@@ -100,10 +100,11 @@ export class TableComponent {
           <td class="px-6 py-3">${factura.razonSocial || ''}</td>
           <td class="px-6 py-3">${factura.fechaEmision || ''}</td>
           <td class="px-6 py-3 text-right">${(factura.importeTotal || 0).toFixed(2)}</td>
-          <td class="px-6 py-3 text-center">${(factura as any).tieneXml ? '✅' : ''}${(factura as any).tienePdf ? ` <span class="pdf-icon cursor-pointer hover:bg-gray-100 p-1 rounded" data-factura-id="${factura.id}" title="Abrir PDF">📄</span>` : ''}${(factura as any).fueVerificado && !(factura as any).tieneXml && !(factura as any).tienePdf ? '❌' : ''}</td>
       </tr>`;
       })
       .join('');
+
+    // <td class="px-6 py-3 text-center">${(factura as any).tieneXml ? '✅' : ''}${(factura as any).tienePdf ? ` <span class="pdf-icon cursor-pointer hover:bg-gray-100 p-1 rounded" data-factura-id="${factura.id}" title="Abrir PDF">📄</span>` : ''}${(factura as any).fueVerificado && !(factura as any).tieneXml && !(factura as any).tienePdf ? '❌' : ''}</td>
 
     safeSetHTML(this.tbodyEl, tableHTML);
 

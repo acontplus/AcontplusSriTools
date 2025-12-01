@@ -8,8 +8,7 @@
     "storage",
     "scripting",
     "downloads",
-    "downloads.open",
-    "cookies"
+    "downloads.open"
   ],
   "host_permissions": [
     "*://*.sri.gob.ec/*",

@@ -27,11 +27,6 @@ async function initializeExtension(): Promise<void> {
       console.warn('⚠️ initSupabase no está disponible');
     }
     
-    // Inicializar FeedbackModal si está disponible
-    if (typeof (window as any).FeedbackModal !== 'undefined' && !(window as any).feedbackModal) {
-      (window as any).feedbackModal = new (window as any).FeedbackModal();
-    }
-    
     // Inicializar DownloadCounter si está disponible
     if (typeof (window as any).DownloadCounter !== 'undefined' && !(window as any).downloadCounter) {
       (window as any).downloadCounter = new (window as any).DownloadCounter();

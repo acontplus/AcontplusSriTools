@@ -30,10 +30,9 @@
         "shared.js",
         "services/supabase.js",
         "services/download-counter.js",
-        "services/feedback-modal.js",
         "content/index.js"
       ],
-      "css": ["assets/css/content.css", "assets/css/feedback-modal.css"],
+      "css": ["assets/css/content.css"],
       "run_at": "document_idle",
       "all_frames": false
     }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Acontplus SRI Tools",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "description": "Extractor de Comprobantes Electronicos del SRI para Acontplus S.A.S. - Interfaz optimizada con tecnicas robustas de paginacion",
   "permissions": [
     "activeTab",

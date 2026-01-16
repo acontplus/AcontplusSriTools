@@ -909,8 +909,10 @@ export class FacturasManager {
     }
 
     const downloadedDocsEl = PopupUI.safeGetElement('downloaded-docs');
+    console.log(`Ignacio print ${downloadedDocsEl}`)
+
     if (downloadedDocsEl) {
-      downloadedDocsEl.textContent = current.toString();
+      downloadedDocsEl.textContent = `${current}`;
     }
   }
 

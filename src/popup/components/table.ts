@@ -43,9 +43,11 @@ export class TableComponent {
 
     if (totalCountEl) safeSetText(totalCountEl, facturasToCount.length.toString());
     if (selectedCountEl) safeSetText(selectedCountEl, selectedVisibleCount.toString());
-    
+
     // Obtener contador de descargas de la sesión actual
     if (downloadedCountEl) {
+      console.log(`Download counter ${downloadedCountEl}`)
+
       try {
         if (typeof (window as any).downloadCounter !== 'undefined') {
           const stats = await (window as any).downloadCounter.getStats();
